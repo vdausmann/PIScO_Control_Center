@@ -1,0 +1,38 @@
+image-set-header:
+    image-set-name: SO268-1_21-1_GMR_CAM-23 (wird befüllt)
+    image-set-context: Fjord Export Cruise of Pelagic Ocean Optics Group (POOG)
+    image-set-event: 21-1- (wird befüllt)
+    image-set-platform: ROS4
+    image-set-sensor: PISCO1
+    image-set-uuid: 2a2360e9-a5ec-4ad2-be04-0ea0b4cbdc58 (wird befüllt)
+    image-set-data-handle: 
+    image-set-metadata-handle: 
+    image-set-crs: EPSG:4326
+    image-set-type: photo
+    image-set-creators:  
+        - name: J. Taucher
+          affiliation: GEOMAR Helmholtz-Zentrum für Ozeanforschung Kiel 
+          email: Jtaucher@geomar.de
+          orcid: 0000-0001-9944-07757 
+    image-set-pi:
+        name: J. Taucher
+        affiliation: GEOMAR Helmholtz-Zentrum für Ozeanforschung Kiel
+        email: Jtaucher@geomar.de
+        orcid: 0000-0001-9944-0775 
+    image-set-license: CC-BY       
+    image-set-coordinate-uncertainty: 3
+    image-set-event-information: hang out at 100, 200 and 400 m for sinking velocity High-resolution in situ observations of passive and active carbon flux in two contrasting fjords.      
+    image-set-item-identification-scheme: PROJECT_EVENT_SENSOR_FREETEXT_DATE_TIME.png
+    image-set-acquisition-settings: Camera set to Framerate 2f/s, gain 1.2, Tag Amplitude 45
+image-set-items:
+    SO268-1_21-1_GMR_CAM-23_20190513_131415.jpg: 
+        image-uuid: 9999ba88-1a20-4efe-a0ac-6b4233490ad6
+        image-hash: 83f30eb35d1325c44c85fba0cf478825c0a629d20177a945069934f6cd07e087
+        image-datetime: 2019-05-13 13:14:15.0000
+        image-longitude: -123.854637
+        image-latitude: 42.133426
+        image-depth: 4230.3
+        
+        
+    
+ 

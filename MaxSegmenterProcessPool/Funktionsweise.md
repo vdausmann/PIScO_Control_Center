@@ -1,0 +1,6 @@
+- Im mainprocess werden mehrere Threads gestartet, die Bilder einlesen (ca. 0.025s pro Bild)
+- Andere Prozesse (Kerne) werden dann benutzt, um die eingelesenen Bilder weiter zu verarbeiten. Es müssen die folgenden Aufgaben erledigt werden:
+  - Hintergrundkorrektur (läuft auf mehreren Cores)
+  - Deconvolution (Läuft auf einzelnem core)
+  - Erkennung (läuft auf mehrern cores)
+  - Abspeichern (vllt auch mit threads? oder mit bei der Erkennung)

@@ -1,0 +1,70 @@
+image-set-header:
+  image-set-name: SO268-1_21-1_GMR_CAM-23
+  image-set-context: SO268-1
+  image-set-event: 21-1
+  image-set-platform: SO_OFOS-1
+  image-set-sensor: GMR_CAM-23
+  image-set-uuid: 2a2360e9-a5ec-4ad2-be04-0ea0b4cbdc58
+  image-set-data-handle: 20.500.12085/2a2360e9-a5ec-4ad2-be04-0ea0b4cbdc58@data
+  image-set-metadata-handle: 20.500.12085/2a2360e9-a5ec-4ad2-be04-0ea0b4cbdc58@metadata
+  image-set-crs: EPSG:4326
+  image-set-type: photo
+  image-set-creators:
+  - name: T. Bodur
+    affiliation: Research Institute Inc.
+    email: tbod@rii.foo
+    orcid: 0000-0002-1825-0097
+  image-set-pi:
+    name: Y. Bodur
+    affiliation: Research Institute Inc.
+    email: ybod@rii.foo
+    orcid: 0000-0002-1825-0097
+  image-set-license: CC-BY
+  image-set-coordinate-uncertainty: 13.42
+  image-set-event-information: Towed camera deployment to assess the health status
+    of the eastern part of the Foobar reef.
+  image-set-reference-calibration: Checkerboard with 3cm box length imaged before
+    deployment.
+  image-set-time-synchronisation: Camera set to UTC over RS232 before the deployment.
+    No offset occured after post-deployment check.
+  image-set-item-identification-scheme: PROJECT_EVENT_SENSOR_DATETIME.jpg
+  image-set-curation-protocol: Navigation data smoothed and splined (see navigation
+    sensor protocol for details), and assigned to imagery by timestamp. Coordinate
+    uncertainty is given by standard deviation from navigation smoothing. Imagery
+    without content (all black) due to lamp failure were removed manually.
+  image-set-acquisition-settings: Camera set to auto mode for ISO, f-number and exposure
+    time
+image-set-items:
+  1.jpg:
+    image-uuid: 9999ba88-1a20-4efe-a0ac-6b4233490ad6
+    image-hash: 83f30eb35d1325c44c85fba0cf478825c0a629d20177a945069934f6cd07e087
+    image-datetime: 2019-05-13 13:14:15
+    image-longitude: -123.854637
+    image-latitude: 42.133426
+    image-depth: 12
+    image-pixel-per-millimeter: 12.1
+    image-meters-above-ground: 1.3
+    image-coordinate-uncertainty: 4.2
+
+  2.jpg:
+    image-uuid: 9999ba88-1a20-4efe-a0ac-6b4233490ad6
+    image-hash: 83f30eb35d1325c44c85fba0cf478825c0a629d20177a945069934f6cd07e087
+    image-datetime: 2019-05-13 13:14:15
+    image-longitude: -123.854637
+    image-latitude: 42.133426
+    image-depth: 13
+    image-pixel-per-millimeter: 12.1
+    image-meters-above-ground: 1.3
+    image-coordinate-uncertainty: 4.2
+
+  3.jpg:
+    image-uuid: 9999ba88-1a20-4efe-a0ac-6b4233490ad6
+    image-hash: 83f30eb35d1325c44c85fba0cf478825c0a629d20177a945069934f6cd07e087
+    image-datetime: 2019-05-13 13:14:15
+    image-longitude: -123.854637
+    image-latitude: 42.133426
+    image-depth: 14
+    image-pixel-per-millimeter: 12.1
+    image-meters-above-ground: 1.3
+    image-coordinate-uncertainty: 4.2
+

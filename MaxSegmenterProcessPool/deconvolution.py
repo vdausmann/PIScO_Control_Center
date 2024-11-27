@@ -20,10 +20,19 @@ MODEL_NAME='lucyd-edof-plankton_231204.pth'
 ##dual GPU usage
 model = LUCYD(num_res=1)
 model_path = os.path.join(current_dir, 'models', MODEL_NAME)
-model.load_state_dict(torch.load(model_path))
-if torch.cuda.device_count() > 1:
-    model = torch.nn.DataParallel(model)
-model.to('cuda')
+
+# Check if CUDA is available and load the model accordingly
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+
+model.load_state_dict(torch.load(model_path, map_location=device))
+if device.type == 'cuda':
+    if torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
+
+model.to(device)
 
 model.eval()
 

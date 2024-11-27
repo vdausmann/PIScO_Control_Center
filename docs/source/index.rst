@@ -1,7 +1,12 @@
-PIScO Image Segmentation Application
+PIScO Image Segmentation Schematic
 ====================================
 
 This document provides a detailed breakdown of each step involved in the image processing application. The application is designed to process images with a series of operations including segmentation and detection.
+
+.. image:: diagram.png
+   :alt: Optional alternative text
+   :width: 400px
+   :align: center
 
 1. Select Source Directory
 ---------------------------

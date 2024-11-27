@@ -26,7 +26,7 @@ The software checks if the images have already been processed by comparing file 
 
 4. Compute Radius for Masking
 -----------------------------
-.. autofunction:: segmenter.compute_radius
+.. autofunction:: MaxSegmenterProcessPool.segmenter.compute_radius
 
 Computes a radius value used for masking based on a few sample images from the input directory.
 

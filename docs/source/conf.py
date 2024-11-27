@@ -1,3 +1,8 @@
+# Add your project directory to sys.path
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../'))
+
 # Configuration file for the Sphinx documentation builder.
 
 # -- Project information
@@ -34,13 +39,4 @@ html_theme = 'sphinx_rtd_theme'
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
 
-# Add your project directory to sys.path
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../../MaxSegmenterProcessPool'))
 
-try:
-    import segmenter
-    print("Module 'segmenter' imported successfully.")
-except ImportError as e:
-    print(f"Error importing module 'segmenter': {e}")

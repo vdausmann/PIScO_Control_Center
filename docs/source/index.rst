@@ -43,10 +43,10 @@ Saves the initialized settings to a CSV file for record-keeping and reproducibil
 7. For Each Batch of Images
 ---------------------------
 
-- **Run Reader**: Reads batches of images concurrently.
-- **Run Background Correction**: Applies background correction to enhance image quality.
-- **Run Deconvolution (if enabled)**: Optionally applies deconvolution to further clarify image details.
-- **Run Detection**: Performs the actual detection and segmentation of features in the images.
+    a. **Run Reader**: Reads batches of images concurrently.
+    b. **Run Background Correction**: Applies background correction to enhance image quality.
+    c. **Run Deconvolution (if enabled)**: Optionally applies deconvolution to further clarify image details.
+    d. **Run Detection**: Performs the actual detection and segmentation of features in the images.
 
 8. Log Processing Time per Image
 --------------------------------

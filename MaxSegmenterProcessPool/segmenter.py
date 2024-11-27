@@ -18,6 +18,22 @@ from tkinter import filedialog
 import pickle
 
 def compute_radius(files):
+     """
+    Computes the radius of the background mask from the first 10 images in the given list of files.
+
+    This function reads the first 10 image files from the provided list, resizes them to a fixed 
+    dimension of 2560x2560 pixels, and calculates a background image by finding the maximum pixel 
+    intensity at each position across these images. It then creates a binary mask to isolate 
+    background elements and iteratively adjusts the radius of a circular region until a specified 
+    amount of background pixels is covered.
+
+    Parameters:
+        files (list): List of file paths to images. Assumes that the list contains at least 10 
+                      image files.
+
+    Returns:
+        int: The computed radius that covers the desired amount of background pixels.
+    """
      imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
      bg = np.max(imgs, axis=0)
 

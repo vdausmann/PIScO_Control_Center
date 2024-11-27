@@ -38,3 +38,9 @@ epub_show_urls = 'footnote'
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../MaxSegmenterProcessPool'))
+
+try:
+    import segmenter
+    print("Module 'segmenter' imported successfully.")
+except ImportError as e:
+    print(f"Error importing module 'segmenter': {e}")

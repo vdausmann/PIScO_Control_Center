@@ -18,7 +18,7 @@ from tkinter import filedialog
 import pickle
 
 def compute_radius(files):
-     """
+    """
     Computes the radius of the background mask from the first 10 images in the given list of files.
 
     This function reads the first 10 image files from the provided list, resizes them to a fixed 
@@ -34,24 +34,24 @@ def compute_radius(files):
     Returns:
         int: The computed radius that covers the desired amount of background pixels.
     """
-     imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
-     bg = np.max(imgs, axis=0)
+    imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
+    bg = np.max(imgs, axis=0)
 
-     bg = cv.threshold(cv.bitwise_not(bg), 180, 255, cv.THRESH_BINARY)[1]
-     bg = cv.bitwise_not(bg)
-     bg[np.where(bg == 0)] = 10
+    bg = cv.threshold(cv.bitwise_not(bg), 180, 255, cv.THRESH_BINARY)[1]
+    bg = cv.bitwise_not(bg)
+    bg[np.where(bg == 0)] = 10
 
-     mask = np.zeros(bg.shape, dtype=np.uint8)
-     count_bg_px = 0
-     radius = 1000
-     while count_bg_px < 10000:
-         radius += 50
-         cv.circle(mask, (1280, 1280), radius, (255), -1)
-         masked = cv.bitwise_and(bg, mask)
-         count_bg_px = len(np.where(masked == 10)[0])
+    mask = np.zeros(bg.shape, dtype=np.uint8)
+    count_bg_px = 0
+    radius = 1000
+    while count_bg_px < 10000:
+        radius += 50
+        cv.circle(mask, (1280, 1280), radius, (255), -1)
+        masked = cv.bitwise_and(bg, mask)
+        count_bg_px = len(np.where(masked == 10)[0])
 
-     radius -= 50
-     return radius
+    radius -= 50
+    return radius
 
 def save_detection_settings_to_csv(settings, file_path):
     with open(file_path, mode='w', newline='') as file:

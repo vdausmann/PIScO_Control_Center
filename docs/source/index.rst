@@ -5,7 +5,7 @@ This document provides a detailed breakdown of each step involved in the image p
 
 .. image:: images/diagram.png
    :alt: Optional alternative text
-   :width: 400px
+   :width: 700px
    :align: center
 
 1. Select Source Directory
@@ -26,6 +26,7 @@ The software checks if the images have already been processed by comparing file 
 
 4. Compute Radius for Masking
 -----------------------------
+.. autofunction:: segmenter.compute_radius
 
 Computes a radius value used for masking based on a few sample images from the input directory.
 

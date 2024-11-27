@@ -1,11 +1,14 @@
 import cv2 as cv
 import torch
 import numpy as np
+import os
 
 from multiprocessing import Queue
 
 from MaxSegmenterProcessPool.lucyd import LUCYD
 
+# Get the directory of the current file
+current_dir = os.path.dirname(__file__)
 
 ## Load Deconv Model globally for faster inference on CPU
 MODEL_NAME='lucyd-edof-plankton_231204.pth'
@@ -16,7 +19,8 @@ MODEL_NAME='lucyd-edof-plankton_231204.pth'
 
 ##dual GPU usage
 model = LUCYD(num_res=1)
-model.load_state_dict(torch.load('/home/pisco-controller/Desktop/PISCO_Software_idof/MaxSegmenterProcessPool/models/'+MODEL_NAME))
+model_path = os.path.join(current_dir, 'models', MODEL_NAME)
+model.load_state_dict(torch.load(model_path))
 if torch.cuda.device_count() > 1:
     model = torch.nn.DataParallel(model)
 model.to('cuda')

@@ -45,70 +45,6 @@ LOG_FOLDER="/home/pisco-controller/SO308/Logfiles/"
 log_path="/home/pisco-controller/SO308/Logfiles/"
 #yaml_Lock=threading.Lock()
 
-
-# def convert_img(filepath: str, compression_quality=85):
-#     parent_folder = os.path.dirname(filepath)
-#     fn = os.path.basename(filepath)
-#     jpg_folder = os.path.join(parent_folder, "JPG")
-#     png_folder = os.path.join(parent_folder, "PNG")
-#     os.makedirs(jpg_folder, exist_ok=True)
-#     os.makedirs(png_folder, exist_ok=True)
-
-#     try:
-#         img = cv.imread(filepath, cv.IMREAD_GRAYSCALE)
-#         cv.imwrite(
-#             os.path.join(jpg_folder, fn[:-3] + "jpg"),
-#             img,
-#             [cv.IMWRITE_JPEG_QUALITY, compression_quality],
-#         )
-#         cv.imwrite(os.path.join(png_folder, fn[:-3] + "png"), img)
-#         cv.im
-#     except:
-#         pass
-#     #os.remove(filepath)
-
-""" def convert_img(filebatch: list, compression_quality=85):
-    for filepath in filebatch:
-        parent_folder = os.path.dirname(filepath)
-        fn = os.path.basename(filepath)
-        jpg_folder = os.path.join(parent_folder, "JPG")
-        png_folder = os.path.join(parent_folder, "PNG")
-        os.makedirs(jpg_folder, exist_ok=True)
-        os.makedirs(png_folder, exist_ok=True)
-
-        try:
-            img = cv.imread(filepath, cv.IMREAD_GRAYSCALE)
-            cv.imwrite(
-                os.path.join(jpg_folder, fn[:-3] + "jpg"),
-                img,
-                [cv.IMWRITE_JPEG_QUALITY, compression_quality],
-            )
-            cv.imwrite(os.path.join(png_folder, fn[:-3] + "png"), img)
-            cv.im
-        except:
-            pass
-    #os.remove(filepath) """
-
-# def convert_imgs(files: list[str]):
-#     max_threads = 10
-#     for file in files:
-#         while len(threading.enumerate())>max_threads:
-#             time.sleep(0.1)
-#         threading.Thread(target=convert_img, args=(file,)).start()
-
-""" def convert_imgs(files: list[str]):
-    imgpthread=len(files)/10
-    i=0
-    x=0
-    for i in range (10):
-        i=i+1
-        filebatch=[]
-        for file in files:
-            x=x+1
-            if (x>imgpthread *(x-1) and x<imgpthread *x ):
-                filebatch.append(file)
-        threading.Thread(target=convert_img, args=(filebatch,)).start() """
-
 def convert_img(filepath: str, metadataframe, compression_quality=85):
     parent_folder = os.path.dirname(filepath)
     fn = os.path.basename(filepath)
@@ -204,15 +140,7 @@ def convert_imgs(files: list[str], metadataframe):
     os.makedirs(png_folder_txt, exist_ok=True)
     metadataframe.write_meta_csv(jpg_folder)
     metadataframe.write_meta_csv(png_folder)
-    
-    # parent_folder = os.path.dirname(files[0])
-    # [newdirname,newimgname,date,press]=metadataframe.get_filename(files[0])
-   
-    # jpg_folder = os.path.join(os.path.dirname(parent_folder), newdirname + "_jpg")
-    
-    # png_folder = os.path.join(os.path.dirname(parent_folder), newdirname + "_png")
-    # os.makedirs(jpg_folder, exist_ok=True)
-    # os.makedirs(png_folder, exist_ok=True)
+
     yaml_Lock=threading.Lock()
     
     t1=time.time()
@@ -255,13 +183,7 @@ def convert_imgs(files: list[str], metadataframe):
         "image-latitude": "42.133426",
         "image-depth": float(newpress * pressurefactor),
         }    
-        append_entry(yamlpath, info)
-          
-        #metadataframe.write_meta(png_folder,fn[:-4] + ".png",uuid,time_ac,newpress,hash)
-        #yamfile=metadataframe.update_Yaml_Pipe(image,camitem,yamlfile,meta,dateyaml,newpress,uuid,hash)
-        #with open(png_folder+'/'+os.path.basename(os.path.dirname(pngtexts[0]))+'.yaml','w') as newyamlfile:
-        #     yaml.dump(yamfile, newyamlfile) 
-        
+        append_entry(yamlpath, info)   
         t2=time.time() 
         print(f"write_meta time png : {t2-t1}")   
     yamlfile['image-set-items']=info    
@@ -301,12 +223,6 @@ def convert_imgs(files: list[str], metadataframe):
         "image-depth": float(newpress * pressurefactor),
         }    
         append_entry(yamlpath, info)
-          
-        #metadataframe.write_meta(png_folder,fn[:-4] + ".png",uuid,time_ac,newpress,hash)
-        #yamfile=metadataframe.update_Yaml_Pipe(image,camitem,yamlfile,meta,dateyaml,newpress,uuid,hash)
-        #with open(png_folder+'/'+os.path.basename(os.path.dirname(pngtexts[0]))+'.yaml','w') as newyamlfile:
-        #     yaml.dump(yamfile, newyamlfile) 
-        
         t2=time.time() 
         print(f"write_meta time jpg : {t2-t1}")   
     yamlfile['image-set-items']=info    
@@ -346,13 +262,7 @@ def sync_meta(log_path):
     process = subprocess.Popen(
         "exec  sshpass -p "
         "pw19"
-        #home/pisco-controller/SO298
-        #" rsync -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/SO298/",
-        #" rsync -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/SO298/",
-        #" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/MSM126/",
-        #" rsync -r plankdeep@192.168.0.1:/home/plankdeep/Desktop/Templog/ /home/pisco-controller/MSM126/Logfiles/",
         f" rsync -r plankdeep@192.168.0.1:/home/plankdeep/Desktop/Templog/ {log_path}",
-        #" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ /home/plankton/Documents/destfold/",
         shell=True,
         stdout=subprocess.PIPE,
     )
@@ -362,13 +272,7 @@ def move_imgs(save_folder):
     process = subprocess.Popen(
         "exec  sshpass -p "
         "pw19"
-        #home/pisco-controller/SO298
-        #" rsync -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/SO298/",
-        #" rsync -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/SO298/",
-        #" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ /home/pisco-controller/MSM126/",
         f" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ {save_folder}",
-        #" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ /Images/M202/",
-        #" rsync --remove-source-files -r plankdeep@192.168.0.1:/images/ /home/plankton/Documents/destfold/",
         shell=True,
         stdout=subprocess.PIPE,
     )
@@ -482,10 +386,6 @@ def init_yaml_file_tim(path, info: dict):
                     f.write(" " * 8 + "- " + key2[0]+": "+ dicts[key2[0]]+"\n")
                     for x in range(1,len(key2)):
                          f.write(" " * 10 + key2[x]+": "+ dicts[key2[x]]+"\n")
-
-                 
-
-
             else:
             
                 if type(info[key])==str:
@@ -607,13 +507,15 @@ def main(
         profile=convert_imgs(data_csv, metadataframe)
         print_message(app, "All images converted")
 
-    
+        #### S E G M E N T A T I O N ####
+
         print_message(app, f"Start segmenting {profile}")
         save_folder = profile + "_Segmentation_results/"
         os.makedirs(save_folder, exist_ok=True)
 
         run_segmenter(profile,save_folder,True)
-        #plot_path = profile+'/'+os.path.basename(profile) 
+        
+        ### some plots for first evaluation ###
         df = gen_crop_df(os.path.join(save_folder,'Data'), small=True)
         press_min = df['pressure [dbar]'].min()-10
         plot_histogram(df, save_folder)

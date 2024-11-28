@@ -18,7 +18,7 @@ version = '0.1.0'
 
 extensions = [
     'sphinx.ext.duration',
-    'sphinx.viewcode',
+    #'sphinx.viewcode',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',

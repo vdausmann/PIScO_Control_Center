@@ -30,7 +30,9 @@ class BasicConv(nn.Module):
 
 
 class ResBlock(nn.Module):
+    
     def __init__(self, in_channel, out_channel):
+
         super(ResBlock, self).__init__()
         self.main = nn.Sequential(
             BasicConv(in_channel, out_channel, kernel_size=3, stride=1, relu=True),

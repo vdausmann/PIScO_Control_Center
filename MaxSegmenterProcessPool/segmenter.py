@@ -54,6 +54,18 @@ def compute_radius(files):
     return radius
 
 def save_detection_settings_to_csv(settings, file_path):
+    """
+    Save the fields and values of a DetectionSettings dataclass to a CSV file.
+
+    This function writes the field names and their corresponding values from
+    a `DetectionSettings` instance into a CSV file. The first row of the CSV
+    file contains the column headers: "Field Name" and "Value".
+
+    Args:
+        settings: An instance of the DetectionSettings dataclass containing
+                  the configuration to be saved.
+        file_path (str): The file path where the CSV will be saved.
+    """
     with open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Field Name", "Value"])
@@ -63,13 +75,56 @@ def save_detection_settings_to_csv(settings, file_path):
 ### write file checking function!!
 
 def timesort(file):
+    """
+    Extract a timestamp from a filename for sorting purposes.
+
+    This function attempts to parse a timestamp from a filename by extracting
+    specific substrings that represent date and time. It is designed to handle
+    filenames with a specific format where the timestamp is embedded.
+
+    Args:
+        file (str): The filename from which to extract the timestamp.
+
+    Returns:
+        int: An integer representation of the timestamp for sorting. If parsing
+             fails due to an IndexError, it attempts an alternative format.
+    """
     try:
         return (int(file.split("_")[4][:8]+file.split("_")[4][9:17] ))
     except IndexError:
         return (int(file.split("_")[0][:8]+file.split("_")[0][9:17] ))
     
 def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
-    
+    """
+    Run the segmentation process on a set of images, optionally including deconvolution.
+
+    This function organizes the segmentation workflow, including reading images,
+    applying background correction, optional deconvolution, and detection. It
+    also saves the settings used for detection into a CSV file. The process is
+    executed in batches to manage large sets of images efficiently.
+
+    Args:
+        src_path (str): The source directory path containing the images to segment.
+        save_path (str): The directory path where outputs will be saved, including
+                         crops, masks, and detection data.
+        deconvolution (bool): A flag indicating whether to perform deconvolution
+                              on the images before detection.
+
+    Workflow:
+        - Creates necessary directories for saving outputs.
+        - Filters and sorts image files from the source directory.
+        - Computes necessary parameters like mask radius.
+        - Initializes detection settings and saves them to a CSV file.
+        - Processes images in batches, applying background correction and detection.
+        - Optionally applies deconvolution if specified.
+
+    Note:
+        - This function assumes the presence of helper functions and classes like
+          `compute_radius`, `run_reader`, `run_bg_correction`, `run_deconvolution`,
+          `run_detection`, and `ReaderOutput`.
+        - The batch processing and use of multiprocessing or threading require
+          proper management of shared resources and synchronization mechanisms.
+    """
     #save_path = os.path.join(save_path, os.path.basename(src_path))
     os.makedirs(save_path, exist_ok=True)
 

@@ -1,5 +1,5 @@
-Reader Component Overview
-=========================
+Image Reader Module
+===================
 
 Purpose
 -------

@@ -8,8 +8,6 @@ This document provides a detailed breakdown of each step involved in the image p
    :width: 700px
    :align: center
 
-Contents
---------
 
 .. toctree::
     :maxdepth: 2

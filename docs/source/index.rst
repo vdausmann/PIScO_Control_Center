@@ -15,6 +15,9 @@ This document provides a detailed breakdown of each step involved in the image p
     
     reader
 
+.. automodule:: MaxSegmenterProcessPool.segmenter
+   :members:
+
 1. Select Source Directory
 ---------------------------
 

@@ -23,7 +23,7 @@ extensions = [
     #"sphinxcontrib.programoutput",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "sphinx_autodoc_typehints",
+    #"sphinx_autodoc_typehints",
     "sphinx.ext.coverage",
     "sphinx.ext.autosummary",
 ]

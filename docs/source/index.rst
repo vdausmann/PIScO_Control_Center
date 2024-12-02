@@ -10,10 +10,11 @@ This document provides a detailed breakdown of each step involved in the image p
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Contents:
     
     reader
+    segmenter
 
 .. automodule:: MaxSegmenterProcessPool.segmenter
    :members:

@@ -17,17 +17,33 @@ version = '0.1.0'
 # -- General configuration
 
 extensions = [
-    'sphinx.ext.duration',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.doctest',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.napoleon",
+    "sphinxcontrib.programoutput",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+    "sphinx_autodoc_typehints",
+    "sphinx.ext.coverage",
+    "sphinx.ext.autosummary",
 ]
 
+# Mock modules so that they don't need to be available
+# just to generate the documentstion.
+autodoc_mock_imports = ["matplotlib"]
+
+napoleon_use_param = False
+napoleon_use_keyword = False
+napoleon_use_rtype = False
+typehints_document_rtype = False
+
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+    "python": ("https://docs.python.org/3", None),
+    # TODO: Always link to the latest stable
+    "pims": ("https://soft-matter.github.io/pims/v0.4.1/", None),
+    "skimage": ("https://scikit-image.org/docs/stable/", None),
+    "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+    "h5py": ("https://docs.h5py.org/en/stable/", None),
 }
 intersphinx_disabled_domains = ['std']
 

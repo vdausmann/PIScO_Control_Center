@@ -12,6 +12,25 @@ from dataclasses import dataclass
 
 @dataclass
 class DetectionSettings:
+    """
+    A data class for storing settings relevant to the image detection process.
+
+    Attributes:
+        data_path (str): The path where detection data (e.g., CSV files) will be saved.
+        crop_path (str): The path where cropped image segments will be saved.
+        mask_path (str): The path where mask images will be saved.
+        img_path (str): The path where processed images will be saved.
+        min_area_to_save (float): Minimum area for a detected object to be saved.
+        min_area_to_segment (float): Minimum area required for segmentation.
+        n_sigma (float): Number of standard deviations for thresholding.
+        save_bb_image (bool): Flag indicating whether to save images with bounding boxes.
+        save_crops (bool): Flag indicating whether to save cropped images.
+        equalize_hist (bool): Flag indicating whether to apply histogram equalization.
+        resize (bool): Flag indicating whether images should be resized.
+        clear_save_path (bool): Flag indicating whether to clear the save path before processing.
+        mask_img (bool): Flag indicating whether to apply a mask to images.
+        mask_radius (int): Radius of the circular mask to be applied on images.
+    """
     data_path: str
     crop_path: str
     mask_path: str
@@ -29,12 +48,34 @@ class DetectionSettings:
 
 
 def save_crop_data(path, data):
+    """
+    Save crop data to a CSV file.
+
+    This function writes a list of data rows to a CSV file specified by `path`.
+
+    Args:
+        path (str): The file path where the CSV data will be saved.
+        data (list): The data to be written to the CSV file, typically a list of lists.
+    """
     with open(path, "w", newline="") as f:
         writer = csv.writer(f, delimiter=",")
         writer.writerows(data)
 
 
 def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0):
+    """
+    Perform object detection on a single image and save relevant data.
+
+    This function applies a detection algorithm on a given image, identifies objects,
+    and saves the processed data. It uses settings from `DetectionSettings` to determine
+    behavior such as masking, thresholding, and where to save outputs.
+
+    Args:
+        input (tuple): A tuple containing the corrected image, cleaned image, mean values, and filename.
+        settings (DetectionSettings): An instance of DetectionSettings containing configuration options.
+        mask (np.ndarray): A mask to be applied to the image if specified in settings.
+        index (int, optional): Index of the image, used for logging or indexing purposes. Default is 0.
+    """
     corrected, cleaned, mean_raw, fn = input
     if mean_raw[1]>2:
         #print(fn)
@@ -139,6 +180,20 @@ def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0)
 
 
 def run_detection(input: Queue, settings: DetectionSettings, n_cores, n_imgs, running):
+    """
+    Execute the detection process across multiple images using a process pool.
+
+    This function manages the detection workflow, including image preparation,
+    masking, and parallel processing across multiple cores. It uses the
+    DetectionSettings to configure the detection behavior and outputs.
+
+    Args:
+        input (Queue): A queue containing images and metadata to be processed.
+        settings (DetectionSettings): Configuration settings for detection.
+        n_cores (int): Number of processor cores to use for parallel processing.
+        n_imgs (int): Total number of images to process.
+        running: A flag or condition indicating whether the process pool is active.
+    """
     shape = (2560, 2560)
     if settings.resize:
         shape = (2560, 2560)

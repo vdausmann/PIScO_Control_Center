@@ -18,26 +18,54 @@ from tkinter import filedialog
 import pickle
 
 def compute_radius(files):
-     imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
-     bg = np.max(imgs, axis=0)
+    """
+    Computes the radius of the background mask from the first 10 images in the given list of files.
 
-     bg = cv.threshold(cv.bitwise_not(bg), 180, 255, cv.THRESH_BINARY)[1]
-     bg = cv.bitwise_not(bg)
-     bg[np.where(bg == 0)] = 10
+    This function reads the first 10 image files from the provided list, resizes them to a fixed 
+    dimension of 2560x2560 pixels, and calculates a background image by finding the maximum pixel 
+    intensity at each position across these images. It then creates a binary mask to isolate 
+    background elements and iteratively adjusts the radius of a circular region until a specified 
+    amount of background pixels is covered.
 
-     mask = np.zeros(bg.shape, dtype=np.uint8)
-     count_bg_px = 0
-     radius = 1000
-     while count_bg_px < 10000:
-         radius += 50
-         cv.circle(mask, (1280, 1280), radius, (255), -1)
-         masked = cv.bitwise_and(bg, mask)
-         count_bg_px = len(np.where(masked == 10)[0])
+    Parameters:
+        files (list): List of file paths to images. Assumes that the list contains at least 10 
+                      image files.
 
-     radius -= 50
-     return radius
+    Returns:
+        int: The computed radius that covers the desired amount of background pixels.
+    """
+    imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
+    bg = np.max(imgs, axis=0)
+
+    bg = cv.threshold(cv.bitwise_not(bg), 180, 255, cv.THRESH_BINARY)[1]
+    bg = cv.bitwise_not(bg)
+    bg[np.where(bg == 0)] = 10
+
+    mask = np.zeros(bg.shape, dtype=np.uint8)
+    count_bg_px = 0
+    radius = 1000
+    while count_bg_px < 10000:
+        radius += 50
+        cv.circle(mask, (1280, 1280), radius, (255), -1)
+        masked = cv.bitwise_and(bg, mask)
+        count_bg_px = len(np.where(masked == 10)[0])
+
+    radius -= 50
+    return radius
 
 def save_detection_settings_to_csv(settings, file_path):
+    """
+    Save the fields and values of a DetectionSettings dataclass to a CSV file.
+
+    This function writes the field names and their corresponding values from
+    a `DetectionSettings` instance into a CSV file. The first row of the CSV
+    file contains the column headers: "Field Name" and "Value".
+
+    Args:
+        settings: An instance of the DetectionSettings dataclass containing
+                  the configuration to be saved.
+        file_path (str): The file path where the CSV will be saved.
+    """
     with open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Field Name", "Value"])
@@ -47,13 +75,56 @@ def save_detection_settings_to_csv(settings, file_path):
 ### write file checking function!!
 
 def timesort(file):
+    """
+    Extract a timestamp from a filename for sorting purposes.
+
+    This function attempts to parse a timestamp from a filename by extracting
+    specific substrings that represent date and time. It is designed to handle
+    filenames with a specific format where the timestamp is embedded.
+
+    Args:
+        file (str): The filename from which to extract the timestamp.
+
+    Returns:
+        int: An integer representation of the timestamp for sorting. If parsing
+             fails due to an IndexError, it attempts an alternative format.
+    """
     try:
         return (int(file.split("_")[4][:8]+file.split("_")[4][9:17] ))
     except IndexError:
         return (int(file.split("_")[0][:8]+file.split("_")[0][9:17] ))
     
 def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
-    
+    """
+    Run the segmentation process on a set of images, optionally including deconvolution.
+
+    This function organizes the segmentation workflow, including reading images,
+    applying background correction, optional deconvolution, and detection. It
+    also saves the settings used for detection into a CSV file. The process is
+    executed in batches to manage large sets of images efficiently.
+
+    Args:
+        src_path (str): The source directory path containing the images to segment.
+        save_path (str): The directory path where outputs will be saved, including
+                         crops, masks, and detection data.
+        deconvolution (bool): A flag indicating whether to perform deconvolution
+                              on the images before detection.
+
+    Workflow:
+        - Creates necessary directories for saving outputs.
+        - Filters and sorts image files from the source directory.
+        - Computes necessary parameters like mask radius.
+        - Initializes detection settings and saves them to a CSV file.
+        - Processes images in batches, applying background correction and detection.
+        - Optionally applies deconvolution if specified.
+
+    Note:
+        - This function assumes the presence of helper functions and classes like
+          `compute_radius`, `run_reader`, `run_bg_correction`, `run_deconvolution`,
+          `run_detection`, and `ReaderOutput`.
+        - The batch processing and use of multiprocessing or threading require
+          proper management of shared resources and synchronization mechanisms.
+    """
     #save_path = os.path.join(save_path, os.path.basename(src_path))
     os.makedirs(save_path, exist_ok=True)
 

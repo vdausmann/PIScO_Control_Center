@@ -1,11 +1,14 @@
 import cv2 as cv
 import torch
 import numpy as np
+import os
 
 from multiprocessing import Queue
 
 from MaxSegmenterProcessPool.lucyd import LUCYD
 
+# Get the directory of the current file
+current_dir = os.path.dirname(__file__)
 
 ## Load Deconv Model globally for faster inference on CPU
 MODEL_NAME='lucyd-edof-plankton_231204.pth'
@@ -16,14 +19,50 @@ MODEL_NAME='lucyd-edof-plankton_231204.pth'
 
 ##dual GPU usage
 model = LUCYD(num_res=1)
-model.load_state_dict(torch.load('/home/pisco-controller/Desktop/PISCO_Software_idof/MaxSegmenterProcessPool/models/'+MODEL_NAME))
-if torch.cuda.device_count() > 1:
-    model = torch.nn.DataParallel(model)
-model.to('cuda')
+model_path = os.path.join(current_dir, 'models', MODEL_NAME)
+
+# Check if CUDA is available and load the model accordingly
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+
+model.load_state_dict(torch.load(model_path, map_location=device))
+if device.type == 'cuda':
+    if torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
+
+model.to(device)
 
 model.eval()
 
 def run_deconvolution(input: Queue, output: Queue, n_imgs: int, batch_size: int = 4):
+    """
+    Perform deconvolution on a series of images using a batch processing approach.
+
+    This function reads cleaned images from an input queue, processes them in batches,
+    and performs deconvolution using a pre-trained model. The results are placed in
+    an output queue. It ensures that images are only processed if their standard
+    deviation is above a threshold, indicating that they are not blank or corrupt.
+
+    Args:
+        input (Queue): A queue containing tuples of corrected images, cleaned images,
+                       their statistical mean and standard deviation, and filenames.
+        output (Queue): A queue to store the deconvolved images along with their
+                        corrected versions and metadata.
+        n_imgs (int): The total number of images to process.
+        batch_size (int, optional): The number of images to process in a single batch.
+                                    Default is 4.
+
+    Notes:
+        - The function assumes that the images are already preprocessed and ready
+          for deconvolution.
+        - It uses PyTorch to perform the deconvolution on GPU ('cuda').
+        - Each image's mean and standard deviation are checked to ensure they
+          meet the criteria for processing.
+        - The function uses a pre-trained model (assumed to be defined elsewhere)
+          for the actual deconvolution process.
+    """
     batch = []
     filenames = []
 

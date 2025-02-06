@@ -3,9 +3,9 @@ import cv2 as cv
 import numpy as np
 import os
 
-from MaxSegmenterProcessPool.process_pool import ProcessPool
+from process_pool import ProcessPool
 from multiprocessing import Queue
-from MaxSegmenterProcessPool.reader import ReaderOutput
+from reader import ReaderOutput
 from scipy.ndimage import uniform_filter
 
 
@@ -79,10 +79,11 @@ def correct_img(
         
         correct_img = cv.absdiff(img, bg)
         cleaned_img = cv.bitwise_not(correct_img)
+        bg_corr_img = cleaned_img
         #fixing problem where very bright objects (plankton acts as lens?!) print through on following images: see mattermost board "Segmenter Problem: Durchdrucken großer/dunkler Objekte im MaxSegmenter"
         #cleaned_img[np.where(cleaned_img >= 250)] = np.mean(bg) 
         
-        output.put((correct_img, cleaned_img, [mean,stdev], fn))
+        output.put((bg_corr_img, cleaned_img, [mean,stdev], fn))
     else:
         print('found corrupt image: ', fn)
 
@@ -116,7 +117,7 @@ def run_bg_correction(input: ReaderOutput, output: Queue, n_bg_imgs: int, runnin
         running,
         -1,
     )
-    pool.start(3,'bg_corr')
+    pool.start(3,'bg_corr') #n_processes was 3
     #print(len(input.images))
     for i in range(len(input.images)):
         try:

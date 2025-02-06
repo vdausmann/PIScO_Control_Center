@@ -2,10 +2,12 @@ import cv2 as cv
 import torch
 import numpy as np
 import os
+import cProfile
+import threading
 
 from multiprocessing import Queue
 
-from MaxSegmenterProcessPool.lucyd import LUCYD
+from lucyd import LUCYD
 
 # Get the directory of the current file
 current_dir = os.path.dirname(__file__)
@@ -65,6 +67,7 @@ def run_deconvolution(input: Queue, output: Queue, n_imgs: int, batch_size: int 
     """
     batch = []
     filenames = []
+    raw_imgs = []
 
     while n_imgs > 0:
         corrected, cleaned, mean, fn = input.get()
@@ -80,6 +83,7 @@ def run_deconvolution(input: Queue, output: Queue, n_imgs: int, batch_size: int 
             # Accumulate batch
             batch.append(x_t)
             filenames.append(fn)
+            raw_imgs.append(corrected)
 
             # Check if batch is ready to process
             if len(batch) == batch_size or n_imgs == 0:
@@ -94,19 +98,33 @@ def run_deconvolution(input: Queue, output: Queue, n_imgs: int, batch_size: int 
                     deconv = y_hat_batch.detach().cpu().numpy()[i, 0]
                     deconv = deconv * 255
                     cleaned = deconv.astype(np.uint8)
-                    corrected = cv.bitwise_not(cleaned)
+                    #corrected = cv.bitwise_not(cleaned)
 
                     # Put the result in the output queue
-                    output.put((corrected, cleaned, mean, filenames[i]))
+                    output.put((raw_imgs[i], cleaned, mean, filenames[i]))
 
                 # Clear the batch for next round
                 batch.clear()
                 filenames.clear()
+                raw_imgs.clear()
         else:
             output.put(([],[],mean, fn))
 
     print('deconvolution finished')
 
+def profiled_run_deconvolution(input: Queue, output: Queue, n_imgs: int, batch_size: int = 4):
+    # Set up the profiler
+    profiler = cProfile.Profile()
+    profiler.enable()
+
+    # Call the original function
+    run_deconvolution(input,output,n_imgs, batch_size)
+
+    # Disable the profiler and save the results to a file
+    profiler.disable()
+    profile_filename = f"profile_run_deconvolution_{threading.current_thread().name}.prof"
+    profiler.dump_stats(profile_filename)
+    print(f"Profiled run_deconvolution saved to {profile_filename}")
 
 # def run_deconvolution(input: Queue, output: Queue, n_imgs: int):
     

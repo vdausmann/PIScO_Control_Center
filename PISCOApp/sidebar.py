@@ -30,7 +30,7 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from PISCO_Pipeline import pipeline
 from PISCO_Pipeline import single_pipe
-from MaxSegmenter import MaxSegmenterModule
+#from MaxSegmenter import MaxSegmenterModule
 from PISCO_DataGenerator import generate_matrix
 
 

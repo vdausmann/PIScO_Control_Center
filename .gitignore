@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# flake.lock files (nix)
+*flake.lock
+
 # Distribution / packaging
 .Python
 build/

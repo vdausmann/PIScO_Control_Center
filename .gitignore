@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 # flake.lock files (nix)
-*/flake.lock
+**/flake.lock
 
 # Distribution / packaging
 .Python

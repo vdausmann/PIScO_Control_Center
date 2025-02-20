@@ -57,6 +57,10 @@ class PIScOControlCenter:
             except KeyError:
                 print(page, " has no Defaults")
 
+    def save_defaults(self):
+        with open(self.config_path, "w") as f:
+            json.dump(self.config, f, indent=4)
+
 
     def switch_page(self, index: int):
         self.stacked_widget.setCurrentIndex(index)
@@ -80,9 +84,11 @@ class PIScOControlCenter:
         print(self.pages_settings)
         print("#" * 20)
 
+        self.page_list = []
         for page in self.pages_settings.keys():
             page_dict = self.pages_settings[page]
             page_widget = Page(self, page, page_dict)
+            self.page_list.append(page_widget)
             # page_widget.create_page(page)
             self.stacked_widget.addWidget(page_widget)
 

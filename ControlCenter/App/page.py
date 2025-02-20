@@ -69,22 +69,16 @@ class Page(QWidget):
             for key in self.settings.keys():
                 cmd += " --" + key + " " + str(self.settings[key].get())
 
-        # self.print("Running command " + cmd)
-        command = Command(cmd)
         self.run_thread = QThread()
-        command.moveToThread(self.run_thread)
-        self.run_thread.started.connect(command.run)
-        command.terminal_signal.connect(self.terminal.print)
-        # self.run_thread.finished.connect(self.run_thread.deleteLater)
-        print("Starting thread")
-        self.run_thread.start()
-        # if self.process is not None and self.process.poll() is None:
-        # if not self.run_thread is None and not self.run_thread.joinable():
-        #     self.print("Command already running")
-        #     return
-        # self.run_thread.join()
+        self.command = Command(cmd, self.run_thread, self.terminal)
 
 
+    def save_defaults(self):
+        if not "Defaults" in self.page_dict.keys():
+            self.page_dict["Defaults"] = {}
+        for settings_name in self.settings.keys():
+            self.page_dict["Defaults"][settings_name] = self.settings[settings_name].get()
+        self.app.save_defaults()
 
     def create_page(self):
         print(self.page_dict)
@@ -119,9 +113,10 @@ class Page(QWidget):
                 self.run_button.clicked.connect(self.run_command)
                 self.grid.addWidget(self.run_button, self.numrows - 1, i)
             if i == self.numcols // 2:
-                self.run_button = QPushButton("Save Default Settings")
-                self.run_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
-                self.run_button.setFixedSize(self.unit_width, self.unit_height)
-                self.grid.addWidget(self.run_button, self.numrows - 1, i)
+                self.save_default_button = QPushButton("Save Default Settings")
+                self.save_default_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+                self.save_default_button.setFixedSize(self.unit_width, self.unit_height)
+                self.save_default_button.clicked.connect(self.save_defaults)
+                self.grid.addWidget(self.save_default_button, self.numrows - 1, i)
             else:
                 self.grid.addItem(QSpacerItem(self.unit_width, self.unit_height), self.numrows - 1, i)

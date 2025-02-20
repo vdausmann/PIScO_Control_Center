@@ -1,12 +1,11 @@
 from PySide6.QtWidgets import QWidget, QGridLayout, QSpacerItem, QVBoxLayout, QPushButton, QLabel
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread
 from .LabelPathComb import LabelPathComb
 from .LabelEntryComb import LabelEntryComb
 from .LabelCheckboxComb import LabelCheckboxComb
 from .terminal import Terminal
+from .command import Command
 from typing import Type
-import subprocess
-import threading
 
 # TODO: Change grid layout to free layout and place the buttons by myself to always have the same layout for each page
 
@@ -60,26 +59,31 @@ class Page(QWidget):
     def print(self, text: str):
         self.terminal.print(text)
 
-    def command(self):
+    def run_command(self):
+        if not self.run_thread is None and self.run_thread.isRunning():
+            self.print("Command already running")
+            return
+            
         cmd = self.page_dict["runCommand"]
         if not self.page_dict["useInputFile"]:
             for key in self.settings.keys():
                 cmd += " --" + key + " " + str(self.settings[key].get())
-        self.print("Running command: " + cmd)
-        # process = subprocess.run(cmd, shell=True, check=True, capture_output=True)
-        self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = self.process.communicate()
 
-        self.print("Finished Command" + cmd)
-        self.print("\t Errors: " + err.decode("utf-8"))
-        self.print("\t Output: " + out.decode("utf-8"))
-
-    def run_command(self):
-        if self.process is not None and self.process.poll() is None:
-            self.print("Command already running")
-            return
-        self.run_thread = threading.Thread(target=self.command)
+        # self.print("Running command " + cmd)
+        command = Command(cmd)
+        self.run_thread = QThread()
+        command.moveToThread(self.run_thread)
+        self.run_thread.started.connect(command.run)
+        command.terminal_signal.connect(self.terminal.print)
+        # self.run_thread.finished.connect(self.run_thread.deleteLater)
+        print("Starting thread")
         self.run_thread.start()
+        # if self.process is not None and self.process.poll() is None:
+        # if not self.run_thread is None and not self.run_thread.joinable():
+        #     self.print("Command already running")
+        #     return
+        # self.run_thread.join()
+
 
 
     def create_page(self):
@@ -89,10 +93,11 @@ class Page(QWidget):
 
         idx = 0
         for settings_name in self.page_dict["Fields"].keys():
-            default_value = ""
             if "Defaults" in self.page_dict.keys() and settings_name in self.page_dict["Defaults"].keys():
                 default_value = self.page_dict["Defaults"][settings_name]
-            l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, default_value)
+                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, default_value)
+            else:
+                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self)
             self.settings[settings_name] = l
             l.setStyleSheet(f"background-color: {self.app.color_settings['button_color']}; padding: 0px;")
             l.setFixedSize(self.unit_width, self.unit_height)

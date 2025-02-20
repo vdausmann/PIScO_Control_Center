@@ -3,7 +3,7 @@ from .clickable_label import ClickableLabel
 
 class LabelPathComb(QFrame):
     selected_path: str = ""
-    def __init__(self, label: str, window):
+    def __init__(self, label: str, window, value: str = ""):
         super().__init__()
 
         self.window = window
@@ -21,6 +21,7 @@ class LabelPathComb(QFrame):
         self.path_select = QPushButton("+", self)
         self.path_select.clicked.connect(self.select_path)
         self.path_select.setFixedSize(20, 20)
+        self.selected_path = value
 
         self.setFixedSize(150, 50)
 

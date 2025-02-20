@@ -1,0 +1,112 @@
+{
+    "colors": 
+    {
+        "background_color" : "#404258",
+        "page_background_color" : "#404258",
+        "page_selector_background_color" : "#474E68",
+        "text_color" : "#eef4ed",
+        "button_color" : "#50577A",
+        "button_color_clicked" : "#404258",
+        "terminal_color" : "#50577A",
+        "run_button_color" : "red"
+    },
+    "layout":
+    {
+        "app_width" : 1080,
+        "app_height" : 720,
+        "page_selector_width_percentage" : 12,
+        "page_padding" : 10,
+        "terminal_height_percentage" : 30,
+
+        "page_switch_button_width" : 100,
+        "page_switch_button_height" : 30,
+        "label_entry_comb_width" : 150,
+        "label_entry_comb_height" : 50,
+        "label_path_comb_width" : 150,
+        "label_path_comb_height" : 50
+    },
+    "pages":
+    {
+        "test_gen_data" : {
+            "Fields": {
+                "x0" : "LabelEntryComb",
+                "x1" : "LabelEntryComb",
+                "nPoints" : "LabelEntryComb"
+                },
+            "Defaults": {
+                "x0" : "-1",
+                "x1" : "1",
+                "nPoints" : "1000"
+            },
+            "runCommand": "python3 Modules/TestModule/test.py",
+            "useInputFile": false
+        },
+        "second_page" : {
+            "Fields": {
+                "Setting1" : "LabelEntryComb",
+                "Setting2" : "LabelEntryComb",
+                "Setting3" : "LabelEntryComb",
+                "Setting4" : "LabelPathComb",
+                "Setting5" : "LabelPathComb",
+                "Setting6" : "LabelPathComb",
+                "Setting7" : "LabelCheckboxComb"
+            },
+            "runCommand": "",
+            "useInputFile": false
+        },
+        "third_page" : {
+            "Fields": {
+                "Setting1" : "LabelEntryComb",
+                "Setting2" : "LabelEntryComb",
+                "Setting3" : "LabelEntryComb",
+                "Setting4" : "LabelEntryComb",
+                "Setting5" : "LabelEntryComb",
+                "Setting6" : "LabelEntryComb",
+                "Setting7" : "LabelEntryComb",
+                "Setting8" : "LabelEntryComb",
+                "Setting9" : "LabelEntryComb",
+                "Setting10" : "LabelEntryComb",
+                "Setting11" : "LabelEntryComb",
+                "Setting12" : "LabelEntryComb",
+                "Setting13" : "LabelEntryComb",
+                "Setting14" : "LabelEntryComb",
+                "Setting15" : "LabelEntryComb",
+                "Setting16" : "LabelEntryComb",
+                "Setting17" : "LabelEntryComb",
+                "Setting18" : "LabelEntryComb",
+                "Setting19" : "LabelEntryComb",
+                "Setting20" : "LabelEntryComb"
+            },
+            "runCommand": "",
+            "useInputFile": false
+       },
+        "page 4" : {
+            "Fields": {
+                "Setting1" : "LabelEntryComb",
+                "Setting2" : "LabelEntryComb",
+                "Setting3" : "LabelEntryComb",
+                "Setting4" : "LabelEntryComb",
+                "Setting5" : "LabelEntryComb",
+                "Setting6" : "LabelEntryComb",
+                "Setting7" : "LabelEntryComb",
+                "Setting8" : "LabelEntryComb",
+                "Setting9" : "LabelEntryComb",
+                "Setting10" : "LabelEntryComb",
+                "Setting11" : "LabelEntryComb",
+                "Setting12" : "LabelEntryComb",
+                "Setting13" : "LabelEntryComb",
+                "Setting14" : "LabelEntryComb",
+                "Setting15" : "LabelEntryComb",
+                "Setting16" : "LabelEntryComb",
+                "Setting17" : "LabelEntryComb",
+                "Setting18" : "LabelEntryComb",
+                "Setting19" : "LabelEntryComb",
+                "Setting20" : "LabelEntryComb"
+            },
+            "runCommand": "",
+            "useInputFile": false
+        }
+    }
+}
+
+

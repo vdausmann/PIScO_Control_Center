@@ -1,35 +1,68 @@
 cmake_minimum_required(VERSION 3.10)
+project(BackgroundCorrection)
 
-# Project name
-project(BackgroundCorrection LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23) # Specify C++ standard version
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Ensure the chosen version is used
+set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_CXX_EXTENSIONS OFF) # Disable compiler-specific extensions
+# (optional)
 
-# Specify the C++ standard
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Variable for the project name
+set(PROJECT_NAME "BackgroundCorrection")
 
-# Variables for library name and path
-set(LIBRARY_NAME BackgroundCorrectionModule)
-set(LIBRARY_PATH "../BackgroundCorrectionModule")
+# Print the project name and C++ version being used
+message(STATUS "Configuring ${PROJECT_NAME} with C++ ${CMAKE_CXX_STANDARD}...")
 
-# Add the library's cmake configuration path
-list(APPEND CMAKE_PREFIX_PATH "${LIBRARY_PATH}/cmake")
+# Specify the directory where the BackgroundCorrectionModule is installed
+set(BG_CORRECTION_MODULE_DIR "../BackgroundCorrectionModule/install")
 
-# Find the library
-find_package(LIBRARY_NAME REQUIRED)
+# Check if BackgroundCorrectionModule is available
+if(EXISTS ${BG_CORRECTION_MODULE_DIR}/lib/libBackgroundCorrectionModule.a
+   OR EXISTS ${BG_CORRECTION_MODULE_DIR}/lib/libBackgroundCorrectionModule.so)
+  message(
+    STATUS "Found BackgroundCorrectionModule at ${BG_CORRECTION_MODULE_DIR}")
+else()
+  message(
+    FATAL_ERROR
+      "BackgroundCorrectionModule library not found in ${BG_CORRECTION_MODULE_DIR}. Please check the installation."
+  )
+endif()
 
-# Automatically find all source files in this project
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+# Add OpenCV support
+find_package(OpenCV REQUIRED)
 
-# Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+# Check if OpenCV is found
+if(OpenCV_FOUND)
+  message(STATUS "OpenCV found at ${OpenCV_DIR}")
+else()
+  message(FATAL_ERROR "OpenCV not found. Please install OpenCV and try again.")
+endif()
 
-# Include directories for this project
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+# Add the path to the include directory for BackgroundCorrectionModule
+include_directories(${BG_CORRECTION_MODULE_DIR}/include)
 
-# Link the library
-target_link_libraries(${PROJECT_NAME} PRIVATE MyLibrary::MyLibrary)
+# Add the path to the library directory for BackgroundCorrectionModule
+link_directories(${BG_CORRECTION_MODULE_DIR}/lib)
 
-# Output directories
+# Automatically detect all source and header files
+file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp) # Collect all .cpp files in
+                                                   # the src directory
+file(GLOB HEADER_FILES ${CMAKE_SOURCE_DIR}/include/*.hpp) # Collect all .hpp
+                                                          # files in the include
+                                                          # directory
+
+# Add your source files (automatically detected)
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+
+# Link the BackgroundCorrectionModule library and OpenCV libraries
+target_link_libraries(${PROJECT_NAME} BackgroundCorrectionModule ${OpenCV_LIBS})
+
+# Set the output directory for the binary to a 'bin' folder next to 'src'
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                                 ${CMAKE_BINARY_DIR}/bin)
+                                                 ${CMAKE_SOURCE_DIR}/bin)
+
+# Check if the executable was created successfully
+message(
+  STATUS
+    "Executable ${PROJECT_NAME} created successfully in ${CMAKE_SOURCE_DIR}/bin."
+)

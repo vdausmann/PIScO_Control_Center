@@ -6,22 +6,6 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-void ThreadManager::_workerFunction(int bufferStartPos, int bufferEndPos)
-{
-    std::cout << "Thread: " << std::this_thread::get_id() << std::endl;
-    for (int i = bufferStartPos; i < bufferEndPos; i++) {
-        if (_settings->invertImage) {
-            cv::bitwise_not(_buffer[i], _threadLocalBuffer[i]);
-        } else {
-            _threadLocalBuffer[i] = _buffer[i].clone();
-        }
-    }
-    cv::Mat background;
-    // _backgroundModel(_threadLocalBuffer, background, bufferStartPos, bufferEndPos);
-    minMaxMethod(_threadLocalBuffer, background, bufferStartPos, bufferEndPos);
-    background.release();
-}
-
 ThreadManager::ThreadManager(const Settings& settings)
     : _settings(&settings)
     , _counter(0)
@@ -41,10 +25,9 @@ ThreadManager::ThreadManager(const Settings& settings)
         _threads.emplace_back(&ThreadManager::worker, this);
     }
 
-    // _backgroundModel = minMethod;
+    _backgroundModel = minMaxMethod;
     // // start main thread:
-    _running
-        = true;
+    _running = true;
     this->run();
 }
 
@@ -137,4 +120,20 @@ void ThreadManager::run()
     for (auto& thread : _threads) {
         thread.join();
     }
+}
+
+void ThreadManager::_workerFunction(int bufferStartPos, int bufferEndPos)
+{
+    std::cout << "Thread: " << std::this_thread::get_id() << std::endl;
+    for (int i = bufferStartPos; i < bufferEndPos; i++) {
+        if (_settings->invertImage) {
+            cv::bitwise_not(_buffer[i], _threadLocalBuffer[i]);
+        } else {
+            _threadLocalBuffer[i] = _buffer[i].clone();
+        }
+    }
+    cv::Mat background;
+    _backgroundModel(_threadLocalBuffer, background, bufferStartPos, bufferEndPos);
+    cv::imwrite(_settings->outDir + "/background_" + std::to_string(_counter) + ".png", background);
+    background.release();
 }

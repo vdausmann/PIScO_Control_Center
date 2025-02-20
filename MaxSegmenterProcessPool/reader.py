@@ -3,10 +3,11 @@ import numpy as np
 import time
 import os
 import threading
-from MaxSegmenterProcessPool.process_pool import ProcessPool
+from process_pool import ProcessPool
 from multiprocessing import Manager
-from MaxSegmenterProcessPool.thread_pool import ThreadPool
+from thread_pool import ThreadPool
 
+import cProfile
 from PIL import Image
 #import torchvision.transforms.functional as TF
 
@@ -107,6 +108,20 @@ def run_reader(files, output: ReaderOutput, n_threads: int, resize:bool):
         #print("Waiting for reader pool to finish")
     print('all files in batch added to reader pool')
     pool.stop(slow=True)
+
+def profiled_run_reader(batch, reader_output, num_threads, resize):
+    # Set up the profiler
+    profiler = cProfile.Profile()
+    profiler.enable()
+
+    # Call the original function
+    run_reader(batch, reader_output, num_threads, resize)
+
+    # Disable the profiler and save the results to a file
+    profiler.disable()
+    profile_filename = f"profile_run_reader_{threading.current_thread().name}.prof"
+    profiler.dump_stats(profile_filename)
+    print(f"Profiled run_reader saved to {profile_filename}")
 
     # Für batchwise das untere auskommentieren, bessere Performance
 

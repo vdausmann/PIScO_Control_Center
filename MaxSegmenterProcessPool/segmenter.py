@@ -8,10 +8,10 @@ from multiprocessing import Queue, Manager, Process, Value
 import imghdr
 #from tqdm import tqdm
 
-from MaxSegmenterProcessPool.reader import run_reader, ReaderOutput
-from MaxSegmenterProcessPool.bg_correction import run_bg_correction
-from MaxSegmenterProcessPool.deconvolution import run_deconvolution
-from MaxSegmenterProcessPool.detection import run_detection, DetectionSettings
+from reader import run_reader, ReaderOutput, profiled_run_reader
+from bg_correction import run_bg_correction
+from deconvolution import profiled_run_deconvolution
+from detection import run_detection, DetectionSettings
 
 import tkinter as tk
 from tkinter import filedialog
@@ -35,6 +35,7 @@ def compute_radius(files):
         int: The computed radius that covers the desired amount of background pixels.
     """
     imgs = [cv.resize(cv.imread(file, cv.IMREAD_GRAYSCALE),(2560,2560)) for file in files[:10]]
+    #print(imgs)
     bg = np.max(imgs, axis=0)
 
     bg = cv.threshold(cv.bitwise_not(bg), 180, 255, cv.THRESH_BINARY)[1]
@@ -53,7 +54,7 @@ def compute_radius(files):
     radius -= 50
     return radius
 
-def save_detection_settings_to_csv(settings, file_path):
+def save_detection_settings_to_csv(settings, file_path, src_path):
     """
     Save the fields and values of a DetectionSettings dataclass to a CSV file.
 
@@ -65,10 +66,12 @@ def save_detection_settings_to_csv(settings, file_path):
         settings: An instance of the DetectionSettings dataclass containing
                   the configuration to be saved.
         file_path (str): The file path where the CSV will be saved.
+        src_path: The path to the data source folder
     """
     with open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Field Name", "Value"])
+        writer.writerow(["data source", src_path])
         for field_name, field_value in settings.__annotations__.items():
             writer.writerow([field_name, getattr(settings, field_name)])
 
@@ -128,11 +131,13 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
     #save_path = os.path.join(save_path, os.path.basename(src_path))
     os.makedirs(save_path, exist_ok=True)
 
-    crop_path = os.path.join(save_path, "Crops")
+    raw_crop_path = os.path.join(save_path, "Crops")
+    deconv_crop_path = os.path.join(save_path, "Deconv_crops")
     mask_path = os.path.join(save_path, "Masks")
     data_path = os.path.join(save_path, "Data")
     img_path = os.path.join(save_path, "Images")
-    os.makedirs(crop_path, exist_ok=True)
+    os.makedirs(raw_crop_path, exist_ok=True)
+    os.makedirs(deconv_crop_path, exist_ok=True)
     os.makedirs(mask_path, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
     os.makedirs(img_path, exist_ok=True)
@@ -148,6 +153,10 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
             continue
         elif (file.endswith('.png') or file.endswith('.jpg')) and imghdr.what(file) is not None:
             files.append(file)
+    
+    #post message about the status of already segmented images
+    print(f'{len(segmented_files)} of {len(files)} images already segmented')
+    
     try:
         files.sort(
             key=lambda x: float(os.path.basename(x).split("_")[0].split("-")[1]) #sort the "old" way
@@ -158,6 +167,7 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
         files.sort()
     #files = [os.path.join(src_path, file) for i, file in enumerate(files)]
     print('start segmentation...')
+    #print(files[:10])
 
     radius = compute_radius(files)
     print("Radius: ",radius)
@@ -165,13 +175,14 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
     manager = Manager()
     settings = DetectionSettings(
         data_path,  #data_path: str
-        crop_path,  #crop_path: str
+        raw_crop_path,  #crop_path: str
+        deconv_crop_path,
         mask_path,
         img_path,   #img_path: str
         400,        #min_area_to_save: float
         10,        #min_area_to_segment: float
         1,          #n_sigma: float
-        True,       #save_bb_image: bool
+        False,       #save_bb_image: bool
         True,       #save_crops: bool
         True,       #equalize_hist: bool
         False,       #resize: bool
@@ -184,7 +195,7 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
     csv_file_path = os.path.join(save_path,"settings.csv")
 
     # Call the function to save the data class to the CSV file
-    save_detection_settings_to_csv(settings, csv_file_path)
+    save_detection_settings_to_csv(settings, csv_file_path, src_path)
 
     batch_size = 200
     batches = []
@@ -204,25 +215,31 @@ def run_segmenter(src_path: str, save_path: str, deconvolution: bool):
         detect_running = Value("i",1)
 
 
-        Thread(
-            target=run_reader, 
-            args=(batch, reader_output, 8, settings.resize)#input, output, n_threads
-            ).start()
-        
+        # Thread(
+        #     target=run_reader, 
+        #     args=(batch, reader_output, 8, settings.resize)#input, output, n_threads
+        #     ).start()
+        # Use the profiled version in the thread
+        thread = Thread(
+            target=profiled_run_reader,  # Use the profiled version
+            args=(batch, reader_output, 8, settings.resize)
+        )
+        thread.start()
+
         bg_size = 6
 
         run_bg_correction(reader_output, bg_output_queue, bg_size, corr_running) 
 
         if deconvolution:
             Thread(
-                target=run_deconvolution,
-                args=(bg_output_queue, deconv_output_queue, len(batch), 4), #last argument is deconv batch_size has to match with image batch size 
+                target=profiled_run_deconvolution,
+                args=(bg_output_queue, deconv_output_queue, len(batch), 12), #last argument is deconv batch_size has to match with image batch size 
             ).start()
         else:
             deconv_output_queue = bg_output_queue
         
         #print(len(batch))
-        n_cores = 8 #3 
+        n_cores = 16 #8 on Seavision
 
         run_detection(deconv_output_queue, settings, n_cores, len(batch), detect_running)
 
@@ -310,26 +327,24 @@ def select_directories():
     return dirs
 
 
-if __name__ == "__main__":
-    dest_folder = '/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/results_240328'
-    source_folders = []
-    for folder in os.listdir('/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/M181_raw'):
-        dir = os.path.join('/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/M181_raw', folder)
-        source_folders.append(dir)
-    selected_folders = select_directories()
-    source_folders.extend(selected_folders)
-    print(source_folders)
-    
-    process_image_folders(source_folders, dest_folder, True)
-
 # if __name__ == "__main__":
-#     run_segmenter(
-#         "/home/plankton/Data/M181-175-1_CTD-050_00deg00S-019deg00W_20220509-0543/PNG", #source folder
-#         "/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/test_masks_static_final/", #destination folder
-#         True, #deconvolution
-#         #mixed layer depth range in dbar i.e. schlieren expected in this depth range. Refer to CTD data.
-#         #log file location for re-lock correction.
-#     )
+#     dest_folder = '/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/results_240328'
+#     source_folders = []
+#     for folder in os.listdir('/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/M181_raw'):
+#         dir = os.path.join('/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/M181_raw', folder)
+#         source_folders.append(dir)
+#     selected_folders = select_directories()
+#     source_folders.extend(selected_folders)
+#     print(source_folders)
+    
+#     process_image_folders(source_folders, dest_folder, True)
+
+if __name__ == "__main__":
+    run_segmenter(
+        "/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/M181_raw/M181-107-1_CTD-036_00°00S-007°00W_20220504-0756/PNG", #source folder
+        "/home/veit/Data_test/M181_test_results/", #destination folder
+        True, #deconvolution        
+    )
 
 # if __name__ == "__main__":
 #     source_base = "/media/plankton/Elements"

@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue, Value
 from queue import Empty
 import time
+import cProfile
 
 
 class ProcessPool:
@@ -62,6 +63,10 @@ class ProcessPool:
             index (int): The index of the worker process for identification.
             name (str, optional): An optional name prefix for the worker process.
         """
+        # Create a profiler for each worker process
+        # profiler = cProfile.Profile()
+        # profiler.enable()
+
         while self.running.value == 1:
             try:
                 task = self.tasks.get(timeout=1)
@@ -71,7 +76,13 @@ class ProcessPool:
                 self.func(task, index)
             except Empty:
                 pass #muss hier vllt ein continue hin?
-        print(f"{name} Process {index} finished")
+        
+        # Disable profiling and dump stats to a file
+        # profiler.disable()
+        # profile_filename = f"profile_{name}_{index}.prof"
+        # profiler.dump_stats(profile_filename)
+
+        # print(f"{name} Process {index} finished and profile saved to {profile_filename}")
 
     def start(self, n_processes, name=''):
         """

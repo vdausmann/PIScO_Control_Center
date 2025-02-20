@@ -1,6 +1,7 @@
 import threading
 import time
-
+import cProfile
+import os
 
 class ThreadPool:
     """
@@ -57,6 +58,10 @@ class ThreadPool:
         Args:
             index (int): The index of the worker thread for identification.
         """
+        # Create a profiler for each worker process
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         sleep_counter = 0
         while True:
             if sleep_counter > self.max_sleep_counter or not self.run:
@@ -76,6 +81,12 @@ class ThreadPool:
                     break
                 self.lock.release()
                 self.func(job, index)
+        
+        # Disable profiling and dump stats to a file
+        profiler.disable()
+        profile_filename = f"profile_thread_{index}.prof"
+        profiler.dump_stats(profile_filename)
+        print(f"Thread {index} finished and profile saved to {profile_filename}")
 
         #print(f"Reader {index} quitting")
 

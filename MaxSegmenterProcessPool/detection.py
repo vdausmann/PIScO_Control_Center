@@ -5,7 +5,7 @@ import time
 import csv
 
 from multiprocessing import Queue
-from MaxSegmenterProcessPool.process_pool import ProcessPool
+from process_pool import ProcessPool
 from dataclasses import dataclass
 #from tqdm import tqdm
 
@@ -17,7 +17,8 @@ class DetectionSettings:
 
     Attributes:
         data_path (str): The path where detection data (e.g., CSV files) will be saved.
-        crop_path (str): The path where cropped image segments will be saved.
+        raw_crop_path (str): The path where cropped image segments will be saved.
+        deconv_crop_path (str): The path where cropped image segments will be saved.
         mask_path (str): The path where mask images will be saved.
         img_path (str): The path where processed images will be saved.
         min_area_to_save (float): Minimum area for a detected object to be saved.
@@ -32,7 +33,8 @@ class DetectionSettings:
         mask_radius (int): Radius of the circular mask to be applied on images.
     """
     data_path: str
-    crop_path: str
+    raw_crop_path: str
+    deconv_crop_path: str
     mask_path: str
     img_path: str
     min_area_to_save: float
@@ -77,6 +79,8 @@ def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0)
         index (int, optional): Index of the image, used for logging or indexing purposes. Default is 0.
     """
     corrected, cleaned, mean_raw, fn = input
+    raw_bg_corr = corrected
+    corrected = cv.bitwise_not(cleaned)
     if mean_raw[1]>2:
         #print(fn)
         # hier bild maskieren
@@ -124,7 +128,8 @@ def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0)
             if areas[i] < settings.min_area_to_segment:
                 continue
 
-            crop_fn = os.path.join(settings.crop_path, f"{fn[:-4]}_{c}.png")
+            raw_crop_fn = os.path.join(settings.raw_crop_path, f"{fn[:-4]}_{c}.png")
+            deconv_crop_fn = os.path.join(settings.deconv_crop_path, f"{fn[:-4]}_{c}.png")
             mask_fn = os.path.join(settings.mask_path, f"{fn[:-4]}_{c}.png")
 
             # if settings.save_bb_image:
@@ -134,7 +139,7 @@ def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0)
 
             if areas[i] > settings.min_area_to_save:
                 #mask = np.zeros_like(cleaned, dtype=np.uint8)
-                crop_data.append([c, os.path.basename(crop_fn),mean_raw[0],mean_raw[1],mean,std, areas[i], x, y, w, h, 1])
+                crop_data.append([c, os.path.basename(raw_crop_fn),mean_raw[0],mean_raw[1],mean,std, areas[i], x, y, w, h, 1])
 
                 x = int(x - w / 2)
                 y = int(y - h / 2)
@@ -143,11 +148,15 @@ def detect_on_img(input, settings: DetectionSettings, mask: np.ndarray, index=0)
 
                 if settings.save_crops:
                     crop = cleaned[y : y + h, x : x + w]
+                    raw_crop = raw_bg_corr[y : y + h, x : x + w]
                     cv.drawContours(mask,[cnt],-1,(255), thickness=cv.FILLED)                    
                     c_mask = mask[y : y + h, x : x + w]
                     crop_mask = np.where(c_mask == 255, crop, 255)
+                    #raw_crop_mask = np.where(c_mask == 255, raw_crop, 255)
                     
-                    cv.imwrite(crop_fn, crop_mask)#now only the object is saved and not objects close to it
+                    
+                    cv.imwrite(deconv_crop_fn, crop_mask)#now only the object is saved and not objects close to it
+                    cv.imwrite(raw_crop_fn, raw_crop)
                     cv.imwrite(mask_fn, c_mask)
             else:
                 crop_data.append([c, os.path.basename(mask_fn),mean_raw[0],mean_raw[1],mean,std, areas[i], x, y, w, h, 0])

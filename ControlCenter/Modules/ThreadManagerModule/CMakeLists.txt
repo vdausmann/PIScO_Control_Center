@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
-project(BackgroundCorrectionModule)
+project(ThreadManagerModule)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_TEST "Build test binary instead of the library" ON)
 
-# Find OpenCV package
-find_package(OpenCV REQUIRED)
+# Find OpenCV package find_package(OpenCV REQUIRED)
 
 # Set the path to the include directory
-include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include)
+# include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include)
 
 # Gather all .cpp files in the src directory
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
@@ -21,19 +20,19 @@ file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 if(NOT BUILD_TEST)
   message(STATUS "Building library")
   # Create the library from source files
-  add_library(BackgroundCorrectionModule STATIC ${SOURCES})
+  add_library(ThreadManagerModule STATIC ${SOURCES})
 
-  # Link OpenCV libraries
-  target_link_libraries(BackgroundCorrectionModule ${OpenCV_LIBS})
+  # Link OpenCV libraries target_link_libraries(BackgroundCorrectionModule
+  # ${OpenCV_LIBS})
 
   # Specify the output directory for the library
   set_target_properties(
-    BackgroundCorrectionModule
+    ThreadManagerModule
     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
                ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
   # Installation instructions
-  install(TARGETS BackgroundCorrectionModule
+  install(TARGETS ThreadManagerModule
           DESTINATION lib # Where the library will go (e.g., /usr/local/lib or
                           # /path/to/install/lib)
   )
@@ -46,10 +45,10 @@ endif()
 if(BUILD_TEST)
   message(STATUS "Building test binary")
   file(GLOB TEST_FILES ${CMAKE_SOURCE_DIR}/testing/*.cpp)
-  add_executable(BackgroundCorrectionModuleTest ${TEST_FILES} ${SOURCES})
-  target_link_libraries(BackgroundCorrectionModuleTest ${OpenCV_LIBS})
-  # Set the output directory for the test binary
+  add_executable(ThreadManagerModuleTest ${TEST_FILES} ${SOURCES})
+  # target_link_libraries(BackgroundCorrectionModuleTest ${OpenCV_LIBS}) Set the
+  # output directory for the test binary
   set_target_properties(
-    BackgroundCorrectionModuleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                              ${CMAKE_SOURCE_DIR}/bin)
+    ThreadManagerModuleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                       ${CMAKE_SOURCE_DIR}/bin)
 endif()

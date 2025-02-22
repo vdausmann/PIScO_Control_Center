@@ -1,6 +1,5 @@
 #pragma once
 
-#include "utils.hpp"
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
@@ -24,7 +23,7 @@ private:
     std::condition_variable _taskCondition, _mainCondition;
     std::atomic<bool> _running;
 
-    const Settings* _settings;
+    // const Settings* _settings;
 
     void worker();
     void run();
@@ -32,5 +31,5 @@ private:
     void (*_backgroundModel)(const std::vector<cv::Mat>&, cv::Mat&, int, int);
 
 public:
-    ThreadManager(const Settings& settings);
+    // ThreadManager(const Settings& settings);
 };

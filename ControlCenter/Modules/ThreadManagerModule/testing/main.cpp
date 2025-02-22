@@ -5,9 +5,7 @@
 
 int main()
 {
-    Settings settings = readConfig("testing/input.ini");
-
-    ThreadManager tm(settings);
+    // ThreadManager tm(settings);
 
     return 0;
 }

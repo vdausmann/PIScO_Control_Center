@@ -1,8 +1,12 @@
 {
 inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-utils = {
+        url = "github:numtide/flake-utils";
+        inputs.system.follows = "systems";
+    };
 };
+
 outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem
     (system:
@@ -25,8 +29,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         enableFfmpeg = true;
                         enableUnfree = true;
                     }))
-                    cmake
-                    libgcc
+                    bashInteractive
                     libcxx
                     pkg-config
                     gcc

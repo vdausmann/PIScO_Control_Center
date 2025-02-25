@@ -1,4 +1,5 @@
-#include "parser.hpp"
+#include "utils.hpp"
+#include "background_correction.hpp"
 #include <csignal>
 #include <fstream>
 #include <iostream>
@@ -12,6 +13,13 @@ bool enablePrinting;
 int stackSize;
 int numBufferedStacks;
 int numThreads;
+int imageWidth;
+int imageHeight;
+bool resizeToImageWidthHeight;
+bool invertImages;
+std::string backgroundCorrectionModelStr;
+
+std::function<void(const cv::Mat*, cv::Mat&, int, int)> backgroundCorrectionModel;
 
 int bufferSize;
 
@@ -22,6 +30,20 @@ void print(std::string str, bool newLine)
         if (newLine) {
             std::cout << std::endl;
         }
+    }
+}
+
+std::string customError(Error errorCode)
+{
+    const std::unordered_map<Error, std::string> errorMap {
+        { EmptyImage, "Empty image" },
+        { UnreadableImageFile, "Unreadable image file" },
+        { CVRuntime, "OpenCV runtime error" },
+    };
+    try {
+        return errorMap.at(errorCode);
+    } catch (const std::out_of_range& e) {
+        return error(errorCode);
     }
 }
 
@@ -106,6 +128,21 @@ void readParameters(int argc, char* argv[], std::string inputFilePath)
     readParameterInt(config, stackSize, "stackSize");
     readParameterInt(config, numBufferedStacks, "numBufferedStacks");
     readParameterInt(config, numThreads, "numThreads");
+    readParameterInt(config, imageWidth, "imageWidth");
+    readParameterInt(config, imageHeight, "imageHeight");
+    readParameterBool(config, resizeToImageWidthHeight, "resizeToImageWidthHeight");
+    readParameterBool(config, invertImages, "invertImages");
+    readParameterString(config, backgroundCorrectionModelStr, "backgroundCorrectionModel");
+
+    if (backgroundCorrectionModelStr == "minMaxMethod") {
+        backgroundCorrectionModel = minMaxMethodPtr;
+    } else if (backgroundCorrectionModelStr == "minMethod") {
+        backgroundCorrectionModel = minMethodPtr;
+    } else if (backgroundCorrectionModelStr == "averageMethod") {
+        backgroundCorrectionModel = averageMethodPtr;
+    } else if (backgroundCorrectionModelStr == "medianMethod") {
+        backgroundCorrectionModel = medianMethodPtr;
+    }
 
     bufferSize = stackSize * numBufferedStacks;
     std::cout << "----------------------------\n\n";

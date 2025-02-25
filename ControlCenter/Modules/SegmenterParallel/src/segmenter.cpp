@@ -1,8 +1,8 @@
 #include "segmenter.hpp"
 #include "background_correction.hpp"
-#include "parser.hpp"
 #include "reader.hpp"
 #include "threads.hpp"
+#include "utils.hpp"
 
 #include <iostream>
 #include <map>
@@ -11,22 +11,22 @@
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
+// TODO: implement a crop data writer, which can either write all data to one file, all crop data from one image to one file or to one file for each crop
+// TODO: implement thread task for saving data as it seems to slow down the execution. Implementation could be done with an additional thread manager using only one thread
+
 void readStackToBuffer(const std::vector<std::string>& files, int& fileIdx, cv::Mat* imageBuffer, cv::Mat* originalImageBuffer, int bufferIdx)
 {
     std::string file;
     for (int i = 0; i < stackSize; i++) {
-        auto result = std::optional<ReaderError>(ReaderError::emptyImage);
-        while (result) {
+        Error result;
+        do {
             file = files[fileIdx];
             fileIdx++;
             result = readImage(file, originalImageBuffer[bufferIdx]);
             imageBuffer[bufferIdx] = originalImageBuffer[bufferIdx].clone();
-            if (result == ReaderError::emptyImage) {
-                std::cout << "Error: Empty image: " << file << std::endl;
-            } else if (result == ReaderError::unreadableImageFile) {
-                std::cout << "Error: Unreadable image file: " << file << std::endl;
-            }
-        }
+            if (result != Success)
+                std::cout << customError(result) << " in " << file << std::endl;
+        } while (result != Success);
         bufferIdx++;
     }
 }
@@ -37,24 +37,34 @@ Error taskFunction(Task* task, cv::Mat* imageBuffer, int bufferStartPos, std::ve
         return EmptyTask;
     }
 
-    printf("Received task starting at %d\n", bufferStartPos);
+    try {
+        printf("Received task starting at %d\n", bufferStartPos);
+        for (int i = 0; i < stackSize; i++) {
+            if (resizeToImageWidthHeight)
+                cv::resize(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i], cv::Size(imageWidth, imageHeight));
+            if (invertImages)
+                cv::bitwise_not(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i]);
+        }
 
-    for (int i = 0; i < stackSize; i++) {
-        cv::resize(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i], cv::Size(), 0.25, 0.25);
-        cv::bitwise_not(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i]);
+        cv::Mat background;
+        backgroundCorrectionModel(imageBuffer, background, bufferStartPos, bufferStartPos + stackSize);
+
+        for (int i = 0; i < stackSize; i++) {
+            cv::absdiff(background, imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i]);
+            cv::threshold(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i], 0, 255, cv::THRESH_TRIANGLE);
+            cv::findContours(imageBuffer[bufferStartPos + i], contours[bufferStartPos + i], cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+        }
+
+        background.release();
+        return Success;
+    } catch (cv::Exception& e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        return CVRuntime;
+    } catch (std::exception& e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        return Runtime;
     }
-
-    cv::Mat background;
-    minMaxMethod(imageBuffer, background, bufferStartPos, bufferStartPos + stackSize);
-
-    for (int i = 0; i < stackSize; i++) {
-        cv::absdiff(background, imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i]);
-        cv::threshold(imageBuffer[bufferStartPos + i], imageBuffer[bufferStartPos + i], 0, 255, cv::THRESH_TRIANGLE);
-        cv::findContours(imageBuffer[bufferStartPos + i], contours[bufferStartPos + i], cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-    }
-
-    background.release();
-    return Success;
+    return Unknown;
 }
 
 std::string splitLast(const std::string& str, char c)
@@ -78,17 +88,18 @@ std::string splitAllBeforeLast(const std::string& str, char c)
     }
     std::string res = "";
     for (int i = 0; i < seglist.size() - 1; i++) {
-        res += seglist[i];
+        res += seglist[i] + ".";
     }
-    return res;
+    return res.substr(0, res.size() - 1);
 }
 
-void finishTask(cv::Mat* originalImageBuffer, int startPos, std::vector<std::vector<cv::Point>>* contours, const std::vector<std::string>& files, int fileIdx)
+Error finishTask(cv::Mat* originalImageBuffer, int startPos, std::vector<std::vector<cv::Point>>* contours, const std::vector<std::string>& files, int fileIdx)
 {
-    for (int i = 0; i < stackSize; i++) {
-        // std::cout << "Showing task with id " << startPos + i << std::endl;
-        try {
-            cv::resize(originalImageBuffer[startPos + i], originalImageBuffer[startPos + i], cv::Size(), 0.25, 0.25);
+    try {
+        for (int i = 0; i < stackSize; i++) {
+            // std::cout << "Showing task with id " << startPos + i << std::endl;
+            if (resizeToImageWidthHeight)
+                cv::resize(originalImageBuffer[startPos + i], originalImageBuffer[startPos + i], cv::Size(imageWidth, imageHeight));
             cv::cvtColor(originalImageBuffer[startPos + i], originalImageBuffer[startPos + i], cv::COLOR_GRAY2BGR);
             cv::drawContours(originalImageBuffer[startPos + i], contours[startPos + i], -1, cv::Scalar(0, 255, 0));
             // cv::imshow("Image", originalImageBuffer[startPos + i]);
@@ -97,10 +108,16 @@ void finishTask(cv::Mat* originalImageBuffer, int startPos, std::vector<std::vec
             std::string path = savePath + "/" + splitAllBeforeLast(splitLast(files[fileIdx + i], '/'), '.') + ".png";
             // std::cout << path << std::endl;
             cv::imwrite(path, originalImageBuffer[startPos + i]);
-        } catch (const cv::Exception& e) {
-            std::cout << "Exception: " << e.what() << std::endl;
         }
+        return Success;
+    } catch (cv::Exception& e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        return CVRuntime;
+    } catch (std::exception& e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        return Runtime;
     }
+    return Unknown;
 }
 
 void segmenterLoop(int& fileIdx, const std::vector<std::string>& files, std::map<int, int>& fileIndices, cv::Mat* imageBuffer, cv::Mat* originalImageBuffer, ThreadManager& tm, std::vector<std::vector<cv::Point>>* contours)
@@ -116,7 +133,8 @@ void segmenterLoop(int& fileIdx, const std::vector<std::string>& files, std::map
         printf("File idx: %d\n", fileIdx);
         if (!finishedTask.emptyTask) {
             bufferIdx = finishedTask.getTaskId();
-            finishTask(originalImageBuffer, bufferIdx, contours, files, fileIndices[bufferIdx]);
+            Error result = finishTask(originalImageBuffer, bufferIdx, contours, files, fileIndices[bufferIdx]);
+            checkError(result);
             printf("Finished task with id %d\n", bufferIdx);
         } else {
             // handling of ThreadManager initial tasks
@@ -132,7 +150,7 @@ void segmenterLoop(int& fileIdx, const std::vector<std::string>& files, std::map
 
         finishedTask = tm.addNextTask(task);
 
-        checkError(finishedTask, false);
+        checkError(finishedTask, enablePrinting);
     }
 }
 
@@ -170,7 +188,8 @@ void runSegmenter()
     while (result == Success && !finishedTask.emptyTask) {
         bufferIdx = finishedTask.getTaskId();
         // printf("Finished task with id %d\n", bufferIdx);
-        finishTask(originalImageBuffer, bufferIdx, contours, files, fileIndices[bufferIdx]);
+        Error error = finishTask(originalImageBuffer, bufferIdx, contours, files, fileIndices[bufferIdx]);
+        checkError(error);
         result = tm.getFinishedTask(finishedTask);
     }
 

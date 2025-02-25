@@ -1,139 +1,197 @@
 #include "threads.hpp"
-#include "background_correction.hpp"
-#include "reader.hpp"
 #include <iostream>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
+#include <mutex>
 
-ThreadManager::ThreadManager(const Settings& settings)
-    : _settings(&settings)
-    , _counter(0)
+std::string error(Error errorCode)
 {
-    _bufferSize = _settings->stackBufferSizeMultiplier * _settings->stackSize,
-    getAllFiles(_settings->sourceDir, _files);
-    std::cout << "Found " << _files.size() << " files" << std::endl;
-    for (int i = 0; i < _settings->stackBufferSizeMultiplier; i++) {
-        _finishedStacks.insert(i * _settings->stackSize + (i + 1) * _settings->stackSize * _bufferSize);
+    const std::unordered_map<Error, std::string> errorMap {
+        { Success, "Success" },
+        { EmptyTask, "Empty task" },
+        { TaskFunctionNotSet, "Task function not set" },
+        { Runtime, "Runtime error" },
+        { Unknown, "Unknown error" },
+    };
+
+    try {
+        return errorMap.at(errorCode);
+    } catch (const std::out_of_range& e) {
+        return "Invalid error code: " + std::to_string(errorCode);
     }
-
-    _buffer.resize(_bufferSize);
-    _threadLocalBuffer.resize(_bufferSize);
-
-    // start workers:
-    for (int i = 0; i < _settings->nThreads; i++) {
-        _threads.emplace_back(&ThreadManager::worker, this);
-    }
-
-    _backgroundModel = minMaxMethod;
-    // // start main thread:
-    _running = true;
-    this->run();
 }
 
+std::function<std::string(Error)> errorFunction = error;
+
+void checkError(const Task& finishedTask, bool printWarnings)
+{
+    if (finishedTask.errorCode > 0 && printWarnings)
+        std::cout << "\033[1;33mWarning from task with id " << finishedTask.getTaskId() << ": " << errorFunction(finishedTask.errorCode) << "\033[0m" << std::endl;
+    else if (finishedTask.errorCode < 0)
+        throw std::runtime_error("\033[31mError from task with id " + std::to_string(finishedTask.getTaskId()) + ": " + errorFunction(finishedTask.errorCode) + "\033[0m");
+}
+
+void checkError(const Error& errorCode, bool printWarnings)
+{
+    if (errorCode > 0 && printWarnings)
+        std::cout << "\033[1;33mWarning: " << errorFunction(errorCode) << "\033[0m" << std::endl;
+    else if (errorCode < 0)
+        throw std::runtime_error("\033[31mError: " + errorFunction(errorCode) + "\033[0m");
+}
+
+// Function that is called in a worker thread to run the task function if defined. Returns the optional error message.
+Error Task::runTask()
+{
+    if (_taskFunction)
+        return _taskFunction();
+    return TaskFunctionNotSet;
+}
+
+Task emptyTask()
+{
+    Task task;
+    task.makeEmpty();
+    return task;
+}
+
+Task stopTask()
+{
+    Task task;
+    task.makeEmpty();
+    task.softStopThreadManager = true;
+    return task;
+}
+
+// Constructor of the ThreadManager. The maxQueueSize is the maximal number of tasks that can be stored in the queue at the same time. The numThreads is the number of worker threads that are started.
+ThreadManager::ThreadManager(int maxQueueSize, int numThreads)
+    : _maxQueueSize(maxQueueSize)
+    , _numThreads(numThreads)
+    , joined(false)
+{
+    _softStop = false;
+    _hardStop = false;
+
+    // fill _finishedTasksQueue with _maxQueueSize empty tasks to start the ThreadManager.
+    for (int i = 0; i < _maxQueueSize; i++) {
+        Task task(i);
+        task.makeEmpty();
+        _finishedTasksQueue.push(task);
+    }
+
+    // add the worker threads:
+    for (int i = 0; i < _numThreads; i++) {
+        _threads.emplace_back(&ThreadManager::worker, this);
+    }
+}
+
+// Worker thread function. Waits until a new task is available. If the ThreadManager is stopped, the worker thread will exit. Else, it will run the tasks function and add the finished task to the finished task queue.
 void ThreadManager::worker()
 {
     while (true) {
-        int bufferPos, bufferStartPos, bufferEndPos;
+        Task task;
         {
-            // std::cout << "Thread: " << std::this_thread::get_id() << " waiting for task" << std::endl;
+            // std::cout << "Worker thread " << std::this_thread::get_id() << " waiting for task" << std::endl;
+            // wait until program is finished or new task is available
             std::unique_lock<std::mutex> lock(_taskMutex);
-            _taskCondition.wait(lock, [this] { return !_running || !_availableStacks.empty(); });
+            _taskCondition.wait(lock, [this] { return _softStop || _hardStop || !_availableTasksQueue.empty(); });
+            // std::cout << "Worker thread " << std::this_thread::get_id() << " finished waiting for task" << std::endl;
 
-            if (!_running && _availableStacks.empty())
-                return;
+            if ((_softStop && _availableTasksQueue.empty()) || _hardStop)
+                break;
 
-            // std::cout << "Thread: " << std::this_thread::get_id() << " got task" << std::endl;
-            // get next task (bufferPos)
-            bufferPos = *_availableStacks.begin();
-            _availableStacks.erase(bufferPos);
-            _counter++;
+            // get the next task
+            task = _availableTasksQueue.front();
+            _availableTasksQueue.pop();
+
+            // check if task has stop signal
+            if (task.hardStopThreadManager) {
+                _hardStop = true;
+                _taskCondition.notify_all();
+                _mainCondition.notify_all();
+            } else if (task.softStopThreadManager) {
+                _softStop = true;
+                _taskCondition.notify_all();
+                _mainCondition.notify_all();
+            }
         }
 
-        bufferStartPos = bufferPos % (_bufferSize);
-        bufferEndPos = bufferPos / (_bufferSize);
-        std::cout << "Thread: " << std::this_thread::get_id() << " got task with start: " << bufferStartPos << " and end: " << bufferEndPos << "" << std::endl;
+        // run task function
+        task.errorCode = task.runTask();
 
-        // run task:
-        _workerFunction(bufferStartPos, bufferEndPos);
-
-        // notify main thread of finished thread
+        // notify main thread for finished task and add it to the finished task list
         {
             std::unique_lock<std::mutex> lock(_mainMutex);
-            _finishedStacks.insert(bufferPos);
+            _finishedTasksQueue.push(task);
         }
         _mainCondition.notify_one();
     }
 }
 
-void ThreadManager::run()
+// Stops the threads and waits until they are finished.
+void ThreadManager::finishThreads()
 {
-    // TODO: Handle remaining files that are not a multiple of stackSize
-    while (true) {
-        {
-            // wait for finished task
-            std::unique_lock<std::mutex> lock(_mainMutex);
-            _mainCondition.wait(lock, [this] { return !_running || !_finishedStacks.empty(); });
+    // wait for all threads to finish
+    _softStop = true;
+    _taskCondition.notify_all();
+    _mainCondition.notify_all();
+    for (std::thread& t : _threads) {
+        t.join();
+    }
+    joined = true;
+}
 
-            if (!_running)
-                return;
+// Returns finished tasks if available.
+Error ThreadManager::getFinishedTask(Task& task)
+{
+    std::unique_lock<std::mutex> lock(_mainMutex);
+    if (_finishedTasksQueue.empty()) {
+        task.makeEmpty();
+        return NoFinishedTasksAvailable;
+    }
+    task = _finishedTasksQueue.front();
+    _finishedTasksQueue.pop();
+    return Success;
+}
 
-            // get next finished task (bufferPos)
-            int bufferPos = *_finishedStacks.begin();
-            _finishedStacks.erase(bufferPos);
-
-            int bufferStartPos = bufferPos % (_bufferSize);
-            int bufferEndPos = bufferPos / (_bufferSize);
-            std::cout << "Main thread got finished task with start: " << bufferStartPos << " and end: " << bufferEndPos << "" << std::endl;
-            if (_files.empty()) {
-                std::cout << "No more files left" << std::endl;
-                _running = false;
-                _taskCondition.notify_all();
-                break;
-            }
-
-            if (_files.size() < _settings->stackSize) {
-                bufferEndPos = bufferStartPos + _files.size();
-                bufferPos = bufferStartPos + bufferEndPos * _bufferSize;
-            }
-            readNextImageStack(_files, _buffer, bufferStartPos, bufferEndPos, _settings);
-            // if less than one stacks remain, combine it with the current one. To ensure enough space is in the buffer, wait for another task to finish
-            // if (_files.size() < _settings->stackSize) {
-            //     std::cout << "Less than " << _settings->stackSize << " files left, combining them..." << std::endl;
-            //     combiningStacks = true;
-            //     combiningStacksBufferPos = bufferPos;
-            //     continue;
-            // }
-
-            // notify worker thread of new task
-            _availableStacks.insert(bufferPos);
-            _taskCondition.notify_one();
+// Function to clean up the ThreadManager. It will soft stop the threads and clear the queues.
+void ThreadManager::cleanUp()
+{
+    if (!joined) {
+        _softStop = true;
+        _taskCondition.notify_all();
+        _mainCondition.notify_all();
+        for (std::thread& t : _threads) {
+            t.join();
         }
+        joined = true;
     }
-
-    // wait for all threads
-    {
-        std::unique_lock<std::mutex> lock(_mainMutex);
-        _mainCondition.wait(lock, [this] { return _availableStacks.empty(); });
-    }
-
-    for (auto& thread : _threads) {
-        thread.join();
+    while (!_finishedTasksQueue.empty()) {
+        _finishedTasksQueue.pop();
     }
 }
 
-void ThreadManager::_workerFunction(int bufferStartPos, int bufferEndPos)
+// This function will be called by an external source providing the next task. It will block until the task can be added to the task queue, thus blocking the external source until the next task can be added. The function returns the finishedTask which will be replaced by the newTask.
+Task ThreadManager::addNextTask(Task& newTask)
 {
-    std::cout << "Thread: " << std::this_thread::get_id() << std::endl;
-    for (int i = bufferStartPos; i < bufferEndPos; i++) {
-        if (_settings->invertImage) {
-            cv::bitwise_not(_buffer[i], _threadLocalBuffer[i]);
-        } else {
-            _threadLocalBuffer[i] = _buffer[i].clone();
-        }
+    // wait until one task is finished
+    std::unique_lock<std::mutex> lock(_mainMutex);
+    _mainCondition.wait(lock, [this] { return !_finishedTasksQueue.empty() || _softStop || _hardStop; });
+
+    if (_softStop || _hardStop) {
+        return Task();
     }
-    cv::Mat background;
-    _backgroundModel(_threadLocalBuffer, background, bufferStartPos, bufferEndPos);
-    cv::imwrite(_settings->outDir + "/background_" + std::to_string(_counter) + ".png", background);
-    background.release();
+
+    Task finishedTask = _finishedTasksQueue.front();
+    _finishedTasksQueue.pop();
+
+    {
+        std::unique_lock<std::mutex> lock(_taskMutex);
+        _availableTasksQueue.push(newTask);
+    }
+    _taskCondition.notify_one();
+
+    return finishedTask;
+}
+
+ThreadManager::~ThreadManager()
+{
+    cleanUp();
 }

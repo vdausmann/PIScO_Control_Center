@@ -3,13 +3,12 @@ project(ThreadManagerModule)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 option(BUILD_TEST "Build test binary instead of the library" ON)
 
-# Find OpenCV package find_package(OpenCV REQUIRED)
-
 # Set the path to the include directory
-# include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Gather all .cpp files in the src directory
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
@@ -18,6 +17,7 @@ file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 # Build and install library:
 if(NOT BUILD_TEST)
+  set(CMAKE_BUILD_TYPE RELEASE)
   message(STATUS "Building library")
   # Create the library from source files
   add_library(ThreadManagerModule STATIC ${SOURCES})
@@ -43,12 +43,19 @@ if(NOT BUILD_TEST)
 endif()
 
 if(BUILD_TEST)
+  set(CMAKE_BUILD_TYPE DEBUG)
   message(STATUS "Building test binary")
   file(GLOB TEST_FILES ${CMAKE_SOURCE_DIR}/testing/*.cpp)
   add_executable(ThreadManagerModuleTest ${TEST_FILES} ${SOURCES})
-  # target_link_libraries(BackgroundCorrectionModuleTest ${OpenCV_LIBS}) Set the
-  # output directory for the test binary
+  # Find OpenCV package
   set_target_properties(
     ThreadManagerModuleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                        ${CMAKE_SOURCE_DIR}/bin)
 endif()
+
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+  message(STATUS "Building in debug mode")
+endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+if(CMAKE_BUILD_TYPE MATCHES RELEASE)
+  message(STATUS "Building in release mode")
+endif(CMAKE_BUILD_TYPE MATCHES RELEASE)

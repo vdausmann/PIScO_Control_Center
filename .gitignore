@@ -6,8 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-# flake.lock files (nix)
+# flake.lock files and envrc files (nix)
 ControlCenter/**/flake.lock
+ControlCenter/**/.envrc
+ControlCenter/**/.direnv
 
 
 # Distribution / packaging

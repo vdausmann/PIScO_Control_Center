@@ -4,7 +4,7 @@ project(BackgroundCorrectionModule)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_TEST "Build test binary instead of the library" ON)
+option(BUILD_TEST "Build test binary instead of the library" OFF)
 
 # Find OpenCV package
 find_package(OpenCV REQUIRED)
@@ -19,6 +19,7 @@ file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 # Build and install library:
 if(NOT BUILD_TEST)
+  set(CMAKE_BUILD_TYPE RELEASE)
   message(STATUS "Building library")
   # Create the library from source files
   add_library(BackgroundCorrectionModule STATIC ${SOURCES})
@@ -44,6 +45,7 @@ if(NOT BUILD_TEST)
 endif()
 
 if(BUILD_TEST)
+  set(CMAKE_BUILD_TYPE DEBUG)
   message(STATUS "Building test binary")
   file(GLOB TEST_FILES ${CMAKE_SOURCE_DIR}/testing/*.cpp)
   add_executable(BackgroundCorrectionModuleTest ${TEST_FILES} ${SOURCES})
@@ -53,3 +55,10 @@ if(BUILD_TEST)
     BackgroundCorrectionModuleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                               ${CMAKE_SOURCE_DIR}/bin)
 endif()
+
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+  message(STATUS "Building in debug mode")
+endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+if(CMAKE_BUILD_TYPE MATCHES RELEASE)
+  message(STATUS "Building in release mode")
+endif(CMAKE_BUILD_TYPE MATCHES RELEASE)

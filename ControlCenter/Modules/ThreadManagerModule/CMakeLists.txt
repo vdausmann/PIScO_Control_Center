@@ -3,7 +3,6 @@ project(ThreadManagerModule)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 option(BUILD_TEST "Build test binary instead of the library" ON)
 
@@ -17,33 +16,46 @@ file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 # Build and install library:
 if(NOT BUILD_TEST)
-  set(CMAKE_BUILD_TYPE RELEASE)
-  message(STATUS "Building library")
-  # Create the library from source files
-  add_library(ThreadManagerModule STATIC ${SOURCES})
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CMAKE_CXX_FLAGS "-Wall -Werror -fsanitize=address -g")
+    message(STATUS "Building library in debug mode")
+    # Create the library from source files
+    add_library(ThreadManagerModule STATIC ${SOURCES})
 
-  # Link OpenCV libraries target_link_libraries(BackgroundCorrectionModule
-  # ${OpenCV_LIBS})
+    # Specify the output directory for the library
+    set_target_properties(
+      ThreadManagerModule
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/libDebug
+                 ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/libDebug)
 
-  # Specify the output directory for the library
-  set_target_properties(
-    ThreadManagerModule
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
-               ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+    # Installation instructions
+    install(TARGETS ThreadManagerModule DESTINATION libDebug)
 
-  # Installation instructions
-  install(TARGETS ThreadManagerModule
-          DESTINATION lib # Where the library will go (e.g., /usr/local/lib or
-                          # /path/to/install/lib)
-  )
+    # Install the header files
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include
+    )# e.g., /usr/local/include
+  else()
+    message(STATUS "Building library in release mode")
+    # Create the library from source files
+    add_library(ThreadManagerModule STATIC ${SOURCES})
 
-  # Install the header files
-  install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include
-  )# e.g., /usr/local/include
+    # Specify the output directory for the library
+    set_target_properties(
+      ThreadManagerModule
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
+                 ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+
+    # Installation instructions
+    install(TARGETS ThreadManagerModule DESTINATION lib)
+
+    # Install the header files
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
+  endif()
 endif()
 
 if(BUILD_TEST)
   set(CMAKE_BUILD_TYPE DEBUG)
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -fsanitize=address -g")
   message(STATUS "Building test binary")
   file(GLOB TEST_FILES ${CMAKE_SOURCE_DIR}/testing/*.cpp)
   add_executable(ThreadManagerModuleTest ${TEST_FILES} ${SOURCES})

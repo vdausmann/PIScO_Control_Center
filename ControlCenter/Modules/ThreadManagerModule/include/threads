@@ -10,27 +10,31 @@
 #include <thread>
 #include <vector>
 
-// Error handling:
-typedef int Error;
+// Error/Information handling:
+typedef int16_t Info;
 // Success is encoded as 0
-// Warnings have positive values.
+// Warnings have positive values below 128.
+// Infos have positive values above 128.
 // Errors have negative values.
 // This conventions can easialy
-constexpr Error Success = 0;
+constexpr Info Success = 0;
+
+// Infos
+constexpr Info nextInfo = 128;
 
 // Warnings
-constexpr Error EmptyTask = 1;
-constexpr Error NoFinishedTasksAvailable = 2;
-constexpr Error nextWarning = 3;
+constexpr Info EmptyTask = 1;
+constexpr Info NoFinishedTasksAvailable = 2;
+constexpr Info nextWarning = 3;
 
 // Errors
-constexpr Error Unknown = -1;
-constexpr Error TaskFunctionNotSet = -2;
-constexpr Error Runtime = -3;
-constexpr Error nextError = -4;
+constexpr Info Unknown = -1;
+constexpr Info TaskFunctionNotSet = -2;
+constexpr Info Runtime = -3;
+constexpr Info nextError = -4;
 
-std::string error(Error errorCode);
-extern std::function<std::string(Error)> errorFunction;
+std::string info(Info infoCode);
+extern std::function<std::string(Info)> errorFunction;
 
 /* Task struct holds a function that will be called when the task is run. The first argument of the task
  * function has to be a pointer to a task. This allows different behavior of the task function depending on
@@ -44,38 +48,41 @@ extern std::function<std::string(Error)> errorFunction;
  */
 struct Task {
 private:
-    std::function<Error()> _taskFunction;
+    std::function<Info(Task*, std::mutex&, size_t threadID)> _taskFunction;
     int _taskId;
 
 public:
-    Error errorCode;
+    Info infoCode;
     bool softStopThreadManager;
     bool hardStopThreadManager;
     bool emptyTask;
 
     int getTaskId() const { return _taskId; }
 
-    Error runTask();
+    // Error runTask();
+    Info runTask(std::mutex& taskMutex, size_t threadID);
 
     void makeEmpty()
     {
         emptyTask = true;
-        errorCode = EmptyTask;
+        infoCode = EmptyTask;
     }
 
     Task(int id)
-        : emptyTask(false)
+        : _taskId(id)
+        , infoCode(Success)
         , softStopThreadManager(false)
         , hardStopThreadManager(false)
-        , _taskId(id)
+        , emptyTask(false)
     {
     }
 
     Task()
-        : emptyTask(false)
+        : _taskId(-1)
+        , infoCode(Success)
         , softStopThreadManager(false)
         , hardStopThreadManager(false)
-        , _taskId(-1)
+        , emptyTask(false)
     {
     }
 
@@ -87,11 +94,9 @@ public:
     void initTaskFunction(Callable&& func, Args... args)
     {
         // Store a lambda that captures the function and its arguments
-        _taskFunction = [func = std::forward<Callable>(func), ... capturedArgs = std::forward<Args>(args), this]() mutable -> Error {
-            // _taskFunction = [func = std::forward<Callable>(func), tupleArgs = std::make_tuple(std::ref(args)...)]() mutable -> std::optional<std::string> {
+        _taskFunction = [func = std::forward<Callable>(func), ... capturedArgs = std::forward<Args>(args), this](Task* task, std::mutex& taskMutex, size_t threadID) mutable -> Info {
             try {
-                return func(this, capturedArgs...);
-                // return std::apply(func, tupleArgs);
+                return func(task, taskMutex, threadID, capturedArgs...);
             } catch (const std::exception& e) {
                 std::cout << std::string("Exception: ") + e.what() << std::endl;
                 return Runtime;
@@ -106,7 +111,8 @@ public:
 Task emptyTask();
 Task stopTask();
 
-void checkError(const Task& finishedTask, bool printWarnings = true);
+void checkInfo(const Task& finishedTask, bool printWarnings = true, bool printInfo = true);
+void checkInfo(const Info& errorCode, bool printWarnings = true, bool printInfo = true);
 
 /* ThreadManager class. The class starts _numThreads threads and provides the threads with Tasks to be run.
  * The preloaded tasks (up to _maxQueueSize tasks) are stored in the _availableTasksQueue. The finished tasks
@@ -117,26 +123,29 @@ void checkError(const Task& finishedTask, bool printWarnings = true);
  * source until the new task is added to _availableTasksQueue. After that, a worker thread will be started
  * with the new task.
  */
-class ThreadManager {
+struct ThreadManager {
 private:
-    int _maxQueueSize;
-    int _numThreads;
-    std::mutex _taskMutex, _mainMutex;
     std::queue<Task> _availableTasksQueue, _finishedTasksQueue;
+    std::mutex _taskMutex, _mainMutex;
     std::condition_variable _taskCondition, _mainCondition;
-    std::vector<std::thread> _threads;
     std::function<Task(Task&)> _getNewTaskFunction;
+    std::vector<std::thread> _threads;
+    size_t _maxQueueSize;
+    size_t _numThreads;
     std::atomic<bool> _softStop, _hardStop;
     bool joined;
+    bool printInfo;
 
-    void worker();
+    void worker(size_t id);
 
 public:
-    ThreadManager(int maxQueueSize, int numThreads);
+    ThreadManager(size_t maxQueueSize, size_t numThreads, bool printInfo = false);
     Task addNextTask(Task& newTask);
+    void addNextTaskNotBlocking(Task& newTask);
     void cleanUp();
     void start();
     void finishThreads();
-    Error getFinishedTask(Task& task);
+    Info getFinishedTask(Task& task);
+    Info getFinishedTaskBlocking(Task& task);
     ~ThreadManager();
 };

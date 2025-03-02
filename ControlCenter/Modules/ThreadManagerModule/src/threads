@@ -2,9 +2,9 @@
 #include <iostream>
 #include <mutex>
 
-std::string error(Error errorCode)
+std::string info(Info infoCode)
 {
-    const std::unordered_map<Error, std::string> errorMap {
+    const std::unordered_map<Info, std::string> errorMap {
         { Success, "Success" },
         { EmptyTask, "Empty task" },
         { TaskFunctionNotSet, "Task function not set" },
@@ -13,35 +13,45 @@ std::string error(Error errorCode)
     };
 
     try {
-        return errorMap.at(errorCode);
+        return errorMap.at(infoCode);
     } catch (const std::out_of_range& e) {
-        return "Invalid error code: " + std::to_string(errorCode);
+        return "Invalid error code: " + std::to_string(infoCode);
     }
 }
 
-std::function<std::string(Error)> errorFunction = error;
+std::function<std::string(Info)> errorFunction = info;
 
-void checkError(const Task& finishedTask, bool printWarnings)
+void checkInfo(const Task& finishedTask, bool printWarnings, bool printInfo)
 {
-    if (finishedTask.errorCode > 0 && printWarnings)
-        std::cout << "\033[1;33mWarning from task with id " << finishedTask.getTaskId() << ": " << errorFunction(finishedTask.errorCode) << "\033[0m" << std::endl;
-    else if (finishedTask.errorCode < 0)
-        throw std::runtime_error("\033[31mError from task with id " + std::to_string(finishedTask.getTaskId()) + ": " + errorFunction(finishedTask.errorCode) + "\033[0m");
+    // warning
+    if (finishedTask.infoCode > 0 && finishedTask.infoCode < 128 && printWarnings)
+        std::cout << "\033[1;33mWarning from task with id " << finishedTask.getTaskId() << ": " << errorFunction(finishedTask.infoCode) << "\033[0m" << std::endl;
+    // info
+    else if (finishedTask.infoCode > 127 && printInfo)
+        std::cout << "\033[1;34mInfo from task with id " << finishedTask.getTaskId() << ": " << errorFunction(finishedTask.infoCode) << "\033[0m" << std::endl;
+    // Error
+    else if (finishedTask.infoCode < 0)
+        throw std::runtime_error("\033[31mError from task with id " + std::to_string(finishedTask.getTaskId()) + ": " + errorFunction(finishedTask.infoCode) + "\033[0m");
 }
 
-void checkError(const Error& errorCode, bool printWarnings)
+void checkInfo(const Info& infoCode, bool printWarnings, bool printInfo)
 {
-    if (errorCode > 0 && printWarnings)
-        std::cout << "\033[1;33mWarning: " << errorFunction(errorCode) << "\033[0m" << std::endl;
-    else if (errorCode < 0)
-        throw std::runtime_error("\033[31mError: " + errorFunction(errorCode) + "\033[0m");
+    // warning
+    if (infoCode > 0 && printWarnings)
+        std::cout << "\033[1;33mWarning: " << errorFunction(infoCode) << "\033[0m" << std::endl;
+    // info
+    else if (infoCode > 127 && printInfo)
+        std::cout << "\033[1;34mInfo: " << errorFunction(infoCode) << "\033[0m" << std::endl;
+    // error
+    else if (infoCode < 0)
+        throw std::runtime_error("\033[31mError: " + errorFunction(infoCode) + "\033[0m");
 }
 
 // Function that is called in a worker thread to run the task function if defined. Returns the optional error message.
-Error Task::runTask()
+Info Task::runTask(std::mutex& taskMutex, size_t id)
 {
     if (_taskFunction)
-        return _taskFunction();
+        return _taskFunction(this, taskMutex, id);
     return TaskFunctionNotSet;
 }
 
@@ -55,44 +65,50 @@ Task emptyTask()
 Task stopTask()
 {
     Task task;
-    task.makeEmpty();
+    // task.makeEmpty();
     task.softStopThreadManager = true;
     return task;
 }
 
 // Constructor of the ThreadManager. The maxQueueSize is the maximal number of tasks that can be stored in the queue at the same time. The numThreads is the number of worker threads that are started.
-ThreadManager::ThreadManager(int maxQueueSize, int numThreads)
+ThreadManager::ThreadManager(size_t maxQueueSize, size_t numThreads, bool printInfo)
     : _maxQueueSize(maxQueueSize)
     , _numThreads(numThreads)
     , joined(false)
+    , printInfo(printInfo)
 {
     _softStop = false;
     _hardStop = false;
 
     // fill _finishedTasksQueue with _maxQueueSize empty tasks to start the ThreadManager.
-    for (int i = 0; i < _maxQueueSize; i++) {
+    for (size_t i = 0; i < _maxQueueSize; i++) {
         Task task(i);
         task.makeEmpty();
         _finishedTasksQueue.push(task);
     }
 
     // add the worker threads:
-    for (int i = 0; i < _numThreads; i++) {
-        _threads.emplace_back(&ThreadManager::worker, this);
+    for (size_t i = 0; i < _numThreads; i++) {
+        _threads.emplace_back(&ThreadManager::worker, this, i);
     }
 }
 
 // Worker thread function. Waits until a new task is available. If the ThreadManager is stopped, the worker thread will exit. Else, it will run the tasks function and add the finished task to the finished task queue.
-void ThreadManager::worker()
+void ThreadManager::worker(size_t id)
 {
     while (true) {
         Task task;
         {
+            auto start = std::chrono::high_resolution_clock::now();
             // std::cout << "Worker thread " << std::this_thread::get_id() << " waiting for task" << std::endl;
             // wait until program is finished or new task is available
             std::unique_lock<std::mutex> lock(_taskMutex);
             _taskCondition.wait(lock, [this] { return _softStop || _hardStop || !_availableTasksQueue.empty(); });
-            // std::cout << "Worker thread " << std::this_thread::get_id() << " finished waiting for task" << std::endl;
+            auto end = std::chrono::high_resolution_clock::now();
+            if (printInfo) {
+                double duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+                std::cout << "Thread " << std::this_thread::get_id() << " waiting for task took " << duration << "ms" << std::endl;
+            }
 
             if ((_softStop && _availableTasksQueue.empty()) || _hardStop)
                 break;
@@ -114,7 +130,7 @@ void ThreadManager::worker()
         }
 
         // run task function
-        task.errorCode = task.runTask();
+        task.infoCode = task.runTask(_taskMutex, id);
 
         // notify main thread for finished task and add it to the finished task list
         {
@@ -139,7 +155,7 @@ void ThreadManager::finishThreads()
 }
 
 // Returns finished tasks if available.
-Error ThreadManager::getFinishedTask(Task& task)
+Info ThreadManager::getFinishedTask(Task& task)
 {
     std::unique_lock<std::mutex> lock(_mainMutex);
     if (_finishedTasksQueue.empty()) {
@@ -148,6 +164,23 @@ Error ThreadManager::getFinishedTask(Task& task)
     }
     task = _finishedTasksQueue.front();
     _finishedTasksQueue.pop();
+    return Success;
+}
+
+// Waits until a finished task is available.
+Info ThreadManager::getFinishedTaskBlocking(Task& task)
+{
+    while (true) {
+        {
+            std::unique_lock<std::mutex> lock(_mainMutex);
+            if (!_finishedTasksQueue.empty()) {
+                task = _finishedTasksQueue.front();
+                _finishedTasksQueue.pop();
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     return Success;
 }
 
@@ -168,9 +201,19 @@ void ThreadManager::cleanUp()
     }
 }
 
-// This function will be called by an external source providing the next task. It will block until the task can be added to the task queue, thus blocking the external source until the next task can be added. The function returns the finishedTask which will be replaced by the newTask.
+/* This function will be called by an external source providing the next task. It will block until the
+ * task can be added to the task queue, thus blocking the external source until the next task can be
+ * added. The function returns the finishedTask which will be replaced by the newTask.
+ */
 Task ThreadManager::addNextTask(Task& newTask)
 {
+    // first add the new task to the queue:
+    {
+        std::unique_lock<std::mutex> lock(_taskMutex);
+        _availableTasksQueue.push(newTask);
+    }
+    _taskCondition.notify_one();
+
     // wait until one task is finished
     std::unique_lock<std::mutex> lock(_mainMutex);
     _mainCondition.wait(lock, [this] { return !_finishedTasksQueue.empty() || _softStop || _hardStop; });
@@ -182,13 +225,17 @@ Task ThreadManager::addNextTask(Task& newTask)
     Task finishedTask = _finishedTasksQueue.front();
     _finishedTasksQueue.pop();
 
+    return finishedTask;
+}
+
+void ThreadManager::addNextTaskNotBlocking(Task& newTask)
+{
+    // first add the new task to the queue:
     {
         std::unique_lock<std::mutex> lock(_taskMutex);
         _availableTasksQueue.push(newTask);
     }
     _taskCondition.notify_one();
-
-    return finishedTask;
 }
 
 ThreadManager::~ThreadManager()

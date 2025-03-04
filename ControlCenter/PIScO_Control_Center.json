@@ -10,32 +10,64 @@
         "run_button_color": "red"
     },
     "layout": {
-        "app_width": 1080,
-        "app_height": 720,
+        "app_width": 1920,
+        "app_height": 1080,
         "page_selector_width_percentage": 12,
         "page_padding": 10,
         "terminal_height_percentage": 30,
         "page_switch_button_width": 100,
         "page_switch_button_height": 30,
-        "label_entry_comb_width": 150,
+        "label_entry_comb_width": 250,
         "label_entry_comb_height": 50,
-        "label_path_comb_width": 150,
+        "label_path_comb_width": 250,
         "label_path_comb_height": 50
     },
     "pages": {
-        "test_gen_data": {
+        "Segmenter": {
             "Fields": {
-                "x0": "LabelEntryComb",
-                "x1": "LabelEntryComb",
-                "nPoints": "LabelEntryComb"
+                "sourcePath": "LabelPathComb",
+                "savePath": "LabelPathComb",
+                "stackSize": "LabelEntryComb",
+                "numBufferedStack": "LabelEntryComb",
+                "numSegmenterThreads": "LabelEntryComb",
+                "numReaderThreads": "LabelEntryComb",
+                "imageWidth": "LabelEntryComb",
+                "imageHeight": "LabelEntryComb",
+                "resizeToImageWidthHeight": "LabelCheckboxComb",
+                "invertImages": "LabelCheckboxComb",
+                "backgroundCorrectionModel": "LabelEntryComb",
+                "numBackgroundImages": "LabelEntryComb",
+                "minObjectAre": "LabelEntryComb",
+                "saveMode": "LabelEntryComb",
+                "saveContours": "LabelCheckboxComb",
+                "saveBackgroundCorrectedImages": "LabelCheckboxComb",
+                "saveCrops": "LabelCheckboxComb",
+                "progressBarWidth": "LabelEntryComb",
+                "enableDetailedPrinting": "LabelCheckboxComb"
             },
             "Defaults": {
-                "x0": "-2",
-                "x1": "2",
-                "nPoints": "1000"
+                "sourcePath": "/home/tim/Documents/ArbeitTestData/PeruTest",
+                "savePath": "/home/tim/Documents/ArbeitTestData/TestResults",
+                "stackSize": "10",
+                "numBufferedStack": "10",
+                "numSegmenterThreads": "8",
+                "numReaderThreads": "4",
+                "imageWidth": "2560",
+                "imageHeight": "2560",
+                "resizeToImageWidthHeight": true,
+                "invertImages": true,
+                "backgroundCorrectionModel": "minMaxMethod",
+                "numBackgroundImages": "10",
+                "minObjectAre": "100",
+                "saveMode": "oneFilePerImage",
+                "saveContours": true,
+                "saveBackgroundCorrectedImages": false,
+                "saveCrops": false,
+                "progressBarWidth": "20",
+                "enableDetailedPrinting": false
             },
-            "runCommand": "python3 Modules/TestModule/test.py",
-            "useInputFile": false
+            "runCommand": "./Modules/SegmenterParallel/bin/SegmenterParallel Modules/SegmenterParallel/input.ini",
+            "useInputFile": true
         },
         "second_page": {
             "Fields": {

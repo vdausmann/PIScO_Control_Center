@@ -7,6 +7,8 @@
 #include <mutex>
 #include <queue>
 
+// TODO: Documentation
+
 typedef std::function<Info(const size_t& threadId, std::mutex& lock, void* taskData, const size_t& taskIdx, const size_t& taskSize)> taskFunction;
 
 // return type for finished task

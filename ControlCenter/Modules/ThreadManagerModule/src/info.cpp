@@ -28,6 +28,7 @@ std::string info(Info infoCode)
         { ThreadManagerMaxTasksReached, "Maximum number of tasks reached" },
         { RuntimeError, "Runtime error" },
         { Unknown, "Unknown error" },
+        { ThreadManagerThisWorkerFinished, "Worker has finished" },
     };
 
     try {

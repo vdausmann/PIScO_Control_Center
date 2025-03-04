@@ -41,12 +41,15 @@ void ThreadManager::_worker(size_t threadId)
             break;
 
         // try to run task function with provided data
+        Info info;
         try {
-            result.taskInfo = _taskFunctions[task.funcIdx](threadId, _taskMutex, _taskData, task.taskIdx, task.size);
+            info = _taskFunctions[task.funcIdx](threadId, _taskMutex, _taskData, task.taskIdx, task.size);
         } catch (std::exception& e) {
-            result.taskInfo = RuntimeError;
+            info = RuntimeError;
             std::cout << makeRed("Exception in taskFunction " + std::to_string(task.funcIdx) + " and taskData at (" + std::to_string(task.taskIdx) + ":" + std::to_string(task.size) + ": ") << e.what() << std::endl;
         }
+
+        result.taskInfo = info;
         result.taskIdx = task.taskIdx;
         result.size = task.size;
         result.funcIdx = task.funcIdx;
@@ -56,6 +59,11 @@ void ThreadManager::_worker(size_t threadId)
             std::unique_lock lock(_finishedTaskMutex);
             _finishedTasksQueue.push(result);
             _finishedTaskCondition.notify_one();
+        }
+
+        // taskFunction can tell the worker that it is finished
+        if (info == ThreadManagerThisWorkerFinished) {
+            break;
         }
     }
 }

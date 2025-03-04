@@ -15,7 +15,7 @@ int main()
     int numBackgroundImages = 10;
     std::vector<cv::Mat> buffer;
     buffer.resize(numBackgroundImages);
-    char key;
+    char key = ' ';
 
     if (!cap.isOpened())
         throw "Could not open video file";

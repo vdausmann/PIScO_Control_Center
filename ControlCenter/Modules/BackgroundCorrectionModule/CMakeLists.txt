@@ -19,33 +19,33 @@ file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 # Build and install library:
 if(NOT BUILD_TEST)
-  set(CMAKE_BUILD_TYPE RELEASE)
-  message(STATUS "Building library")
-  # Create the library from source files
-  add_library(BackgroundCorrectionModule STATIC ${SOURCES})
-
-  # Link OpenCV libraries
-  target_link_libraries(BackgroundCorrectionModule ${OpenCV_LIBS})
-
-  # Specify the output directory for the library
-  set_target_properties(
-    BackgroundCorrectionModule
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
-               ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
-  # Installation instructions
-  install(TARGETS BackgroundCorrectionModule
-          DESTINATION lib # Where the library will go (e.g., /usr/local/lib or
-                          # /path/to/install/lib)
-  )
-
-  # Install the header files
-  install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include
-  )# e.g., /usr/local/include
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CMAKE_CXX_FLAGS "-Wall -Werror -fsanitize=address -g")
+    message(STATUS "Building library in debug mode")
+    add_library(BackgroundCorrectionModule STATIC ${SOURCES})
+    target_link_libraries(BackgroundCorrectionModule ${OpenCV_LIBS})
+    set_target_properties(
+      BackgroundCorrectionModule
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/libDebug
+                 ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/libDebug)
+    install(TARGETS BackgroundCorrectionModule DESTINATION libDebug)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
+  else()
+    message(STATUS "Building library in release mode")
+    add_library(BackgroundCorrectionModule STATIC ${SOURCES})
+    target_link_libraries(BackgroundCorrectionModule ${OpenCV_LIBS})
+    set_target_properties(
+      BackgroundCorrectionModule
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
+                 ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+    install(TARGETS BackgroundCorrectionModule DESTINATION lib)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
+  endif()
 endif()
 
 if(BUILD_TEST)
   set(CMAKE_BUILD_TYPE DEBUG)
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -fsanitize=address -g")
   message(STATUS "Building test binary")
   file(GLOB TEST_FILES ${CMAKE_SOURCE_DIR}/testing/*.cpp)
   add_executable(BackgroundCorrectionModuleTest ${TEST_FILES} ${SOURCES})
@@ -55,10 +55,3 @@ if(BUILD_TEST)
     BackgroundCorrectionModuleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                               ${CMAKE_SOURCE_DIR}/bin)
 endif()
-
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-  message(STATUS "Building in debug mode")
-endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
-if(CMAKE_BUILD_TYPE MATCHES RELEASE)
-  message(STATUS "Building in release mode")
-endif(CMAKE_BUILD_TYPE MATCHES RELEASE)

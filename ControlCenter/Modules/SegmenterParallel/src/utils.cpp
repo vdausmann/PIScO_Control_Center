@@ -1,31 +1,57 @@
 #include "utils.hpp"
-#include "background_correction.hpp"
+#include <background_correction.hpp>
 #include <csignal>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
+//////////////////////////////////////////////////////////////
+// External variables:
+//////////////////////////////////////////////////////////////
+// Paths:
 std::string sourcePath;
 std::string savePath;
-bool enablePrinting;
-int stackSize;
-int numBufferedStacks;
-int numThreads;
-int imageWidth;
-int imageHeight;
+
+// ThreadManager settings:
+Index stackSize;
+Index numBufferedStacks;
+Index numSegmenterThreads;
+Index numReaderThreads;
+
+// Image manipulation settings:
+Index imageWidth;
+Index imageHeight;
 bool resizeToImageWidthHeight;
 bool invertImages;
 std::string backgroundCorrectionModelStr;
+Index numBackgroundImages;
 
-std::function<void(const cv::Mat*, cv::Mat&, int, int)> backgroundCorrectionModel;
+// Segmenter settings:
+double minObjectArea;
+bool saveContours;
+SaveMode saveMode;
+bool saveBackgroundCorrectedImages;
+bool saveCrops;
 
-int bufferSize;
+// Other:
+Index progressBarWidth;
+bool enableDetailedPrinting;
 
-void print(std::string str, bool newLine)
+// Helper:
+std::function<void(const std::vector<cv::Mat>&, cv::Mat&, int, int)> backgroundCorrectionModel;
+Index bufferSize;
+std::string saveModeStr;
+std::string objectSaveFilePath;
+std::ofstream objectSaveFile;
+//////////////////////////////////////////////////////////////
+
+void print(std::string str, bool newLine, bool ignoreDetailedPrinting)
 {
-    if (enablePrinting) {
+    if (ignoreDetailedPrinting || enableDetailedPrinting) {
         std::cout << str;
         if (newLine) {
             std::cout << std::endl;
@@ -33,17 +59,50 @@ void print(std::string str, bool newLine)
     }
 }
 
-std::string customError(Error errorCode)
+void error(std::string errorMessage)
 {
-    const std::unordered_map<Error, std::string> errorMap {
+    throw std::runtime_error(makeRed("Error: " + errorMessage));
+}
+
+void warning(std::string warningMessage)
+{
+    std::cout << makeYellow("Warning: " + warningMessage) << std::endl;
+}
+
+void progressBar(Index fileIdx, Index filesSize)
+{
+    if (progressBarWidth > 0) {
+        double progress = double(fileIdx) / filesSize;
+        Index pos = Index(std::round(progress * progressBarWidth));
+        std::cout << "[\033[34m";
+        for (Index i = 0; i < progressBarWidth; i++) {
+            if (i < pos)
+                std::cout << "#";
+            else if (i == pos)
+                std::cout << ">\033[0m\033[90m";
+            else
+                std::cout << "#";
+        }
+        std::cout << "\033[0m] " << int(progress * 100) << "%\r";
+        std::cout.flush();
+        if (progress == 1)
+            std::cout << std::endl;
+    }
+}
+
+std::string customInfo(Info errorCode)
+{
+    const std::unordered_map<Info, std::string> errorMap {
         { EmptyImage, "Empty image" },
         { UnreadableImageFile, "Unreadable image file" },
         { CVRuntime, "OpenCV runtime error" },
+        { WriterErrorInvalidSaveMode, "Writer error: invalid save mode" },
+        { ReaderFinished, "Reader finished with files" },
     };
     try {
         return errorMap.at(errorCode);
     } catch (const std::out_of_range& e) {
-        return error(errorCode);
+        return info(errorCode);
     }
 }
 
@@ -53,12 +112,13 @@ std::unordered_map<std::string, std::string> parseConfigFile(std::string filenam
 
     std::ifstream configFile(filename);
     if (!configFile.is_open()) {
-        throw std::runtime_error("Error: Unable to open the configuration file.");
+        throw std::runtime_error("Error: Unable to open the configuration file " + filename);
     }
 
-    std::string line;
+    std::string line, subStr;
     while (std::getline(configFile, line)) {
-        if (line.substr(0, 2) == "//") {
+        subStr = line.substr(0, 2);
+        if (subStr == "//" || subStr == "#") {
             continue;
         }
         std::istringstream iss(line);
@@ -77,73 +137,181 @@ std::unordered_map<std::string, std::string> parseConfigFile(std::string filenam
     return settings;
 }
 
-void readParameterInt(std::unordered_map<std::string, std::string> config, int& parameter, std::string name)
+void printHelp()
 {
-    auto foundKey = config.find(name);
-    if (foundKey == config.end()) {
-        throw std::runtime_error("Error: " + name + " not found in the config file.");
-    }
-    parameter = std::stoi(config[name]);
-    print("Found Parameter " + name + " of type int with value " + std::to_string(parameter), true);
+    std::cout << "Help" << std::endl;
 }
 
-void readParameterDouble(std::unordered_map<std::string, std::string> config, double& parameter, std::string name)
+// Function to parse command-line arguments
+std::unordered_map<std::string, std::string> parseCommandLineArgs(int argc, char* argv[])
 {
-    auto foundKey = config.find(name);
-    if (foundKey == config.end()) {
-        throw std::runtime_error("Error: " + name + " not found in the config file.");
+    std::unordered_map<std::string, std::string> params;
+    std::string key;
+    std::string str;
+    // find config file path as first argument
+    if (argc < 2) {
+        // throw std::runtime_error("Error: Input file not found. Specify as first argument, i.e. ./SegmenterParallel <input_file_path>");
+        params["config"] = "input.ini";
+    } else {
+        params["config"] = std::string(argv[1]);
     }
-    parameter = std::stod(config[name]);
-    print("Found Parameter " + name + " of type double with value " + std::to_string(parameter), true);
+
+    for (int i = 2; i < argc; i++) {
+        str = argv[i];
+        if (str.rfind("--", 0) == 0) { // found key
+            key = str.substr(2);
+
+            // this key is without value
+            if (i + 1 < argc && std::string(argv[i + 1]).rfind("--", 0) == 0) {
+                if (key == "help")
+                    printHelp();
+            }
+        } else { // found value
+            params[key] = str;
+        }
+    }
+    return params;
 }
 
-void readParameterBool(std::unordered_map<std::string, std::string> config, bool& parameter, std::string name)
+void readParameterIndex(std::unordered_map<std::string, std::string>& fileConfig, std::unordered_map<std::string, std::string>& commandLineConfig, Index& parameter, std::string name)
 {
-    auto foundKey = config.find(name);
-    if (foundKey == config.end()) {
-        throw std::runtime_error("Error: " + name + " not found in the config file.");
+    auto foundKey = commandLineConfig.find(name);
+    if (foundKey == commandLineConfig.end()) {
+        foundKey = fileConfig.find(name);
+        if (foundKey == fileConfig.end()) {
+            throw std::runtime_error(makeRed("Error: " + name + " not found in the config file."));
+        }
+        parameter = std::stoi(fileConfig[name]);
+    } else {
+        parameter = std::stoi(commandLineConfig[name]);
     }
-    parameter = (config[name] == "true");
-    print("Found Parameter " + name + " of type bool with value " + std::to_string(parameter), true);
+    print("Found Parameter " + name + " of type int with value " + std::to_string(parameter), true, true);
 }
 
-void readParameterString(std::unordered_map<std::string, std::string> config, std::string& parameter, std::string name)
+void readParameterDouble(std::unordered_map<std::string, std::string>& fileConfig, std::unordered_map<std::string, std::string>& commandLineConfig, double& parameter, std::string name)
 {
-    auto foundKey = config.find(name);
-    if (foundKey == config.end()) {
-        throw std::runtime_error("Error: " + name + " not found in the config file.");
+    auto foundKey = commandLineConfig.find(name);
+    if (foundKey == commandLineConfig.end()) {
+        foundKey = fileConfig.find(name);
+        if (foundKey == fileConfig.end()) {
+            throw std::runtime_error(makeRed("Error: " + name + " not found in the config file."));
+        }
+        parameter = std::stod(fileConfig[name]);
+    } else {
+        parameter = std::stod(commandLineConfig[name]);
     }
-    parameter = config[name];
-    print("Found Parameter " + name + " of type string with value " + parameter, true);
+    print("Found Parameter " + name + " of type double with value " + std::to_string(parameter), true, true);
 }
 
-void readParameters(int argc, char* argv[], std::string inputFilePath)
+void readParameterBool(std::unordered_map<std::string, std::string>& fileConfig, std::unordered_map<std::string, std::string>& commandLineConfig, bool& parameter, std::string name)
 {
-    std::unordered_map<std::string, std::string> config = parseConfigFile(inputFilePath);
+    auto foundKey = commandLineConfig.find(name);
+    std::string value;
+    if (foundKey == commandLineConfig.end()) {
+        foundKey = fileConfig.find(name);
+        if (foundKey == fileConfig.end()) {
+            throw std::runtime_error(makeRed("Error: " + name + " not found in the config file."));
+        }
+        value = fileConfig[name];
+    } else {
+        value = commandLineConfig[name];
+    }
+    if (value == "true")
+        parameter = true;
+    else if (value == "false")
+        parameter = false;
+    else
+        throw std::runtime_error(makeRed("Error: Invalid value for " + name));
+    print("Found Parameter " + name + " of type bool with value " + std::to_string(parameter), true, true);
+}
 
-    std::cout << "----------------------------\n";
-    readParameterBool(config, enablePrinting, "enablePrinting");
-    readParameterString(config, sourcePath, "sourcePath");
-    readParameterString(config, savePath, "savePath");
-    readParameterInt(config, stackSize, "stackSize");
-    readParameterInt(config, numBufferedStacks, "numBufferedStacks");
-    readParameterInt(config, numThreads, "numThreads");
-    readParameterInt(config, imageWidth, "imageWidth");
-    readParameterInt(config, imageHeight, "imageHeight");
-    readParameterBool(config, resizeToImageWidthHeight, "resizeToImageWidthHeight");
-    readParameterBool(config, invertImages, "invertImages");
-    readParameterString(config, backgroundCorrectionModelStr, "backgroundCorrectionModel");
+void readParameterString(std::unordered_map<std::string, std::string>& fileConfig, std::unordered_map<std::string, std::string>& commandLineConfig, std::string& parameter, std::string name)
+{
+    auto foundKey = commandLineConfig.find(name);
+    if (foundKey == commandLineConfig.end()) {
+        foundKey = fileConfig.find(name);
+        if (foundKey == fileConfig.end()) {
+            throw std::runtime_error(makeRed("Error: " + name + " not found in the config file."));
+        }
+        parameter = fileConfig[name];
+    } else {
+        parameter = commandLineConfig[name];
+    }
+    print("Found Parameter " + name + " of type string with value " + parameter, true, true);
+}
+
+void readParameters(int argc, char* argv[])
+{
+    // read parameters from command line and input file
+    std::unordered_map<std::string, std::string> commandLineConfig = parseCommandLineArgs(argc, argv);
+    std::unordered_map<std::string, std::string> fileConfig = parseConfigFile(commandLineConfig["config"]);
+
+    print("----------------------------", true, true);
+    readParameterBool(fileConfig, commandLineConfig, enableDetailedPrinting, "enableDetailedPrinting");
+    readParameterString(fileConfig, commandLineConfig, sourcePath, "sourcePath");
+    readParameterString(fileConfig, commandLineConfig, savePath, "savePath");
+    readParameterIndex(fileConfig, commandLineConfig, stackSize, "stackSize");
+    readParameterIndex(fileConfig, commandLineConfig, numBufferedStacks, "numBufferedStacks");
+    readParameterIndex(fileConfig, commandLineConfig, numSegmenterThreads, "numSegmenterThreads");
+    readParameterIndex(fileConfig, commandLineConfig, numReaderThreads, "numReaderThreads");
+    readParameterIndex(fileConfig, commandLineConfig, imageWidth, "imageWidth");
+    readParameterIndex(fileConfig, commandLineConfig, imageHeight, "imageHeight");
+    readParameterBool(fileConfig, commandLineConfig, resizeToImageWidthHeight, "resizeToImageWidthHeight");
+    readParameterBool(fileConfig, commandLineConfig, invertImages, "invertImages");
+    readParameterString(fileConfig, commandLineConfig, backgroundCorrectionModelStr, "backgroundCorrectionModel");
+    readParameterIndex(fileConfig, commandLineConfig, progressBarWidth, "progressBarWidth");
+    readParameterDouble(fileConfig, commandLineConfig, minObjectArea, "minObjectArea");
+    readParameterBool(fileConfig, commandLineConfig, saveContours, "saveContours");
+    readParameterBool(fileConfig, commandLineConfig, saveBackgroundCorrectedImages, "saveBackgroundCorrectedImages");
+    readParameterBool(fileConfig, commandLineConfig, saveCrops, "saveCrops");
+    readParameterIndex(fileConfig, commandLineConfig, numBackgroundImages, "numBackgroundImages");
+
+    readParameterString(fileConfig, commandLineConfig, saveModeStr, "saveMode");
+
+    if (saveModeStr == "oneFile") {
+        saveMode = oneFile;
+        objectSaveFilePath = savePath + "/objects.dat";
+    } else if (saveModeStr == "oneFilePerImage") {
+        objectSaveFilePath = savePath + "/objects_img_";
+        saveMode = oneFilePerImage;
+    } else if (saveModeStr == "oneFilePerObject") {
+        saveMode = oneFilePerObject;
+        objectSaveFilePath = savePath + "/object_";
+    } else {
+        throw std::runtime_error(makeRed("Error: Invalid value for parameter saveMode: " + saveModeStr));
+    }
 
     if (backgroundCorrectionModelStr == "minMaxMethod") {
-        backgroundCorrectionModel = minMaxMethodPtr;
+        backgroundCorrectionModel = minMaxMethod;
     } else if (backgroundCorrectionModelStr == "minMethod") {
-        backgroundCorrectionModel = minMethodPtr;
+        backgroundCorrectionModel = minMethod;
     } else if (backgroundCorrectionModelStr == "averageMethod") {
-        backgroundCorrectionModel = averageMethodPtr;
+        backgroundCorrectionModel = averageMethod;
     } else if (backgroundCorrectionModelStr == "medianMethod") {
-        backgroundCorrectionModel = medianMethodPtr;
+        backgroundCorrectionModel = medianMethod;
+    } else {
+        throw std::runtime_error(makeRed("Error: Invalid value for parameter backgroundCorrectionModel: " + backgroundCorrectionModelStr));
+    }
+
+    // create crop directory if needed
+    if (saveCrops && !std::filesystem::is_directory(savePath + "/crops"))
+        std::filesystem::create_directory(savePath + "/crops");
+
+    // check values:
+    // if (numSegmenterThreads < 1)
+    //     error("Invalid value for parameter numThreads: " + std::to_string(numSegmenterThreads) + ". At least two threads are needed.");
+    // if (numSegmenterThreads > numBufferedStacks)
+    //     warning("Number of threads is larger than number of buffered stacks. Only numBufferedStacks can run at the same time.");
+
+    if (backgroundCorrectionModelStr == "minMaxMethod" && numBackgroundImages % 2 != 0) {
+        warning("For the minMaxMethod, the number of background images needs to be even. numBackgroundImages will be set to " + std::to_string(numBackgroundImages - 1));
+        numBackgroundImages--;
+    }
+    if (numBackgroundImages > stackSize || numBackgroundImages <= 0) {
+        warning("Invalid value for parameter numBackgroundImages: " + std::to_string(numBackgroundImages) + ". This value needs to be smaller or equal to the stack size and larger than zero: " + std::to_string(stackSize) + ". numBufferedStacks will be set to stackSize.");
+        numBackgroundImages = stackSize;
     }
 
     bufferSize = stackSize * numBufferedStacks;
-    std::cout << "----------------------------\n\n";
+    print("----------------------------\n", true, true);
 }

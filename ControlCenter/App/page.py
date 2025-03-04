@@ -68,6 +68,8 @@ class Page(QWidget):
         if not self.page_dict["useInputFile"]:
             for key in self.settings.keys():
                 cmd += " --" + key + " " + str(self.settings[key].get())
+        else:
+            ...
 
         self.run_thread = QThread()
         self.command = Command(cmd, self.run_thread, self.terminal)

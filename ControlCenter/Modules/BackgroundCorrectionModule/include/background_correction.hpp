@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <opencv4/opencv2/core.hpp>
 
 void minMethod(const std::vector<cv::Mat>& imageBuffer, cv::Mat& background, int bufferStartPos, int bufferEndPos);

@@ -14,7 +14,8 @@ constexpr Info Success = 0;
 
 // Infos
 constexpr Info ThreadManagerFinished = 128;
-constexpr Info nextInfo = 129;
+constexpr Info ThreadManagerThisWorkerFinished = 129;
+constexpr Info nextInfo = 130;
 
 // Warnings
 constexpr Info ThreadManagerMaxTasksReached = 1;

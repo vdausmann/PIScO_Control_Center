@@ -4,6 +4,9 @@
 
 ThreadManager::ThreadManager(void* taskData, taskFunction* taskFunctions, size_t numThreads, bool returnFinishedTasks, size_t taskBufferSize)
     : _taskBufferSize(taskBufferSize)
+    , _averagingSamples(0)
+    , _avgWaitTime(0)
+    , _avgTaskRunTime(0)
     , _taskData(taskData)
     , _taskFunctions(taskFunctions)
     , _returnFinishedTasks(returnFinishedTasks)
@@ -35,15 +38,30 @@ void ThreadManager::_worker(size_t threadId)
     while (true) {
         Task task;
         Task result;
+
+        auto start = std::chrono::high_resolution_clock::now();
         // get next task
         result.threadManagerInfo = _getNextTask(task);
         if (result.threadManagerInfo == ThreadManagerFinished)
             break;
 
+        double waitDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+
         // try to run task function with provided data
         Info info;
         try {
+            auto start = std::chrono::high_resolution_clock::now();
             info = _taskFunctions[task.funcIdx](threadId, _taskMutex, _taskData, task.taskIdx, task.size);
+            double duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+
+            // metrics:
+            {
+                std::unique_lock lock(_metricsMutex);
+                _avgTaskRunTime += duration;
+                _avgWaitTime = _avgWaitTime + waitDuration;
+                _averagingSamples++;
+            }
+
         } catch (std::exception& e) {
             info = RuntimeError;
             std::cout << makeRed("Exception in taskFunction " + std::to_string(task.funcIdx) + " and taskData at (" + std::to_string(task.taskIdx) + ":" + std::to_string(task.size) + ": ") << e.what() << std::endl;
@@ -127,4 +145,14 @@ void ThreadManager::cleanUp()
 ThreadManager::~ThreadManager()
 {
     cleanUp();
+}
+
+double ThreadManager::getAvgWaitTime()
+{
+    return _avgWaitTime / _averagingSamples;
+}
+
+double ThreadManager::getAvgTaskRunTime()
+{
+    return _avgTaskRunTime / _averagingSamples;
 }

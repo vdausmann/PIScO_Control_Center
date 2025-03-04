@@ -30,8 +30,12 @@ private:
     std::mutex _availableTaskMutex;
     std::mutex _finishedTaskMutex;
     std::mutex _taskMutex;
+    std::mutex _metricsMutex;
     std::vector<std::thread> _threads;
     size_t _taskBufferSize;
+    size_t _averagingSamples;
+    double _avgWaitTime;
+    double _avgTaskRunTime;
     void* _taskData;
     taskFunction* _taskFunctions;
     std::atomic<bool> _stop;
@@ -46,5 +50,7 @@ public:
     void getFinishedTask(Task& result);
     void finishThreads();
     void cleanUp();
+    double getAvgWaitTime();
+    double getAvgTaskRunTime();
     ~ThreadManager();
 };

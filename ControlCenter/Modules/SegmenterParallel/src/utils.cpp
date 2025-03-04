@@ -216,6 +216,8 @@ void readParameterBool(std::unordered_map<std::string, std::string>& fileConfig,
     } else {
         value = commandLineConfig[name];
     }
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char c) { return std::tolower(c); });
     if (value == "true")
         parameter = true;
     else if (value == "false")
@@ -246,7 +248,7 @@ void readParameters(int argc, char* argv[])
     std::unordered_map<std::string, std::string> commandLineConfig = parseCommandLineArgs(argc, argv);
     std::unordered_map<std::string, std::string> fileConfig = parseConfigFile(commandLineConfig["config"]);
 
-    print("----------------------------", true, true);
+    print("--------------------------------------------------------------------", true, true);
     readParameterBool(fileConfig, commandLineConfig, enableDetailedPrinting, "enableDetailedPrinting");
     readParameterString(fileConfig, commandLineConfig, sourcePath, "sourcePath");
     readParameterString(fileConfig, commandLineConfig, savePath, "savePath");
@@ -313,5 +315,5 @@ void readParameters(int argc, char* argv[])
     }
 
     bufferSize = stackSize * numBufferedStacks;
-    print("----------------------------\n", true, true);
+    print("--------------------------------------------------------------------\n", true, true);
 }

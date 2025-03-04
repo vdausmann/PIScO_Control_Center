@@ -10,6 +10,7 @@ option(BUILD_PROFILING "Build project for profiling" ON)
 set(PROJECT_NAME "SegmenterParallel")
 
 set(BG_CORRECTION_MODULE_DIR "../BackgroundCorrectionModule")
+set(BUILDING_DIR "${CMAKE_SOURCE_DIR}/binDebug")
 
 # Add OpenCV support
 find_package(OpenCV REQUIRED)
@@ -68,6 +69,8 @@ if(NOT BUILD_PROFILING)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize=address")
 
+    set(BUILDING_DIR "${CMAKE_SOURCE_DIR}/binDebug")
+
   else()
     message(
       STATUS
@@ -108,6 +111,7 @@ if(NOT BUILD_PROFILING)
     link_directories(${BG_CORRECTION_MODULE_DIR}/lib
                      ${THREAD_MANAGER_MODULE_DIR}/lib)
 
+    set(BUILDING_DIR "${CMAKE_SOURCE_DIR}/bin")
   endif()
 else()
   message(
@@ -146,6 +150,7 @@ else()
   link_directories(${BG_CORRECTION_MODULE_DIR}/lib
                    ${THREAD_MANAGER_MODULE_DIR}/lib)
 
+  set(BUILDING_DIR "${CMAKE_SOURCE_DIR}/binDebug")
 endif()
 
 # Automatically detect all source and header files
@@ -165,10 +170,8 @@ target_link_libraries(${PROJECT_NAME} BackgroundCorrectionModule
 # -fsanitize=address) Set the output directory for the binary to a 'bin' folder
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                                 ${CMAKE_SOURCE_DIR}/bin)
+                                                 ${BUILDING_DIR})
 
 # Check if the executable was created successfully
 message(
-  STATUS
-    "Executable ${PROJECT_NAME} created successfully in ${CMAKE_SOURCE_DIR}/bin."
-)
+  STATUS "Executable ${PROJECT_NAME} created successfully in ${BUILDING_DIR}.")

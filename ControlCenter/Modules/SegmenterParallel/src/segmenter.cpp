@@ -316,6 +316,15 @@ void _taskLoop(const std::vector<std::string>& files)
         checkInfo(finishedTask.taskInfo, enableDetailedPrinting, enableDetailedPrinting);
     } while (finishedTask.threadManagerInfo == Success);
 
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "Metrics: " << std::endl;
+    std::cout << "Reader:\n";
+    std::cout << "\tAverage wait time: " << tmReader.getAvgWaitTime() << "ms" << std::endl;
+    std::cout << "\tAverage task run time: " << tmReader.getAvgTaskRunTime() << "ms" << std::endl;
+    std::cout << "Segmenter:\n";
+    std::cout << "\tAverage wait time: " << tmSegmenter.getAvgWaitTime() << "ms" << std::endl;
+    std::cout << "\tAverage task run time: " << tmSegmenter.getAvgTaskRunTime() << "ms" << std::endl;
+
     tmReader.cleanUp();
     tmSegmenter.cleanUp();
 
@@ -351,6 +360,8 @@ void runSegmenter()
     auto end = std::chrono::high_resolution_clock::now();
     double duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     duration /= 1000;
-    print("Duration of segmenter: " + std::to_string(duration) + "s", true, true);
+    print("Runtime of segmenter: " + std::to_string(duration) + "s", true, true);
     print("Avg. time per image: " + std::to_string(duration / files.size()) + "s", true, true);
+    std::cout << "--------------------------------------------------------------------\n"
+              << std::endl;
 }

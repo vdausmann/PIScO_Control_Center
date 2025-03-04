@@ -3,11 +3,12 @@ from .clickable_label import ClickableLabel
 
 class LabelPathComb(QFrame):
     selected_path: str = ""
-    def __init__(self, label: str, window, value: str = ""):
+    def __init__(self, label: str, window, app, value: str = ""):
         super().__init__()
 
         self.window = window
         self.name = label
+        self.app = app
 
         self.setFrameShape(QFrame.Box)
         self.setFrameShadow(QFrame.Raised)

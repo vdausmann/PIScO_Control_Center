@@ -5,10 +5,11 @@ class LabelEntryComb(QFrame):
 
     text_entry: QLineEdit
 
-    def __init__(self, label: str, window, value: str = ""):
+    def __init__(self, label: str, window, app, value: str = ""):
         super().__init__()
         self.window = window
         self.name = label
+        self.app = app
 
         self.setFrameShape(QFrame.Box)
         self.setFrameShadow(QFrame.Raised)
@@ -22,10 +23,13 @@ class LabelEntryComb(QFrame):
         self.text_entry = QLineEdit()
 
         self.text_entry.setText(value)
-        # self.setFixedSize(150, 50)
 
-        self.label.setFixedWidth(70)
-        self.text_entry.setFixedWidth(70)
+        self.width = app.layout_settings["label_entry_comb_width"]
+        self.height = app.layout_settings["label_entry_comb_height"]
+        self.setFixedSize(self.width, self.height)
+
+        self.label.setFixedWidth(app.layout_settings["label_entry_comb_label_width_percentage"] * self.width)
+        self.text_entry.setFixedWidth((1 - app.layout_settings["label_entry_comb_label_width_percentage"]) * self.width)
 
         layout.addWidget(self.label)
         layout.addWidget(self.text_entry)

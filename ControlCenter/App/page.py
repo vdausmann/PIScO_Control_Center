@@ -5,6 +5,7 @@ from .LabelEntryComb import LabelEntryComb
 from .LabelCheckboxComb import LabelCheckboxComb
 from .terminal import Terminal
 from .command import Command
+from .inputfile_writer import write_new_inputfile
 from typing import Type
 
 # TODO: Change grid layout to free layout and place the buttons by myself to always have the same layout for each page
@@ -27,12 +28,10 @@ class Page(QWidget):
 
         self.button_container = QWidget(self)
         self.button_container.setFixedSize(self.page_width, self.page_height)
-        self.button_container.setStyleSheet(f"background-color: self.app.color_settings['page_background_color'];")
         self.button_container.move(self.app.layout_settings["page_padding"], self.app.layout_settings["page_padding"])
 
         self.terminal_container = QWidget(self)
         self.terminal_container.setFixedSize(self.page_width, self.app.layout_settings["app_height"] * self.app.layout_settings["terminal_height_percentage"] / 100 - self.app.layout_settings["page_padding"])
-        self.terminal_container.setStyleSheet(f"background-color: self.app.color_settings['page_background_color'];")
         self.terminal_container.move(self.app.layout_settings["page_padding"], self.app.layout_settings["app_height"] * (1 - self.app.layout_settings["terminal_height_percentage"] / 100))
 
         self.terminal = Terminal(self.app, self.terminal_container)
@@ -69,7 +68,8 @@ class Page(QWidget):
             for key in self.settings.keys():
                 cmd += " --" + key + " " + str(self.settings[key].get())
         else:
-            ...
+            path = write_new_inputfile(self.settings, self.page_name)
+            cmd += " " + path
 
         self.run_thread = QThread()
         self.command = Command(cmd, self.run_thread, self.terminal)
@@ -83,7 +83,6 @@ class Page(QWidget):
         self.app.save_defaults()
 
     def create_page(self):
-        print(self.page_dict)
         if len(self.page_dict["Fields"].keys()) >= self.numrows * self.numcols:
             raise Warning("Too many elements in page. Make page bigger (by increasing the app_width) or make the elements smaller (by decreasing label_entry_comb_width, label_entry_comb_height)")
 
@@ -91,21 +90,19 @@ class Page(QWidget):
         for settings_name in self.page_dict["Fields"].keys():
             if "Defaults" in self.page_dict.keys() and settings_name in self.page_dict["Defaults"].keys():
                 default_value = self.page_dict["Defaults"][settings_name]
-                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, default_value)
+                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, self.app, default_value)
             else:
-                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self)
+                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, self.app)
             self.settings[settings_name] = l
             l.setStyleSheet(f"background-color: {self.app.color_settings['button_color']}; padding: 0px;")
             l.setFixedSize(self.unit_width, self.unit_height)
             self.grid.addWidget(l, idx // self.numcols, idx % self.numcols)
             idx += 1
 
-        # print(idx)
         new_idx = idx
         for i in range(idx, (self.numrows - 1) * self.numcols):
             new_idx += 1
             self.grid.addItem(QSpacerItem(self.unit_width, self.unit_height), (i + idx) // self.numcols, (i + idx) % self.numcols)
-        print(new_idx)
 
         for i in range(self.numcols):
             if i == self.numcols // 2 - 1:

@@ -2,10 +2,11 @@ from PySide6.QtWidgets import QLabel, QWidget, QVBoxLayout, QHBoxLayout, QFrame,
 from .clickable_label import ClickableLabel
 
 class LabelCheckboxComb(QFrame):
-    def __init__(self, label: str, window, value: bool = False):
+    def __init__(self, label: str, window, app, value: bool = False):
         super().__init__()
         self.window = window
         self.name = label
+        self.app = app
 
         self.setFrameShape(QFrame.Box)
         self.setFrameShadow(QFrame.Raised)

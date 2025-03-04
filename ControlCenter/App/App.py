@@ -11,7 +11,6 @@ class PIScOControlCenter:
 
         self.config_path = config_path
         self.config = self.load_config()
-        print(self.config)
 
         self.color_settings = self.config["colors"]
         self.layout_settings = self.config["layout"]
@@ -28,7 +27,6 @@ class PIScOControlCenter:
 
         self.create_page_selector()
         self.create_pages()
-        self.load_defaults()
         
         self.main_window.show()
         sys.exit(self.app.exec())
@@ -49,13 +47,6 @@ class PIScOControlCenter:
         with open(self.config_path, "r") as f:
             config = json.load(f)
         return config
-
-    def load_defaults(self):
-        for page in self.pages_settings.keys():
-            try:
-                print(self.pages_settings[page]["Defaults"])
-            except KeyError:
-                print(page, " has no Defaults")
 
     def save_defaults(self):
         with open(self.config_path, "w") as f:
@@ -80,16 +71,11 @@ class PIScOControlCenter:
         self.stacked_widget_container.setStyleSheet(f"background-color: {self.color_settings['page_background_color']};")
         self.stacked_widget_container.setFixedSize(round(self.layout_settings["app_width"] * (1 - self.layout_settings["page_selector_width_percentage"] / 100)), self.layout_settings["app_height"])
 
-        print("#" * 20)
-        print(self.pages_settings)
-        print("#" * 20)
-
         self.page_list = []
         for page in self.pages_settings.keys():
             page_dict = self.pages_settings[page]
             page_widget = Page(self, page, page_dict)
             self.page_list.append(page_widget)
-            # page_widget.create_page(page)
             self.stacked_widget.addWidget(page_widget)
 
         self.stacked_widget_container.move(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100), 0)

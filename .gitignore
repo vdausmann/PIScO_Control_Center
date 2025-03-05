@@ -10,6 +10,8 @@ __pycache__/
 ControlCenter/**/flake.lock
 ControlCenter/**/.envrc
 ControlCenter/**/.direnv
+ControlCenter/**/.clang-format
+ControlCenter/**/.clangd
 ControlCenter/**/bin/
 ControlCenter/**/libDebug/
 

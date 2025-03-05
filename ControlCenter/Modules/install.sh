@@ -9,20 +9,21 @@ fi
 # Find all module directories (assuming each module has a flake.nix file)
 MODULES=("ThreadManagerModule" "BackgroundCorrectionModule" "SegmenterParallel")
 
-# Loop through each module and build it
-for module in $MODULES; do
-    echo "Entering module: $module"
-    echo "-----------------------------------------------------"
-    cd "$module" || { echo "Failed to enter $module"; exit 1; }
+COMPILE_ARG="${1:-release}"
 
-    # Enter Nix shell and compile the module
-    nix develop --command bash -c "./compile.sh release"
+# Compile modules in order
+for module in "${MODULES[@]}"; do
+    if [ -d "$module" ] && [ -f "$module/flake.nix" ]; then
+        echo "Entering module: $module"
+        cd "$module" || { echo "Failed to enter $module"; exit 1; }
 
-    # Return to the root directory
-    cd - >/dev/null || exit
-    echo "Finished compiling module: $module"
+        # Enter Nix shell and compile the module
+        nix develop --command bash -c "./compile.sh $COMPILE_ARG && cmake --build build"
+
+        # Return to the root directory
+        cd - >/dev/null || exit
+    else
+        echo "Skipping $module: Directory or flake.nix not found."
+    fi
     echo "-----------------------------------------------------"
 done
-
-echo "All modules compiled successfully."
-

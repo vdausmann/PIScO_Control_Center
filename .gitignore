@@ -10,6 +10,8 @@ __pycache__/
 ControlCenter/**/flake.lock
 ControlCenter/**/.envrc
 ControlCenter/**/.direnv
+ControlCenter/**/bin/
+ControlCenter/**/libDebug/
 
 
 # Distribution / packaging

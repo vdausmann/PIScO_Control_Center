@@ -22,7 +22,7 @@ case "$input" in
         ;;
     *)
         echo "Unknown command: $input"
-        echo "Valid commands: lib, test, debug"
+        echo "Valid commands: release, test, debug"
         ;;
 esac
 

@@ -300,7 +300,7 @@ class Settings(QWidget):
         for i in reversed(range(self.grid_layout.count())):
             self.grid_layout.itemAt(i).widget().setParent(None)
 
-        rows = max(1, len(self.settings.keys()) // self.columns + 1)
+        rows = max(1, len(self.settings.keys()) // self.columns + 2)
         for index, name in enumerate(self.settings.keys()):
             row = index % rows
             col = index // rows

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QSpacerItem, QVBoxLayout, QPushButton, QLabel
+from PySide6.QtWidgets import QWidget, QGridLayout, QSpacerItem, QVBoxLayout, QPushButton, QLabel, QHBoxLayout
 from PySide6.QtCore import Qt, QThread
 from .LabelPathComb import LabelPathComb
 from .LabelEntryComb import LabelEntryComb
@@ -6,6 +6,7 @@ from .LabelCheckboxComb import LabelCheckboxComb
 from .terminal import Terminal
 from .command import Command
 from .inputfile_writer import write_new_inputfile
+from .settings import Settings
 from typing import Type
 
 # TODO: Change grid layout to free layout and place the buttons by myself to always have the same layout for each page
@@ -26,34 +27,49 @@ class Page(QWidget):
         self.page_dict = page_dict
 
 
-        self.button_container = QWidget(self)
-        self.button_container.setFixedSize(self.page_width, self.page_height)
-        self.button_container.move(self.app.layout_settings["page_padding"], self.app.layout_settings["page_padding"])
+        self.page_layout = QVBoxLayout()
+        self.label = QLabel("Settings for " + page_name, alignment=Qt.AlignCenter)
+        self.page_layout.addWidget(self.label, stretch=20)
 
-        self.terminal_container = QWidget(self)
-        self.terminal_container.setFixedSize(self.page_width, self.app.layout_settings["app_height"] * self.app.layout_settings["terminal_height_percentage"] / 100 - self.app.layout_settings["page_padding"])
-        self.terminal_container.move(self.app.layout_settings["page_padding"], self.app.layout_settings["app_height"] * (1 - self.app.layout_settings["terminal_height_percentage"] / 100))
+        settings_layout = QVBoxLayout()
 
-        self.terminal = Terminal(self.app, self.terminal_container)
-        self.terminal.setFixedSize(self.page_width, self.app.layout_settings["app_height"] * self.app.layout_settings["terminal_height_percentage"] / 100 - self.app.layout_settings["page_padding"])
+        self.settings = Settings(page_dict)
+        settings_layout.addWidget(self.settings)
 
+        # self.settings.setLayout(self.settings_layout)
+        self.page_layout.addWidget(self.settings, stretch=300)
 
-        self.grid = QGridLayout()
-        self.grid.setHorizontalSpacing(5)
-        self.grid.setVerticalSpacing(10)
-        self.button_container.setLayout(self.grid)
-
-        self.settings = {}
-
-        self.unit_height = max(self.app.layout_settings["label_entry_comb_height"], self.app.layout_settings["label_path_comb_height"])
-        self.unit_width = max(self.app.layout_settings["label_entry_comb_width"], self.app.layout_settings["label_path_comb_width"])
-        self.numrows = self.button_container.height() // self.unit_height - 1
-        self.numcols = self.button_container.width() // self.unit_width
 
         self.run_thread = None
         self.process = None
 
-        self.create_page()
+        button_layout = QHBoxLayout()
+        button_area = QWidget()
+
+        run_button = QPushButton("Run")
+        run_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        run_button.setFixedHeight(40)
+        run_button.clicked.connect(self.run_command)
+        button_layout.addWidget(run_button)
+
+        save_default_button = QPushButton("Save Default Settings")
+        save_default_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        # save_default_button.setFixedSize(self.unit_width, self.unit_height)
+        save_default_button.setFixedHeight(40)
+        save_default_button.clicked.connect(self.save_defaults)
+        button_layout.addWidget(save_default_button)
+
+        button_area.setLayout(button_layout)
+        self.page_layout.addWidget(button_area, stretch=50)
+
+        # self.terminal_container = QWidget(self)
+        self.terminal = Terminal(self.app, self)
+        
+        self.page_layout.addWidget(self.terminal, stretch=200)
+
+
+        self.page_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.page_layout)
 
     def print(self, text: str):
         self.terminal.print(text)
@@ -65,10 +81,10 @@ class Page(QWidget):
             
         cmd = self.page_dict["runCommand"]
         if not self.page_dict["useInputFile"]:
-            for key in self.settings.keys():
-                cmd += " --" + key + " " + str(self.settings[key].get())
+            for key in self.settings.settings.keys():
+                cmd += " --" + key + " " + str(self.settings.settings[key].get())
         else:
-            path = write_new_inputfile(self.settings, self.page_name)
+            path = write_new_inputfile(self.settings.settings, self.page_name)
             cmd += " " + path
 
         self.run_thread = QThread()
@@ -78,44 +94,6 @@ class Page(QWidget):
     def save_defaults(self):
         if not "Defaults" in self.page_dict.keys():
             self.page_dict["Defaults"] = {}
-        for settings_name in self.settings.keys():
-            self.page_dict["Defaults"][settings_name] = self.settings[settings_name].get()
+        for settings_name in self.settings.settings.keys():
+            self.page_dict["Defaults"][settings_name] = self.settings.settings[settings_name].get()
         self.app.save_defaults()
-
-    def create_page(self):
-        if len(self.page_dict["Fields"].keys()) >= self.numrows * self.numcols:
-            raise Warning("Too many elements in page. Make page bigger (by increasing the app_width) or make the elements smaller (by decreasing label_entry_comb_width, label_entry_comb_height)")
-
-        idx = 0
-        for settings_name in self.page_dict["Fields"].keys():
-            if "Defaults" in self.page_dict.keys() and settings_name in self.page_dict["Defaults"].keys():
-                default_value = self.page_dict["Defaults"][settings_name]
-                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, self.app, default_value)
-            else:
-                l = self.page_elements[self.page_dict["Fields"][settings_name]](settings_name, self, self.app)
-            self.settings[settings_name] = l
-            l.setStyleSheet(f"background-color: {self.app.color_settings['button_color']}; padding: 0px;")
-            l.setFixedSize(self.unit_width, self.unit_height)
-            self.grid.addWidget(l, idx // self.numcols, idx % self.numcols)
-            idx += 1
-
-        new_idx = idx
-        for i in range(idx, (self.numrows - 1) * self.numcols):
-            new_idx += 1
-            self.grid.addItem(QSpacerItem(self.unit_width, self.unit_height), (i + idx) // self.numcols, (i + idx) % self.numcols)
-
-        for i in range(self.numcols):
-            if i == self.numcols // 2 - 1:
-                self.run_button = QPushButton("Run")
-                self.run_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
-                self.run_button.setFixedSize(self.unit_width, self.unit_height)
-                self.run_button.clicked.connect(self.run_command)
-                self.grid.addWidget(self.run_button, self.numrows - 1, i)
-            if i == self.numcols // 2:
-                self.save_default_button = QPushButton("Save Default Settings")
-                self.save_default_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
-                self.save_default_button.setFixedSize(self.unit_width, self.unit_height)
-                self.save_default_button.clicked.connect(self.save_defaults)
-                self.grid.addWidget(self.save_default_button, self.numrows - 1, i)
-            else:
-                self.grid.addItem(QSpacerItem(self.unit_width, self.unit_height), self.numrows - 1, i)

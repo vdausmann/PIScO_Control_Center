@@ -55,7 +55,9 @@ class Terminal(QWidget):
         self.commands = {"clear": self.clear_output, "help": self.help, "doc": self.doc}
         self.documentation = {"clear": "Clears the output", "help": "Displays available commands", "doc": "Short documentation of App"}
 
-        self.setStyleSheet(f"background-color: {self.app.color_settings['terminal_color']};")
+        # self.setStyleSheet(f"background-color: {self.app.color_settings['terminal_color']};")
+        self.input.setStyleSheet(f"background-color: {self.app.color_settings['terminal_color']};")
+        self.output.setStyleSheet(f"background-color: {self.app.color_settings['terminal_color']};")
 
         self.output_lines = []
 

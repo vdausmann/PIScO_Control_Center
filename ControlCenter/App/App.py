@@ -20,15 +20,24 @@ class PIScOControlCenter:
 
         self.main_window = QWidget()
         self.main_window.setWindowTitle("PIScO Control Center")
-        # self.main_window.setFixedSize(self.layout_settings["app_width"], self.layout_settings["app_height"])
+        self.main_window.setMinimumSize(800, 600)
+        self.main_window.setMaximumSize(1920, 1080)
         self.main_window.setBaseSize(self.layout_settings["app_width"], self.layout_settings["app_height"])
-
+        
         self.set_colors()
+
+        self.main_window_layout = QHBoxLayout(self.main_window)
+
+        self.page_selector = PageSelector(list(self.pages_settings.keys()), self)
+        self.page_selector.setStyleSheet(f"background-color: {self.color_settings['page_selector_background_color']}; border: none; border-radius: 5px;")
+        self.main_window_layout.addWidget(self.page_selector)
+
+        self.create_pages()
+        self.main_window_layout.addWidget(self.stacked_widget_container, 1)
         
 
-        self.create_page_selector()
-        self.create_pages()
-        
+        self.main_window.setLayout(self.main_window_layout)
+
         self.main_window.show()
         sys.exit(self.app.exec())
 
@@ -56,21 +65,24 @@ class PIScOControlCenter:
 
     def switch_page(self, index: int):
         self.stacked_widget.setCurrentIndex(index)
+        self.page_list[index].settings.resizeEvent(None)
 
     def create_page_selector(self):
         self.page_selector = PageSelector(list(self.pages_settings.keys()), self)
-        self.page_selector_container = QWidget(self.main_window)
-        self.page_selector_container.setLayout(self.page_selector.layout())
-        self.page_selector_container.setStyleSheet(f"background-color: {self.color_settings['page_selector_background_color']};")
-        self.page_selector_container.setFixedSize(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100), self.layout_settings["app_height"])
-        self.page_selector_container.move(0, 0)
+
+        # self.page_selector_container = QWidget(self.main_window)
+        self.page_selector.setLayout(self.page_selector.layout())
+        self.page_selector.setStyleSheet(f"background-color: {self.color_settings['page_selector_background_color']};")
+        # self.page_selector.setFixedSize(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100), self.layout_settings["app_height"])
+        # self.page_selector.setFixedWidth(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100))
+        self.main_window_layout.addWidget(self.page_selector)
 
     def create_pages(self):
         self.stacked_widget = QStackedWidget()
         self.stacked_widget_container = QWidget(self.main_window)
         self.stacked_widget_container.setLayout(self.stacked_widget.layout())
         self.stacked_widget_container.setStyleSheet(f"background-color: {self.color_settings['page_background_color']};")
-        self.stacked_widget_container.setFixedSize(round(self.layout_settings["app_width"] * (1 - self.layout_settings["page_selector_width_percentage"] / 100)), self.layout_settings["app_height"])
+        # self.stacked_widget_container.setFixedSize(round(self.layout_settings["app_width"] * (1 - self.layout_settings["page_selector_width_percentage"] / 100)), self.layout_settings["app_height"])
 
         self.page_list = []
         for page in self.pages_settings.keys():
@@ -79,4 +91,4 @@ class PIScOControlCenter:
             self.page_list.append(page_widget)
             self.stacked_widget.addWidget(page_widget)
 
-        self.stacked_widget_container.move(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100), 0)
+        # self.stacked_widget_container.move(round(self.layout_settings["app_width"] * self.layout_settings["page_selector_width_percentage"] / 100), 0)

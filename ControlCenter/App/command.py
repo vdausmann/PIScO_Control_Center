@@ -34,8 +34,7 @@ class Command(QObject):
 
         self.terminal_signal.emit("Finished Command " + self.cmd, False, False)
         self.terminal_signal.emit("\t Errors: \n" + err.decode("utf-8"), True, False)
-        self.terminal_signal.emit("\t Output: \n" + out.decode("utf-8"), True, False)
-        self.terminal_signal.emit("Running command: " + self.cmd, False, False)
+        # self.terminal_signal.emit("\t Output: \n" + out.decode("utf-8"), True, False)
 
         self.run_thread.terminate()
 

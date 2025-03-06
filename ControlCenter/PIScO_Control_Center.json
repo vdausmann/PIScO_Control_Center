@@ -67,7 +67,7 @@
                 "progressBarWidth": "20",
                 "enableDetailedPrinting": false
             },
-            "runCommand": "./Modules/SegmenterParallel/bin/SegmenterParallel",
+            "runCommand": "./Modules/run.sh SegmenterParallel",
             "useInputFile": true
         },
         "second_page": {

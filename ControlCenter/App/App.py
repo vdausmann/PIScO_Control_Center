@@ -20,7 +20,8 @@ class PIScOControlCenter:
 
         self.main_window = QWidget()
         self.main_window.setWindowTitle("PIScO Control Center")
-        self.main_window.setFixedSize(self.layout_settings["app_width"], self.layout_settings["app_height"])
+        # self.main_window.setFixedSize(self.layout_settings["app_width"], self.layout_settings["app_height"])
+        self.main_window.setBaseSize(self.layout_settings["app_width"], self.layout_settings["app_height"])
 
         self.set_colors()
         

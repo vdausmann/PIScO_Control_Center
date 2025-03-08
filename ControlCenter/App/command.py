@@ -1,3 +1,4 @@
+from re import sub
 from PySide6.QtCore import QThread, Signal, QObject
 import subprocess
 
@@ -12,8 +13,9 @@ class Command(QObject):
         self.run()
 
     def run_command(self):
-        self.terminal_signal.emit("Starting Command " + self.cmd, False, False)
-        process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+        self.terminal_signal.emit("Starting Command " + " ".join(self.cmd), False, False)
+        # process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+        process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE , stderr=subprocess.PIPE, bufsize=0)
 
         buffer = ""
         while process.poll() is None:
@@ -32,7 +34,7 @@ class Command(QObject):
 
         out, err = process.communicate()
 
-        self.terminal_signal.emit("Finished Command " + self.cmd, False, False)
+        self.terminal_signal.emit("Finished Command " + " ".join(self.cmd), False, False)
         if err != b"":
             print(err.decode("utf-8"))
         #     self.terminal_signal.emit("\t Errors: \n" + err.decode("utf-8"), True, False)

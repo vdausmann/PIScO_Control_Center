@@ -79,16 +79,17 @@ class Page(QWidget):
             self.print("Command already running")
             return
             
-        cmd = self.page_dict["runCommand"]
+        args = self.page_dict["runCommand"]
         if not self.page_dict["useInputFile"]:
             for key in self.settings.settings.keys():
-                cmd += " --" + key + " " + str(self.settings.settings[key].get())
+                args.append(" --" + key)
+                args.append(str(self.settings.settings[key].get()))
         else:
             path = write_new_inputfile(self.settings.settings, self.page_name)
-            cmd += " " + path
+            args.append(path)
 
         self.run_thread = QThread()
-        self.command = Command(cmd, self.run_thread, self.terminal)
+        self.command = Command(args, self.run_thread, self.terminal)
 
 
     def save_defaults(self):

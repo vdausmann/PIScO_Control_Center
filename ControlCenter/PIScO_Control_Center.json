@@ -116,7 +116,8 @@
                 "progressBarWidth": "40",
                 "enableDetailedPrinting": false
             },
-            "runCommand": "../../PIScO_Suite/run.sh SegmenterParallel",
+            "runCommand": [
+                "../../PIScO_Suite/run.sh", "SegmenterParallel"],
             "useInputFile": true
         },
         "GenerateCrops": {
@@ -148,6 +149,15 @@
                 "saveMode": [
                     "option",
                     [
+                        "oneImagePerObject",
+                        "cluster",
+                        "clusterPerImage",
+                        "drawContours"
+                    ]
+                ],
+                "cropDataLoadMode": [
+                    "option",
+                    [
                         "oneFilePerImage",
                         "oneFilePerObject",
                         "oneFile"
@@ -169,11 +179,13 @@
                 "imageWidth": "2560",
                 "imageHeight": "2560",
                 "resizeToImageWidthHeight": true,
-                "saveMode": "oneFilePerImage",
+                "saveMode": "oneImagePerObject",
                 "progressBarWidth": "40",
-                "enableDetailedPrinting": false
+                "enableDetailedPrinting": false,
+                "cropDataLoadMode": "oneFilePerImage"
             },
-            "runCommand": "../../PIScO_Suite/run.sh GenerateCrops",
+            "runCommand": [
+                "../../PIScO_Suite/run.sh", "GenerateCrops"],
             "useInputFile": true
         }
     }

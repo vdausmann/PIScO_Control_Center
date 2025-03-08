@@ -25,11 +25,11 @@ class PageSelector(QWidget):
         self.pages = pages
         self.buttons = []
 
-        button_size = (app.layout_settings["page_switch_button_width"], app.layout_settings["page_switch_button_height"])
+        # button_size = (app.layout_settings["page_switch_button_width"], app.layout_settings["page_switch_button_height"])
 
         for index, page in enumerate(self.pages):
             button = QPushButton(page)
-            button.setFixedSize(*button_size)
+            # button.setFixedSize(*button_size)
             button.setStyleSheet(f"background-color: {self.app.color_settings['button_color']}; color: {self.app.color_settings['text_color']}; padding: 5px;")
             button.clicked.connect(lambda _, i=index: self.onclick(i))
             self.buttons.append(button)

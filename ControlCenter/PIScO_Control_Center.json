@@ -109,7 +109,7 @@
                 "backgroundCorrectionModel": "minMaxMethod",
                 "numBackgroundImages": "10",
                 "minObjectArea": "100",
-                "saveMode": "oneFile",
+                "saveMode": "oneFilePerImage",
                 "saveContours": true,
                 "saveBackgroundCorrectedImages": false,
                 "saveCrops": false,
@@ -117,6 +117,63 @@
                 "enableDetailedPrinting": false
             },
             "runCommand": "../../PIScO_Suite/run.sh SegmenterParallel",
+            "useInputFile": true
+        },
+        "GenerateCrops": {
+            "Fields": {
+                "sourcePath": [
+                    "path"
+                ],
+                "imageSourcePath": [
+                    "path"
+                ],
+                "savePath": [
+                    "path"
+                ],
+                "taskBufferSize": [
+                    "int"
+                ],
+                "numThreads": [
+                    "int"
+                ],
+                "imageWidth": [
+                    "int"
+                ],
+                "imageHeight": [
+                    "int"
+                ],
+                "resizeToImageWidthHeight": [
+                    "bool"
+                ],
+                "saveMode": [
+                    "option",
+                    [
+                        "oneFilePerImage",
+                        "oneFilePerObject",
+                        "oneFile"
+                    ]
+                ],
+                "progressBarWidth": [
+                    "int"
+                ],
+                "enableDetailedPrinting": [
+                    "bool"
+                ]
+            },
+            "Defaults": {
+                "sourcePath": "/home/tim/Documents/ArbeitTestData/TestResults",
+                "imageSourcePath": "/home/tim/Documents/ArbeitTestData/PeruTest",
+                "savePath": "/home/tim/Documents/ArbeitTestData/TestResultsCrops/Crops",
+                "taskBufferSize": "20",
+                "numThreads": "12",
+                "imageWidth": "2560",
+                "imageHeight": "2560",
+                "resizeToImageWidthHeight": true,
+                "saveMode": "oneFilePerImage",
+                "progressBarWidth": "40",
+                "enableDetailedPrinting": false
+            },
+            "runCommand": "../../PIScO_Suite/run.sh GenerateCrops",
             "useInputFile": true
         }
     }

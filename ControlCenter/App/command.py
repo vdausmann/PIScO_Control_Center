@@ -33,7 +33,8 @@ class Command(QObject):
         out, err = process.communicate()
 
         self.terminal_signal.emit("Finished Command " + self.cmd, False, False)
-        # if err != b"":
+        if err != b"":
+            print(err.decode("utf-8"))
         #     self.terminal_signal.emit("\t Errors: \n" + err.decode("utf-8"), True, False)
         # self.terminal_signal.emit("\t Output: \n" + out.decode("utf-8"), True, False)
 

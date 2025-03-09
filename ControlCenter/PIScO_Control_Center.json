@@ -117,7 +117,9 @@
                 "enableDetailedPrinting": false
             },
             "runCommand": [
-                "../../PIScO_Suite/run.sh", "SegmenterParallel"],
+                "../../PIScO_Suite/run.sh",
+                "SegmenterParallel"
+            ],
             "useInputFile": true
         },
         "GenerateCrops": {
@@ -163,6 +165,9 @@
                         "oneFile"
                     ]
                 ],
+                "sourceImageFileType": [
+                    "string"
+                ],
                 "progressBarWidth": [
                     "int"
                 ],
@@ -172,20 +177,23 @@
             },
             "Defaults": {
                 "sourcePath": "/home/tim/Documents/ArbeitTestData/TestResults",
-                "imageSourcePath": "/home/tim/Documents/ArbeitTestData/PeruTest",
+                "imageSourcePath": "/home/tim/Documents/ArbeitTestData/TestResults",
                 "savePath": "/home/tim/Documents/ArbeitTestData/TestResultsCrops/Crops",
                 "taskBufferSize": "20",
-                "numThreads": "12",
+                "numThreads": "5",
                 "imageWidth": "2560",
                 "imageHeight": "2560",
                 "resizeToImageWidthHeight": true,
                 "saveMode": "oneImagePerObject",
                 "progressBarWidth": "40",
                 "enableDetailedPrinting": false,
-                "cropDataLoadMode": "oneFilePerImage"
+                "cropDataLoadMode": "oneFilePerImage",
+                "sourceImageFileType": "png"
             },
             "runCommand": [
-                "../../PIScO_Suite/run.sh", "GenerateCrops"],
+                "../../PIScO_Suite/run.sh",
+                "GenerateCrops"
+            ],
             "useInputFile": true
         }
     }

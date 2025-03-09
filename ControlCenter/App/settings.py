@@ -49,6 +49,9 @@ class SettingBlockFloat(QFrame):
         text = self.input_field.text()
         return self.input_field.text() if self.is_valid(text) else "0"
 
+    def str_to_type(self, string):
+        return float(string) 
+
 
 class SettingBlockInt(QFrame):
     def __init__(self, name, setting, width, height, default):
@@ -92,6 +95,10 @@ class SettingBlockInt(QFrame):
     def get(self):
         text = self.input_field.text()
         return self.input_field.text() if self.is_valid(text) else "0"
+
+    def str_to_type(self, string):
+        return int(string) 
+
 
 class SettingBlockPath(QFrame):
     def __init__(self, name, setting, width, height, default):
@@ -137,6 +144,9 @@ class SettingBlockPath(QFrame):
     def get(self):
         return self.input_field.text()
 
+    def str_to_type(self, string):
+        return string 
+
 
 class SettingBlockOption(QFrame):
     def __init__(self, name, setting, width, height, default):
@@ -166,6 +176,9 @@ class SettingBlockOption(QFrame):
     def get(self):
         return self.input_field.currentText()
 
+    def str_to_type(self, string):
+        return string 
+
 
 class SettingBlockString(QFrame):
     def __init__(self, name, setting, width, height, default):
@@ -189,8 +202,15 @@ class SettingBlockString(QFrame):
 
         self.block_layout.addWidget(self.input_field)
 
+
+    def set(self, path):
+        self.input_field.setText(path)
+
     def get(self):
         return self.input_field.text()
+
+    def str_to_type(self, string):
+        return string 
 
 class SettingBlockBool(QFrame):
     def __init__(self, name, setting, width, height, default):
@@ -233,6 +253,9 @@ class SettingBlockBool(QFrame):
     def get(self):
         return self.input_field.isChecked()
 
+    def str_to_type(self, string):
+        return string == "true"
+
 class Settings(QWidget):
     def __init__(self, settings):
         super().__init__()
@@ -262,7 +285,9 @@ class Settings(QWidget):
         self.main_layout.addWidget(self.scroll_area)
 
         self.settings = {}
+        self.add_settings(settings)
 
+    def add_settings(self, settings):
         for key in settings["Fields"].keys():
             if "Defaults" in settings.keys() and key in settings["Defaults"].keys():
                 self.add_setting(key, settings["Fields"][key], settings["Defaults"][key])

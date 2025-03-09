@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QSpacerItem, QVBoxLayout, QPushButton, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QGridLayout, QSpacerItem, QVBoxLayout, QPushButton, QLabel, QHBoxLayout, QFileDialog
 from PySide6.QtCore import Qt, QThread
 from .LabelPathComb import LabelPathComb
 from .LabelEntryComb import LabelEntryComb
@@ -43,21 +43,41 @@ class Page(QWidget):
         self.run_thread = None
         self.process = None
 
-        button_layout = QHBoxLayout()
+        button_layout = QGridLayout()
         button_area = QWidget()
+
+        load_config_button = QPushButton("Load Settings")
+        load_config_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        # save_default_button.setFixedSize(self.unit_width, self.unit_height)
+        load_config_button.setFixedHeight(40)
+        load_config_button.clicked.connect(self.load_settings)
+        button_layout.addWidget(load_config_button, 0, 0)
+
+        load_default = QPushButton("Load Defaults")
+        load_default.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        load_default.setFixedHeight(40)
+        load_default.clicked.connect(self.load_defaults)
+        button_layout.addWidget(load_default, 0, 1)
+
+        save_default_button = QPushButton("Save Default Settings")
+        save_default_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        save_default_button.setFixedHeight(40)
+        save_default_button.clicked.connect(self.save_defaults)
+        button_layout.addWidget(save_default_button, 0, 2)
+
 
         run_button = QPushButton("Run")
         run_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
         run_button.setFixedHeight(40)
         run_button.clicked.connect(self.run_command)
-        button_layout.addWidget(run_button)
+        button_layout.addWidget(run_button, 1, 0, 1, 2)
 
-        save_default_button = QPushButton("Save Default Settings")
-        save_default_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
-        # save_default_button.setFixedSize(self.unit_width, self.unit_height)
-        save_default_button.setFixedHeight(40)
-        save_default_button.clicked.connect(self.save_defaults)
-        button_layout.addWidget(save_default_button)
+        kill_button = QPushButton("Kill")
+        kill_button.setStyleSheet(f"background-color: {self.app.color_settings['run_button_color']}; color: {self.app.color_settings['text_color']};")
+        kill_button.setFixedHeight(40)
+        kill_button.clicked.connect(lambda: self.command.process.kill())
+        button_layout.addWidget(kill_button, 1, 2)
+
 
         button_area.setLayout(button_layout)
         self.page_layout.addWidget(button_area, stretch=50)
@@ -79,7 +99,7 @@ class Page(QWidget):
             self.print("Command already running")
             return
             
-        args = self.page_dict["runCommand"]
+        args = self.page_dict["runCommand"].copy()
         if not self.page_dict["useInputFile"]:
             for key in self.settings.settings.keys():
                 args.append(" --" + key)
@@ -98,3 +118,32 @@ class Page(QWidget):
         for settings_name in self.settings.settings.keys():
             self.page_dict["Defaults"][settings_name] = self.settings.settings[settings_name].get()
         self.app.save_defaults()
+
+    def load_defaults(self):
+        if not "Defaults" in self.page_dict.keys():
+            return
+        for settings_name in self.settings.settings.keys():
+            self.settings.settings[settings_name].set(self.page_dict["Defaults"][settings_name])
+
+    def load_settings(self):
+        file = QFileDialog.getOpenFileName(self, 'Open file', '.')[0]
+        try:
+            with open(file, "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    line = line.strip()
+                    # check for comment
+                    if line[0] == "#" or line[0] == "//": 
+                        continue
+                    line = line.split("=")
+                    key = line[0].strip()
+                    value = line[1].strip()
+                    try:
+                        setting = self.settings.settings[key]
+                        setting.set(setting.str_to_type(value))
+                    except Exception as e:
+                        print(e)
+                        self.terminal.print(f'<font color="red">Error while reading key {key} from input file.</font>')
+
+        except:
+            self.terminal.print('<font color="red">Error while reading input file.</font>')

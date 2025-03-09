@@ -15,11 +15,11 @@ class Command(QObject):
     def run_command(self):
         self.terminal_signal.emit("Starting Command " + " ".join(self.cmd), False, False)
         # process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
-        process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE , stderr=subprocess.PIPE, bufsize=0)
+        self.process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE , stderr=subprocess.PIPE, bufsize=0)
 
         buffer = ""
-        while process.poll() is None:
-            s = process.stdout.read(1)
+        while self.process.poll() is None:
+            s = self.process.stdout.read(1)
             if s == b"\n":
                 self.terminal_signal.emit(buffer, True, False)
                 buffer = ""
@@ -32,7 +32,7 @@ class Command(QObject):
                 buffer += s.decode("utf-8")
 
 
-        out, err = process.communicate()
+        out, err = self.process.communicate()
 
         self.terminal_signal.emit("Finished Command " + " ".join(self.cmd), False, False)
         if err != b"":

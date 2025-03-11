@@ -96,7 +96,7 @@
                 ]
             },
             "Defaults": {
-                "sourcePath": "/home/tim/Documents/ArbeitTestData/PeruTest",
+                "sourcePath": "/home/tim/Documents/ArbeitTestData/selection",
                 "savePath": "/home/tim/Documents/ArbeitTestData/TestResults",
                 "stackSize": "10",
                 "numBufferedStacks": "20",
@@ -104,7 +104,7 @@
                 "numReaderThreads": "5",
                 "imageWidth": "2560",
                 "imageHeight": "2560",
-                "resizeToImageWidthHeight": true,
+                "resizeToImageWidthHeight": false,
                 "invertImages": true,
                 "backgroundCorrectionModel": "minMaxMethod",
                 "numBackgroundImages": "10",

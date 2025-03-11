@@ -82,6 +82,7 @@ class Terminal(QWidget):
 
     def clear_output(self):
         self.output.clear()
+        self.output_lines.clear()
 
     def help(self):
         self.output.append(f'<font color="{self.app.color_settings["text_color"]}">Available commands:</font>')

@@ -20,6 +20,10 @@ from skimage import measure
 from skimage.io import imread
 import cv2
 
+import umap
+import pickle
+from sklearn.preprocessing import StandardScaler
+
 from tqdm import tqdm
 
 ### fixed variables
@@ -640,9 +644,73 @@ def create_log_df(file_path):
     
     return df
 
+def calculate_umap_embeddings(df, reducer, scaler):
+    selected_features = [
+       # 'pressure [dbar]', 
+       # 'temperature', 
+       # 'area', 
+       # 'w', 
+       # 'h', 
+       'esd', 
+       # 'interpolated_s', 
+       # 'interpolated_o',
+       # 'interpolated_t', 
+       # 'interpolated_chl', 
+       'object_area_exc', 
+       'object_area_rprops', 
+       'object_%area',
+       'object_major_axis_len', 
+       'object_minor_axis_len', 
+       'object_centroid_y', 
+       'object_centroid_x', 
+       'object_convex_area',
+       'object_min_intensity', 
+       'object_max_intensity', 
+       'object_mean_intensity', 
+       'object_int_density', 
+       'object_perimeter',
+       'object_elongation', 
+       'object_range', 
+       'object_perim_area_excl', 
+       'object_perim_major', 
+       'object_circularity_area_excl', 
+       'object_angle',
+       'object_boundbox_area', 
+       'object_eccentricity', 
+       'object_equivalent_diameter',
+       'object_euler_nr', 
+       'object_extent', 
+       'object_local_centroid_col', 
+       'object_local_centroid_row',
+       'object_solidity', 
+       'TAG_event', 
+       'part_based_filter'
+    ]
+    df_selected = df[selected_features]
+    
+    df_selected_scaled = scaler.transform(df_selected)
 
-def analyze_profiles(profiles_dir, dest_folder, engine, small=False, add_ctd=True, calc_props=True, plotting=True, log_directory=None):
+    # Then transform the UMAP model with the scaled data
+    embedding = reducer.transform(df_selected_scaled)
+    
+    #add embedding to database
+    df.drop(['umap_x', 'umap_y'], axis=1, inplace=True, errors='ignore')
+    df['umap_x']=embedding[:, 0]
+    df['umap_y']=embedding[:, 1]
+
+    return df
+
+def analyze_profiles(profiles_dir, dest_folder, engine, small=False, add_ctd=True, calc_props=True, calc_umap=True, plotting=True, log_directory=None):
     os.makedirs(dest_folder, exist_ok=True)
+    if calc_umap:
+        print('loading UMAP model...')
+        reducer_path = '/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/umap_reducer.pkl'
+        scaler_path = '/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/standard_scaler.pkl'
+        with open(reducer_path, 'rb') as f:
+            reducer = pickle.load(f)
+        with open(scaler_path, 'rb') as f:
+            scaler = pickle.load(f)
+
     for folder in os.listdir(profiles_dir):
         if '°' in folder:
             folder_corr = folder.replace('°', 'deg')
@@ -712,6 +780,11 @@ def analyze_profiles(profiles_dir, dest_folder, engine, small=False, add_ctd=Tru
             df_combined = pd.merge_asof(df, df_log, left_on='timestamp', right_on='timestamp', direction='backward')
             df_combined.drop('timestamp', axis=1, inplace=True)
 
+        #Calculate UMAP embeddings
+        if calc_umap:
+            print('calculating UMAP embeddings...')
+            df_combined = calculate_umap_embeddings(df_combined, reducer, scaler)
+
         #Sort by filename and add obj_id
         sorted_df = df_combined.sort_values(by='filename')
         sorted_fn_list = sorted_df['filename'].tolist()
@@ -757,9 +830,9 @@ def analyze_profiles(profiles_dir, dest_folder, engine, small=False, add_ctd=Tru
         print('Done.')
 
 if __name__ == "__main__":
-    dest_folder = '/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/analysis'
-    result_dir = '/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/results_240328'
-    log_dir = '/media/plankton/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/Templog/'
+    dest_folder = '/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/analysis'
+    result_dir = '/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/results_240328'
+    log_dir = '/media/veit/30781fe1-cea5-4503-ae00-1986beb935d2/Segmentation_results/M181/Templog/'
     analyze_profiles(result_dir, dest_folder, engine, small=False, add_ctd=True, calc_props=True, plotting=True, log_directory=log_dir)
     print('All done.')
     engine.dispose()

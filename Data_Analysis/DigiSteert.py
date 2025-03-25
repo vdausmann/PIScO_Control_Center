@@ -847,4 +847,4 @@ def update_feature_selection(feat_click):
         return crop_fig,     
 
 if __name__ == '__main__':
-    app.run(debug=True, host='10.136.78.3', port=8050)
+    app.run(debug=True, host='10.136.72.201', port=8050)

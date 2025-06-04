@@ -62,11 +62,15 @@
                         "minMaxMethod",
                         "medianMethod",
                         "minMethod",
-                        "averageMethod"
+                        "averageMethod",
+                        "noBackgroundCorrection"
                     ]
                 ],
                 "numBackgroundImages": [
                     "int"
+                ],
+                "inputIsVideo": [
+                    "bool"
                 ],
                 "minObjectArea": [
                     "float"
@@ -114,7 +118,8 @@
                 "saveBackgroundCorrectedImages": false,
                 "saveCrops": false,
                 "progressBarWidth": "40",
-                "enableDetailedPrinting": false
+                "enableDetailedPrinting": false,
+                "inputIsVideo": false
             },
             "runCommand": [
                 "../../PIScO_Suite/run.sh",

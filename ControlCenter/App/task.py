@@ -2,9 +2,12 @@ from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QFrame, QDialog, QVBoxLayout, QPushButton, QCheckBox, QScrollArea, QGridLayout, QLineEdit
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtGui import QMouseEvent, QIcon
 from .module import Module
-
+from .helper import ScrollablePopUp, DropdownSettings
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from .app import PIScOControlCenter
 
 class Task: 
     def __init__(self, selected_modules: dict[str, bool]):
@@ -22,10 +25,12 @@ class Task:
 
 
 class TaskObject(QWidget):
-    def __init__(self, name: str, selected_modules: dict[str, bool]):
+    def __init__(self, name: str, selected_modules: dict[str, bool], app):
         super().__init__()
         self.name = name
+        self.app = app
         self.selected = False  # Track selection state
+        self.task = Task(selected_modules)
         self.init_ui()
 
     def init_ui(self):
@@ -36,9 +41,9 @@ class TaskObject(QWidget):
         # Background & border
         self.setStyleSheet("""
             QWidget {
-                background-color: #e6f0f8;
+                background-color: #c0c0c0;
                 border-radius: 4px;
-                border: 1px solid #c0d3e5;
+                border: 1px solid #a0a0a0;
             }
         """)
 
@@ -47,14 +52,20 @@ class TaskObject(QWidget):
         layout.setSpacing(0)
 
         frame = QFrame(self)
-        # frame.setStyleSheet("background-color: #000;")
+
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(0, 0, 0, 0)
-        frame_layout.setSpacing(0)
+        frame_layout.setSpacing(5)
+
+        self.dropDownMenu = DropdownSettings()
+        frame_layout.addWidget(self.dropDownMenu, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.dropDownMenu.add_action_from_label("test", lambda: None)
+        self.dropDownMenu.add_action_from_label("\033[91mDelete Task\033[0m", lambda: self.app.delete_task(self.name))
+
 
         # Label
         self.label = QLabel(self.name)
-        self.label.setStyleSheet("font-size: 10pt;")
+        self.label.setStyleSheet("font-size: 10pt; border: none;")
         frame_layout.addWidget(self.label, 1)
 
         # Make label clickable by overriding mousePressEvent
@@ -88,33 +99,16 @@ class TaskObject(QWidget):
                 }
             """)
 
-class PopUpTaskSettings(QDialog):
+class PopUpTaskSettings(ScrollablePopUp):
     def __init__(self, module: Module, parent=None):
-        super().__init__(parent)
+        super().__init__(parent=parent)
         self.setWindowTitle("Settings")
-        self.row_height = 30
-        self.window_height = 400
-        self.window_width = 200
-        self.padding = 2
-        self.setFixedSize(self.window_width, self.window_height)
         self.inputs = {}  # To store input widgets
         self.module = module
         self.init_ui()
 
     def init_ui(self):
-        main_layout = QVBoxLayout(self)
-
-        label = QLabel(f"Settings for {self.module.name}")
-        main_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Scroll Area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_widget = QWidget()
-        rows_layout = QVBoxLayout(scroll_widget)
-        rows_layout.setContentsMargins(2, 0, 2, 0)
-        rows_layout.setSpacing(5)
-
+        rows = []
         settings = self.module.get_settings()
         for setting in settings:
             try:
@@ -139,21 +133,9 @@ class PopUpTaskSettings(QDialog):
                 row.addWidget(input_widget, 1)
 
             self.inputs[setting] = input_widget
-            rows_layout.addLayout(row)
+            rows.append(("", row))
 
-        scroll.setWidget(scroll_widget)
-        main_layout.addWidget(scroll)
-
-        # OK / Cancel buttons
-        button_row = QHBoxLayout()
-        ok_btn = QPushButton("OK")
-        cancel_btn = QPushButton("Cancel")
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn.clicked.connect(self.reject)
-        button_row.addStretch()
-        button_row.addWidget(ok_btn)
-        button_row.addWidget(cancel_btn)
-        main_layout.addLayout(button_row)
+        self.add_rows(rows)
 
     def get_settings(self):
         result = {}

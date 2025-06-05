@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-        QMainWindow, QWidget, QVBoxLayout, QPushButton, QScrollArea, QApplication
+        QMainWindow, QWidget, QVBoxLayout, QPushButton, QScrollArea, QApplication, QMessageBox
         )
 from PySide6.QtCore import Qt
 import sys
@@ -44,6 +44,13 @@ class PIScOControlCenter(QMainWindow):
         self.object_container.setLayout(self.object_layout)
         self.scroll_area.setWidget(self.object_container)
 
+        self.tasks = {}
+
+        # test:
+        task = TaskObject("test", {"TestModule": True}, self)
+        self.object_layout.addWidget(task, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.tasks[task.name] = task
+
         self.show()
         sys.exit(self.app.exec())
 
@@ -51,14 +58,25 @@ class PIScOControlCenter(QMainWindow):
         ret, name = popUpTextEntry(self, "Adding a Task", "Enter Name of Task:")
         if not ret or not name:
             return
+        if name in self.tasks:
+            QMessageBox.warning(None, "Warning", "Tasks need unique names!")
+            return
 
         dialog = PopUpModuleSelection(["Module 1", "Module 2"])
         if not dialog.exec():
             return
 
+        selected = dialog.get_selected()
         modules = [Module(m) for m in dialog.get_selected() if dialog.get_selected()[m]]
         for module in modules:
             PopUpTaskSettings(module, self).exec()
 
-        # obj_widget = TaskObject(name, dialog.get_selected())
-        # self.object_layout.addWidget(obj_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        task = TaskObject(name, dialog.get_selected(), self)
+        self.object_layout.addWidget(task, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.tasks[task.name] = task
+
+    def delete_task(self, name: str):
+        self.object_layout.removeWidget(self.tasks[name])
+        self.tasks[name].setParent(None)
+        self.tasks[name].deleteLater()
+        self.tasks.pop(name)

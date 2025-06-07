@@ -1,12 +1,24 @@
 from PySide6.QtWidgets import (
-        QMainWindow, QWidget, QVBoxLayout, QPushButton, QScrollArea, QApplication, QMessageBox, QTreeWidget,
-        QTreeWidgetItem, QAbstractItemView
-        )
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QScrollArea,
+    QApplication,
+    QMessageBox,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QAbstractItemView,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+)
 from PySide6.QtCore import Qt
 import sys
 from .task import TaskObject, PopUpTaskSettings
 from .helper import popUpTextEntry, TreeItemWidget
-from .module import PopUpModuleSelection, Module
+from .module import PopUpModuleSelection, Module, load_modules_from_file
+
 
 class PIScOControlCenter(QMainWindow):
     def __init__(self, config):
@@ -47,51 +59,31 @@ class PIScOControlCenter(QMainWindow):
 
         self.tasks = {}
 
-        # task1 = TreeItemWidget("Task 1", 0)
-        # module1_1 = TreeItemWidget("Module 1", 1)
-        # module1_2 = TreeItemWidget("Module 2", 1)
-        # setting1_1 = TreeItemWidget("Setting 1", 2, leaf_node=True)
-        # module1_1.add_child(setting1_1)
-        # task1.add_child(module1_1)
-        # task1.add_child(module1_2)
-        #
-        # task2 = TreeItemWidget("Task 2", 0)
-        # module2_1 = TreeItemWidget("Module 1", 1)
-        # module2_2 = TreeItemWidget("Module 2", 1)
-        # task2.add_child(module2_1)
-        # task2.add_child(module2_2)
-        # self.object_layout.addWidget(task1)
-        # self.object_layout.addWidget(task2)
-        # self.object_layout.addStretch()
-
-        self.tree = QTreeWidget()
+        self.tree = QTreeWidget(self)
         self.tree.setHeaderHidden(True)
         self.tree.setAllColumnsShowFocus(True)
         self.tree.setSelectionBehavior(QTreeWidget.SelectRows)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.tree.itemClicked.connect(self.on_item_click)
-
         self.object_layout.addWidget(self.tree)
 
-        # Example data
-        task1 = QTreeWidgetItem(["Task 1"])
-        module1 = QTreeWidgetItem(["Module A"])
-        module2 = QTreeWidgetItem(["Module B"])
-        task1.addChildren([module1, module2])
-
-        task2 = QTreeWidgetItem(["Task 2"])
-        module3 = QTreeWidgetItem(["Module C"])
-        setting1 = QTreeWidgetItem(["Setting 1"])
-        setting2 = QTreeWidgetItem(["Setting 2"])
-        module3.addChildren([setting1, setting2])
-        task2.addChild(module3)
-
-        self.tree.addTopLevelItems([task1, task2])
-
         # test:
-        # task = TaskObject("test", {"TestModule": True}, self)
+        print(load_modules_from_file("modules.cfg"))
+        task = TaskObject("test", {"TestModule": True}, self)
+        # self.tree.addTopLevelItem(task)
+        frame = QFrame()
+        layout = QHBoxLayout(frame)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        label = QLabel(task.name)
+        delete_button = QPushButton("Delete")
+        delete_button.setStyleSheet("QPushButton { color: red; border: none; }")
+        delete_button.clicked.connect(lambda: self.delete_task(task.name))
+        layout.addWidget(label)
+        layout.addStretch()
+        layout.addWidget(delete_button)
         # self.object_layout.addWidget(task, alignment=Qt.AlignmentFlag.AlignCenter)
-        # self.tasks[task.name] = task
+        self.tasks[task.name] = task
+        self.tree.setItemWidget(task, 0, frame)
 
         self.show()
         sys.exit(self.app.exec())
@@ -122,8 +114,7 @@ class PIScOControlCenter(QMainWindow):
         self.object_layout.addWidget(task, alignment=Qt.AlignmentFlag.AlignCenter)
         self.tasks[task.name] = task
 
+    def add_task(self, name, modules): ...
+
     def delete_task(self, name: str):
-        self.object_layout.removeWidget(self.tasks[name])
-        self.tasks[name].setParent(None)
-        self.tasks[name].deleteLater()
-        self.tasks.pop(name)
+        self.tree.takeTopLevelItem(self.tree.indexOfTopLevelItem(self.tasks[name]))

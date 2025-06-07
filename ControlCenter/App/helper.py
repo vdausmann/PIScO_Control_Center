@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QInputDialog, QWidget, QDialog, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel, QPushButton,
-QScrollArea, QMenu, QWidgetAction)
+QScrollArea, QMenu, QWidgetAction, QVBoxLayout)
 from PySide6.QtGui import QMouseEvent, QAction, QIcon
 from PySide6.QtCore import Qt, QPoint
 
@@ -112,3 +112,64 @@ class DropdownSettings(QWidget):
     def add_action(self, action: QAction, callback):
         action.triggered.connect(callback)
         self.menu.addAction(action)
+
+
+class TreeItemWidget(QWidget):
+    def __init__(self, label, level=0, on_click: Callable[[QLabel], None]=lambda _: None, leaf_node:bool = False):
+        super().__init__()
+        self.level = level
+        self.label = label
+        self.on_click = on_click
+        self.children_visible = False
+        self.child_nodes = []
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        if leaf_node:
+            self.header = QLabel(" " * 4 * level + label)
+            self.header.setStyleSheet("""
+                    border: none;
+                    text-align: left;
+                    padding: 4px;
+                    font-weight: bold;
+                    background-color: #f0f0f0;
+            """)
+            self.main_layout.addWidget(self.header)
+        else:
+            self.header = QPushButton(f"{' ' * (4 * level)}▶ {label}")
+            self.header.setStyleSheet("""
+                QPushButton {
+                    border: none;
+                    text-align: left;
+                    padding: 4px;
+                    font-weight: bold;
+                    background-color: #f0f0f0;
+                }
+                QPushButton:hover {
+                    background-color: #e0e0e0;
+                }
+            """)
+            self.header.clicked.connect(self.toggle_children)
+            if self.on_click:
+                self.header.clicked.connect(lambda: self.on_click(self.label))
+
+            self.main_layout.addWidget(self.header)
+
+            self.child_container = QWidget()
+            self.child_layout = QVBoxLayout(self.child_container)
+            self.child_layout.setContentsMargins(0, 0, 0, 0)
+            self.child_container.setVisible(False)
+            self.main_layout.addWidget(self.child_container)
+
+
+    def add_child(self, child_widget):
+        self.child_nodes.append(child_widget)
+        self.child_layout.addWidget(child_widget)
+
+    def toggle_children(self):
+        self.children_visible = not self.children_visible
+        self.child_container.setVisible(self.children_visible)
+        arrow = "▼" if self.children_visible else "▶"
+        self.header.setText(f"{' ' * (4 * self.level)}{arrow} {self.label}")
+

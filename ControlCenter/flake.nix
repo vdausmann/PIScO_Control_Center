@@ -28,6 +28,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         numpy
                         matplotlib
                         pandas
+                        pyyaml
                     ]))
                 ];
                 buildInputs = with pkgs; [

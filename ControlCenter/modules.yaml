@@ -1,0 +1,62 @@
+
+
+
+TestModule1:
+  externalSettings:
+    enableLogging: 
+      type: bool
+      value: true
+      desc: Wether to enable logging
+    userName:
+      type: string
+    savePath:
+      type: folder
+      value: ~/Downloads
+      desc: Folder to which the results should be saved.
+      check: false
+    configFile:
+      type: file
+      value: modules.yaml
+    autoSave:
+      type: bool
+      value: true
+    step:
+      type: double
+      value: 0.1
+    model:
+      type: 
+        option: 
+          - model1
+          - model2
+      value: model2
+    nCores:
+      type: int
+      value: 8
+  internalSettings:
+    command: echo "hi"
+    priority: 0
+
+
+TestModule2:
+  externalSettings:
+    enableLogging: 
+      type: bool
+      value: true
+      desc: Wether to enable logging
+    userName:
+      type: string
+      value: tim
+    savePath:
+      type: folder
+      value: /home/tim/Downloads
+      desc: Folder to which the results should be saved.
+      check: false
+    configFile:
+      type: file
+    autoSave:
+      type: bool
+    step:
+      type: double
+  internalSettings:
+    command: echo "bye"
+    priority: 4

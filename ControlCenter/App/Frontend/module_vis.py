@@ -1,18 +1,26 @@
-from PySide6.QtWidgets import QHBoxLayout, QCheckBox, QLabel, QMessageBox
+from PySide6.QtWidgets import QHBoxLayout, QCheckBox, QLabel, QTreeWidgetItem
 from .helper import ScrollablePopUp
-from .settings import Setting
+from App.Backend.module import Module
+from App.Backend.settings import Setting
+from .setting_vis import SettingObject
+from .helper import TreeNode
 
 
-class Module:
-    def __init__(self, name: str):
-        self.name = name
-        self.settings: list[Setting] = []
+class ModuleObject(TreeNode):
+    def __init__(self, module: Module):
+        super().__init__()
+        self.module = module
+        self.init_ui()
 
-    def load_settings(self, default=True): ...
+    def init_ui(self):
+        node = QLabel(self.module.name)
+        self.add_object([node])
+        for setting in self.module.settings:
+            setting_object = SettingObject(setting)
+            self.add_child(setting_object)
 
-    def run(self): ...
-
-
+        priority_setting_object = SettingObject(self.module.priority)
+        self.add_child(priority_setting_object)
 
 
 class PopUpModuleSelection(ScrollablePopUp):
@@ -21,7 +29,8 @@ class PopUpModuleSelection(ScrollablePopUp):
         self.setWindowTitle("Select Modules")
 
         self.checkboxes = {}
-        modules = load_modules_from_file("modules.cfg")
+        # modules = load_modules_from_file("modules.cfg")
+        modules = []
         self.init_ui(modules)
 
     def init_ui(self, modules):

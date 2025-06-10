@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPoint, QTimer
 import sys
 from .task_vis import TaskObject, TaskObjectMenu, TaskTree
-from .helper import popUpTextEntry, StartStopButton, PopupNotification
+from .helper import popUpTextEntry, StartStopButton
+from .notification import NotificationManager
 from App.Backend.module import Module
 from App.Backend.settings import Setting
 from App.Backend.task import Task
@@ -35,6 +36,7 @@ class PIScOControlCenter(QMainWindow):
         self.setMinimumSize(600, 400)
         self.resize(1080, 720)
 
+
         self.inactive_tasks_tree = TaskTree(self.open_tree_menu, self)
         self.active_tasks_tree = TaskTree(self.open_tree_menu, self)
 
@@ -43,9 +45,11 @@ class PIScOControlCenter(QMainWindow):
         self.main_layout = QVBoxLayout(central_widget)
         self.setCentralWidget(central_widget)
 
+
         # Button to add new object
         self.add_button = QPushButton("Save")
-        self.add_button.clicked.connect(self.save)
+        self.add_button.clicked.connect(self.show_notification)
+        # self.add_button.clicked.connect(self.save)
         self.main_layout.addWidget(self.add_button)
 
         # Scroll area to hold the objects
@@ -93,10 +97,10 @@ class PIScOControlCenter(QMainWindow):
         try:
             inactive_tasks, active_tasks = load_app_state("tmp/app_state.yaml")
             for task in inactive_tasks:
-                t = Task(task, inactive_tasks[task])
+                t = Task(task, inactive_tasks[task], False)
                 self.add_task(t, self.inactive_tasks_tree)
             for task in active_tasks:
-                t = Task(task, active_tasks[task])
+                t = Task(task, active_tasks[task], True)
                 self.add_task(t, self.active_tasks_tree)
         except Exception as e:
             print("Loading not possible", e)
@@ -110,13 +114,19 @@ class PIScOControlCenter(QMainWindow):
         # task3 = Task("Test 3", modules, True)
         # self.add_task(task3, self.active_tasks_tree)
 
+        self.notifications_manager = NotificationManager(self)
+
         self.autosave_timer = QTimer(self)
-        self.autosave_timer.timeout.connect(self.autosave)
+        self.c = 0
+        self.autosave_timer.timeout.connect(self.save)
         self.autosave_timer.start(5 * 60 * 1000)
-        self.autosave()
 
         self.show()
         sys.exit(self.app.exec())
+
+    def show_notification(self):
+        self.notifications_manager.show_notification("Notification " + str(self.c))
+        self.c += 1
 
     def open_tree_menu(self, tree: QTreeWidget, point):
         item = tree.itemAt(point)
@@ -153,8 +163,5 @@ class PIScOControlCenter(QMainWindow):
             [t.task for t in self.inactive_tasks_tree.tasks],
             [t.task for t in self.active_tasks_tree.tasks],
         )
-
-    def autosave(self):
-        print("saved")
-        self.save()
-        PopupNotification(self, "Autosaved")
+        self.notifications_manager.show_notification("Saved" + str(self.c))
+        self.c += 1

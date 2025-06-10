@@ -18,13 +18,13 @@ def get_setting_dict(setting: Setting) -> dict:
 def write_current_state(inactive_tasks: list[Task], active_tasks: list[Task]):
     state = {"inactive_tasks": {}, "active_tasks": {}}
     for task in inactive_tasks:
-        state["inactive_tasks"][task.name] = {}
+        state["inactive_tasks"][task.name] = {"modules": {}, "state": {}}
         for module in task.modules:
-            state["inactive_tasks"][task.name][module.name] = {
+            state["inactive_tasks"][task.name]["modules"][module.name] = {
                 "externalSettings": {},
                 "internalSettings": {},
             }
-            d = state["inactive_tasks"][task.name][module.name]
+            d = state["inactive_tasks"][task.name]["modules"][module.name]
             for setting in module.settings:
                 d["externalSettings"][setting.name] = get_setting_dict(setting)
             d["internalSettings"] = {
@@ -32,13 +32,13 @@ def write_current_state(inactive_tasks: list[Task], active_tasks: list[Task]):
                 "priority": module.priority.value,
             }
     for task in active_tasks:
-        state["active_tasks"][task.name] = {}
+        state["active_tasks"][task.name] = {"modules": {}, "state": {}}
         for module in task.modules:
-            state["active_tasks"][task.name][module.name] = {
+            state["active_tasks"][task.name]["modules"][module.name] = {
                 "externalSettings": {},
                 "internalSettings": {},
             }
-            d = state["active_tasks"][task.name][module.name]
+            d = state["active_tasks"][task.name]["modules"][module.name]
             for setting in module.settings:
                 d["externalSettings"][setting.name] = get_setting_dict(setting)
             d["internalSettings"] = {

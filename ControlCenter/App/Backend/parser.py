@@ -38,9 +38,9 @@ def load_app_state(filepath) -> tuple[dict[str, list[Module]], dict[str, list[Mo
         data = yaml.safe_load(f)
     inactive_tasks = {}
     for task in data["inactive_tasks"]:
-        inactive_tasks[task] = load_modules_from_dict(data["inactive_tasks"][task])
+        inactive_tasks[task] = load_modules_from_dict(data["inactive_tasks"][task]["modules"])
     active_tasks = {}
     for task in data["active_tasks"]:
-        active_tasks[task] = load_modules_from_dict(data["active_tasks"][task])
+        active_tasks[task] = load_modules_from_dict(data["active_tasks"][task]["modules"])
 
     return inactive_tasks, active_tasks

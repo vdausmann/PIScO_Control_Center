@@ -1,6 +1,7 @@
 from .module import Module
 from App.Frontend.helper import warning
 from .settings import Setting
+from .task import Task
 import yaml
 
 
@@ -33,14 +34,33 @@ def load_modules_from_dict(data) -> list[Module]:
     return modules
 
 
-def load_app_state(filepath) -> tuple[dict[str, list[Module]], dict[str, list[Module]]]:
+def load_app_state(filepath) -> list[Task]:
     with open(filepath, "r") as f:
         data = yaml.safe_load(f)
-    inactive_tasks = {}
-    for task in data["inactive_tasks"]:
-        inactive_tasks[task] = load_modules_from_dict(data["inactive_tasks"][task]["modules"])
-    active_tasks = {}
-    for task in data["active_tasks"]:
-        active_tasks[task] = load_modules_from_dict(data["active_tasks"][task]["modules"])
+    tasks: list[Task] = []
+    for task in data["tasks"]:
+        tasks.append(
+            Task(
+                task,
+                load_modules_from_dict(data["tasks"][task]["modules"]),
+                data["tasks"][task]["state"]["active"],
+            )
+        )
+    return tasks
 
-    return inactive_tasks, active_tasks
+
+# def load_app_state(filepath) -> tuple[dict[str, list[Module]], dict[str, list[Module]]]:
+#     with open(filepath, "r") as f:
+#         data = yaml.safe_load(f)
+#     inactive_tasks = {}
+#     for task in data["inactive_tasks"]:
+#         inactive_tasks[task] = load_modules_from_dict(
+#             data["inactive_tasks"][task]["modules"]
+#         )
+#     active_tasks = {}
+#     for task in data["active_tasks"]:
+#         active_tasks[task] = load_modules_from_dict(
+#             data["active_tasks"][task]["modules"]
+#         )
+#
+#     return inactive_tasks, active_tasks

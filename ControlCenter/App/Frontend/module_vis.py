@@ -10,6 +10,8 @@ class ModuleObject(TreeNode):
     def __init__(self, module: Module):
         super().__init__()
         self.module = module
+        self.external_settings: list[SettingObject] = []
+        self.internal_settings: list[SettingObject] = []
         self.init_ui()
 
     def init_ui(self):
@@ -18,9 +20,11 @@ class ModuleObject(TreeNode):
         for setting in self.module.settings:
             setting_object = SettingObject(setting)
             self.add_child(setting_object)
+            self.external_settings.append(setting_object)
 
         priority_setting_object = SettingObject(self.module.priority)
         self.add_child(priority_setting_object)
+        self.internal_settings.append(priority_setting_object)
 
 
 class PopUpModuleSelection(ScrollablePopUp):

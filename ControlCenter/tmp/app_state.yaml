@@ -1,5 +1,7 @@
-inactive_tasks:
+tasks:
   Test 1:
+    state:
+      active: false
     modules:
       TestModule1:
         externalSettings:
@@ -48,9 +50,10 @@ inactive_tasks:
             check: true
         internalSettings:
           command: echo "hi"
-          priority: 20.5
-    state: {}
+          priority: 0.0
   Test 2:
+    state:
+      active: false
     modules:
       TestModule1:
         externalSettings:
@@ -135,9 +138,9 @@ inactive_tasks:
         internalSettings:
           command: echo "bye"
           priority: 4.0
-    state: {}
-active_tasks:
   Test 3:
+    state:
+      active: true
     modules:
       TestModule1:
         externalSettings:
@@ -222,4 +225,3 @@ active_tasks:
         internalSettings:
           command: echo "bye"
           priority: 4.0
-    state: {}

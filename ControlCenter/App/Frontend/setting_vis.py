@@ -39,6 +39,9 @@ class IntInput(QLineEdit):
     def value(self):
         return int(self.text()) if self.hasAcceptableInput() else None
 
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
+
 
 class FloatInput(QLineEdit):
     def __init__(self, value: float, setting: Setting, parent=None):
@@ -64,6 +67,9 @@ class FloatInput(QLineEdit):
 
     def value(self):
         return float(self.text()) if self.hasAcceptableInput() else None
+
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
 
 
 class PathInput(QFrame):
@@ -118,6 +124,9 @@ class PathInput(QFrame):
         path = self.edit.text()
         return path if os.path.exists(path) else None
 
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
+
 
 class StringInput(QLineEdit):
     def __init__(self, value: str, setting: Setting, parent=None):
@@ -135,6 +144,9 @@ class StringInput(QLineEdit):
     def is_valid(self) -> bool:
         return bool(self.text().strip())
 
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
+
 
 class BoolInput(QCheckBox):
     def __init__(self, value: bool, setting: Setting, parent=None):
@@ -151,6 +163,9 @@ class BoolInput(QCheckBox):
 
     def is_valid(self) -> bool:
         return True  # A bool is always valid
+
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
 
 
 class OptionInput(QComboBox):
@@ -170,6 +185,9 @@ class OptionInput(QComboBox):
     def is_valid(self) -> bool:
         return self.currentIndex() >= 0
 
+    def set_editable(self, editable: bool):
+        self.setEnabled(editable)
+
 
 class SettingObject(TreeNode):
     def __init__(self, setting: Setting):
@@ -186,30 +204,30 @@ class SettingObject(TreeNode):
         layout.addWidget(label, 2)
 
         if self.setting.type_name == "bool":
-            input = BoolInput(self.setting.value, self.setting)
+            self.input = BoolInput(self.setting.value, self.setting)
         elif self.setting.type_name == "int":
-            input = IntInput(self.setting.value, self.setting)
+            self.input = IntInput(self.setting.value, self.setting)
         elif self.setting.type_name == "double":
-            input = FloatInput(self.setting.value, self.setting)
+            self.input = FloatInput(self.setting.value, self.setting)
         elif self.setting.type_name == "string":
-            input = StringInput(self.setting.value, self.setting)
+            self.input = StringInput(self.setting.value, self.setting)
         elif self.setting.type_name == "option":
-            input = OptionInput(
+            self.input = OptionInput(
                 self.setting.value, self.setting, self.setting.type.options
             )
         elif self.setting.type_name == "file":
-            input = PathInput(
+            self.input = PathInput(
                 self.setting.value, self.setting, True, check=self.setting.check
             )
         elif self.setting.type_name == "folder":
-            input = PathInput(
+            self.input = PathInput(
                 self.setting.value, self.setting, False, check=self.setting.check
             )
         else:
-            input = QLineEdit()
+            self.input = QLineEdit()
 
-        input.setFixedHeight(18)
-        layout.addWidget(input, 1)
+        self.input.setFixedHeight(18)
+        layout.addWidget(self.input, 1)
         layout.addStretch()
         self.add_object([frame])
         # self.setText(1, str(self.setting.value))

@@ -36,21 +36,24 @@ class PIScOControlCenter(QMainWindow):
         self.setMinimumSize(600, 400)
         self.resize(1080, 720)
 
-
-        self.inactive_tasks_tree = TaskTree(self.open_tree_menu, self)
-        self.active_tasks_tree = TaskTree(self.open_tree_menu, self)
+        self.tasks_tree = TaskTree(self.open_tree_menu, self)
 
         # Central widget and layout
         central_widget = QWidget()
         self.main_layout = QVBoxLayout(central_widget)
         self.setCentralWidget(central_widget)
 
-
         # Button to add new object
-        self.add_button = QPushButton("Save")
-        self.add_button.clicked.connect(self.show_notification)
-        # self.add_button.clicked.connect(self.save)
-        self.main_layout.addWidget(self.add_button)
+        self.save_button = QPushButton("Save")
+        self.save_button.clicked.connect(self.save)
+
+        self.main_layout.addWidget(self.save_button)
+
+        run_tasks_button = StartStopButton()
+        run_tasks_button.started.connect(self.run_tasks)
+        self.main_layout.addWidget(
+            run_tasks_button, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         # Scroll area to hold the objects
         self.scroll_area = QScrollArea()
@@ -73,60 +76,33 @@ class PIScOControlCenter(QMainWindow):
         self.object_container.setLayout(self.object_layout)
         self.scroll_area.setWidget(self.object_container)
 
-        inactive_tasks_label = QLabel("Inactive Tasks")
-        self.object_layout.addWidget(
-            inactive_tasks_label, alignment=Qt.AlignmentFlag.AlignCenter
-        )
-        self.object_layout.addWidget(self.inactive_tasks_tree, 1)
-
-        active_tasks_frame = QFrame()
-        active_tasks_layout = QHBoxLayout(active_tasks_frame)
-        active_tasks_label = QLabel("Active Tasks")
-        active_tasks_layout.addWidget(
-            active_tasks_label, 1, alignment=Qt.AlignmentFlag.AlignCenter
-        )
-        active_tasks_button = StartStopButton()
-        active_tasks_button.started.connect(self.run_tasks)
-        # active_tasks_button.stopped.connect()
-        active_tasks_layout.addWidget(active_tasks_button)
-        self.object_layout.addWidget(active_tasks_frame)
-
-        self.object_layout.addWidget(self.active_tasks_tree, 1)
+        self.object_layout.addWidget(self.tasks_tree)
 
         # load app state:
         try:
-            inactive_tasks, active_tasks = load_app_state("tmp/app_state.yaml")
-            for task in inactive_tasks:
-                t = Task(task, inactive_tasks[task], False)
-                self.add_task(t, self.inactive_tasks_tree)
-            for task in active_tasks:
-                t = Task(task, active_tasks[task], True)
-                self.add_task(t, self.active_tasks_tree)
+            tasks = load_app_state("tmp/app_state.yaml")
+            for task in tasks:
+                self.add_task(task, self.tasks_tree)
         except Exception as e:
             print("Loading not possible", e)
 
-        # test:
+        # # test:
         # modules = load_modules_from_file("modules.yaml")
         # task1 = Task("Test 1", [modules[0]])
-        # self.add_task(task1, self.inactive_tasks_tree)
+        # self.add_task(task1, self.tasks_tree)
         # task2 = Task("Test 2", modules)
-        # self.add_task(task2, self.inactive_tasks_tree)
+        # self.add_task(task2, self.tasks_tree)
         # task3 = Task("Test 3", modules, True)
-        # self.add_task(task3, self.active_tasks_tree)
+        # self.add_task(task3, self.tasks_tree)
 
         self.notifications_manager = NotificationManager(self)
 
         self.autosave_timer = QTimer(self)
-        self.c = 0
         self.autosave_timer.timeout.connect(self.save)
         self.autosave_timer.start(5 * 60 * 1000)
 
         self.show()
         sys.exit(self.app.exec())
-
-    def show_notification(self):
-        self.notifications_manager.show_notification("Notification " + str(self.c))
-        self.c += 1
 
     def open_tree_menu(self, tree: QTreeWidget, point):
         item = tree.itemAt(point)
@@ -146,22 +122,15 @@ class PIScOControlCenter(QMainWindow):
         task_object = TaskObject(task, tree)
         tree.add_task_object(task_object)
 
-    def move_task(self, task_object: TaskObject, origin: TaskTree):
-        origin.delete_task(task_object)
-        task_object.task.active = not task_object.task.active
-        if task_object.task.active:
-            self.active_tasks_tree.add_task_object(task_object)
-        else:
-            self.inactive_tasks_tree.add_task_object(task_object)
-
     def run_tasks(self):
-        for task_object in self.active_tasks_tree.tasks:
-            print(task_object.task.name)
+        for task_object in self.tasks_tree.tasks:
+            if task_object.task.active:
+                print(task_object.task.name)
+        # for task_object in self.active_tasks_tree.tasks:
+        #     print(task_object.task.name)
 
     def save(self):
         write_current_state(
-            [t.task for t in self.inactive_tasks_tree.tasks],
-            [t.task for t in self.active_tasks_tree.tasks],
+            [t.task for t in self.tasks_tree.tasks],
         )
-        self.notifications_manager.show_notification("Saved" + str(self.c))
-        self.c += 1
+        self.notifications_manager.show_notification("Saved")

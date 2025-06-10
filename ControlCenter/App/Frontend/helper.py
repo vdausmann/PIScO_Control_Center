@@ -159,8 +159,12 @@ def text_running(text="Running"):
     return color_text(text, "#1565c0")
 
 
-def text_idle(text="Idle"):
-    return color_text(text, "#555555")
+def text_inactive():
+    return color_text("Inactive", "#555555")
+
+
+def text_active():
+    return color_text("Active", "#f9a825")
 
 
 class TreeNode(QWidget):
@@ -179,7 +183,7 @@ class TreeNode(QWidget):
             background-color: #e0e0e0;
         """)
         self.header_layout = QHBoxLayout(self.header_container)
-        self.header_layout.setContentsMargins(4, 2, 4, 2)
+        self.header_layout.setContentsMargins(0, 0, 0, 0)
 
         self.expand_icon = QLabel("▶" if not is_leaf else "  ")
         self.expand_icon.setFixedWidth(10)
@@ -198,8 +202,8 @@ class TreeNode(QWidget):
         main_layout.addWidget(self.children_container)
 
     def add_object(self, objects: list[QFrame | QWidget]):
-        for object in objects:
-            self.header_layout.addWidget(object)
+        for obj in objects:
+            self.header_layout.addWidget(obj)
 
     def toggle(self):
         self.expanded = not self.expanded
@@ -275,5 +279,3 @@ class StartStopButton(QPushButton):
                     background-color: #1b5e20;
                 }
             """)
-
-

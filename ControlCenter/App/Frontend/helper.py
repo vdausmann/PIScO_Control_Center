@@ -11,9 +11,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QFrame,
+    QGraphicsDropShadowEffect,
 )
-from PySide6.QtGui import QMouseEvent, QAction, QPalette, QColor
-from PySide6.QtCore import Qt, QPoint, Signal, QTimer, QPropertyAnimation
+from PySide6.QtGui import QMouseEvent, QAction, QPalette, QColor, QPainter
+from PySide6.QtCore import Qt, QPoint, Signal, QTimer, QPropertyAnimation, QSize
 
 from collections.abc import Callable
 
@@ -55,7 +56,7 @@ class ScrollablePopUp(QDialog):
         for id, row in rows:
             widget = QWidget()
             widget.setFixedSize(self.window_width, self.row_height)
-            widget.setStyleSheet("background-color: #888;")
+            widget.setStyleSheet("background-color: #e0e0e0;")
 
             # row = QHBoxLayout(widget)
             # checkbox = QCheckBox()
@@ -71,7 +72,7 @@ class ScrollablePopUp(QDialog):
             len(rows), self.window_height // (self.row_height + self.padding) - 1
         ):
             widget = QWidget()
-            widget.setStyleSheet("background: transparent;")
+            # widget.setStyleSheet("background: transparent;")
             widget.setFixedSize(self.window_width, self.row_height)
             scroll_layout.addWidget(widget)
 
@@ -143,10 +144,6 @@ def color_text(text: str, color: str) -> str:
 #     if status == "Idle":
 
 
-def text_ok(text="OK"):
-    return color_text(text, "#2e7d32")
-
-
 def text_warning(text="Warning"):
     return color_text(text, "#f9a825")
 
@@ -165,6 +162,10 @@ def text_inactive():
 
 def text_active():
     return color_text("Active", "#f9a825")
+
+
+def text_finished():
+    return color_text("Finished", "#2e7d32")
 
 
 class TreeNode(QWidget):
@@ -279,3 +280,38 @@ class StartStopButton(QPushButton):
                     background-color: #1b5e20;
                 }
             """)
+
+
+class StatusIndicator(QLabel):
+    def __init__(self, diameter=12, parent=None):
+        super().__init__(parent)
+        self.diameter = diameter
+        self.setFixedSize(QSize(diameter, diameter))
+        self.set_inactive()
+
+    def set_running(self):
+        self.color = QColor("yellow")
+        self.update()
+
+    def set_inactive(self):
+        self.color = QColor("red")
+        self.update()
+
+    def set_finished(self):
+        self.color = QColor("green")
+        self.update()
+
+    def set_color(self, color: QColor):
+        if isinstance(color, str):
+            color = QColor(color)
+        self.setStyleSheet(f"""
+            background-color: {color.name()};
+            border-radius: {self.diameter // 2}px;
+        """)
+
+    def paintEvent(self, arg__1):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(self.color)
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, self.width(), self.height())

@@ -1,6 +1,4 @@
 
-
-
 TestModule1:
   externalSettings:
     enableLogging: 
@@ -33,7 +31,7 @@ TestModule1:
       type: int
       value: 8
   internalSettings:
-    command: echo "hi"
+    command: python3 test.py
     priority: 0
 
 
@@ -58,5 +56,5 @@ TestModule2:
     step:
       type: double
   internalSettings:
-    command: echo "bye"
+    command: echo bye
     priority: 4

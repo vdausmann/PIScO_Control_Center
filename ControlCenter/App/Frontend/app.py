@@ -22,6 +22,7 @@ from App.Backend.settings import Setting
 from App.Backend.task import Task
 from App.Backend.parser import load_modules_from_file, load_app_state
 from App.Backend.writer import write_current_state
+from App.Backend.task_manager import TaskManager
 from .module_vis import PopUpModuleSelection, ModuleObject
 from .setting_vis import SettingObject
 
@@ -29,7 +30,8 @@ from .setting_vis import SettingObject
 class PIScOControlCenter(QMainWindow):
     def __init__(self, config):
         self.app = QApplication(sys.argv)
-        print(config)
+
+        self.task_manager = TaskManager()
 
         super().__init__()
         self.setWindowTitle("Dynamic Object Adder")
@@ -43,17 +45,14 @@ class PIScOControlCenter(QMainWindow):
         self.main_layout = QVBoxLayout(central_widget)
         self.setCentralWidget(central_widget)
 
-        # Button to add new object
         self.save_button = QPushButton("Save")
         self.save_button.clicked.connect(self.save)
-
         self.main_layout.addWidget(self.save_button)
 
-        run_tasks_button = StartStopButton()
-        run_tasks_button.started.connect(self.run_tasks)
-        self.main_layout.addWidget(
-            run_tasks_button, alignment=Qt.AlignmentFlag.AlignCenter
-        )
+        # Button to add new object
+        self.add_task_button = QPushButton("Add Task")
+        self.add_task_button.clicked.connect(self.add_new_task)
+        self.main_layout.addWidget(self.add_task_button)
 
         # Scroll area to hold the objects
         self.scroll_area = QScrollArea()
@@ -118,16 +117,14 @@ class PIScOControlCenter(QMainWindow):
             action = menu.exec(tree.viewport().mapToGlobal(item_rect.bottomLeft()))
             menu.run_action(action)
 
+    def add_new_task(self):
+        task = Task("New Task", [])
+        self.add_task(task, self.tasks_tree)
+
     def add_task(self, task: Task, tree: TaskTree):
         task_object = TaskObject(task, tree)
         tree.add_task_object(task_object)
-
-    def run_tasks(self):
-        for task_object in self.tasks_tree.tasks:
-            if task_object.task.active:
-                print(task_object.task.name)
-        # for task_object in self.active_tasks_tree.tasks:
-        #     print(task_object.task.name)
+        self.task_manager.add_task(task)
 
     def save(self):
         write_current_state(

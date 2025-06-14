@@ -13,6 +13,7 @@ ControlCenter/**/.direnv
 ControlCenter/**/.clang-format
 ControlCenter/**/.clangd
 ControlCenter/**/bin/
+ControlCenter/**/binDebug/
 ControlCenter/**/libDebug/
 
 

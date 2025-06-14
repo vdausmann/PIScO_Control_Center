@@ -1,7 +1,6 @@
 tasks:
   Test 1:
-    state:
-      active: false
+    state: 1
     modules:
       TestModule1:
         externalSettings:
@@ -52,8 +51,7 @@ tasks:
           command: echo "hi"
           priority: 0.0
   Test 2:
-    state:
-      active: false
+    state: 1
     modules:
       TestModule1:
         externalSettings:
@@ -139,8 +137,7 @@ tasks:
           command: echo "bye"
           priority: 4.0
   Test 3:
-    state:
-      active: true
+    state: 1
     modules:
       TestModule1:
         externalSettings:

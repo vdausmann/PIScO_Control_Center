@@ -1,6 +1,8 @@
-import yaml
+import matplotlib.pyplot as plt
+import numpy as np
 
-with open("modules.yaml", "r") as f:
-    data = yaml.safe_load(f)
 
-print(data)
+x = np.linspace(0, 4, 1000)
+y = np.sin(x)
+plt.plot(x, y)
+plt.show()

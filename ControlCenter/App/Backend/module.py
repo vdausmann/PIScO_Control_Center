@@ -27,7 +27,7 @@ class ExternalProcessWorker(QObject):
         self.process = QProcess()
 
         self.process.readyReadStandardOutput.connect(self.handle_stdout)
-        self.process.readyReadStandardError.connect(self.handle_stderr)
+        self.process.readyReadStandardError.connect(self.handle_program_error)
         self.process.errorOccurred.connect(self.handle_process_error)
         self.process.finished.connect(self.handle_finished)
 
@@ -43,7 +43,7 @@ class ExternalProcessWorker(QObject):
         data = self.process.readAllStandardOutput().data().decode()
         self.output_received.emit(data)
 
-    def handle_stderr(self):
+    def handle_program_error(self):
         data = self.process.readAllStandardError().data().decode()
         self.program_error_received.emit(data)
 

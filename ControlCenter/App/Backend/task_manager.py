@@ -44,7 +44,7 @@ class TaskManager(QObject):
             for module in t.modules
             if module.state == ModuleState.NotExecuted
         ]
-        active_modules.sort(key=lambda x: x.priority.value, reverse=True)
+        active_modules.sort(key=lambda x: x.priority.value)
 
         while active_modules and len(self.running_modules) < self.max_running_modules:
             module = active_modules.pop()

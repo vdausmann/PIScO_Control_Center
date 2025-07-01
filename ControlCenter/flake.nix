@@ -23,15 +23,17 @@ outputs = { self, nixpkgs, flake-utils, ... }:
             devShells.default = mkShell {
                 nativeBuildInputs = with pkgs; [
                     bashInteractive
-                    (python311.withPackages(ps: with ps;[
+                ];
+                buildInputs = with pkgs; [
+                    (pkgs.python312.withPackages(ps: with ps;[
+                        pylint
                         pyside6
                         numpy
                         matplotlib
                         pandas
                         pyyaml
+                        psutil
                     ]))
-                ];
-                buildInputs = with pkgs; [
                 ];
                 shellHook = ''
                 '';

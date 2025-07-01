@@ -1,6 +1,6 @@
 from .module import Module
 from App.Frontend.helper import warning
-from .settings import Setting
+from .settings import Setting, get_setting
 from .task import Task, TaskState
 import yaml
 
@@ -19,8 +19,8 @@ def get_modules_dict_from_file(filepath):
 
 def load_modules_from_dict(data, task: Task) -> list[Module]:
     modules: list[Module] = []
-    for module in data:
-        module_settings = data[module]
+    for module in data["Modules"]:
+        module_settings = data["Modules"][module]
         external_settings = []
         for setting in module_settings["externalSettings"]:
             setting_dict = module_settings["externalSettings"][setting]
@@ -29,7 +29,7 @@ def load_modules_from_dict(data, task: Task) -> list[Module]:
             setting_desc = setting_dict["desc"] if "desc" in setting_dict else ""
             setting_check = setting_dict["check"] if "check" in setting_dict else True
             external_settings.append(
-                Setting(
+                get_setting(
                     setting, setting_type, setting_value, setting_desc, setting_check
                 )
             )

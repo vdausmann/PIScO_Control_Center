@@ -20,7 +20,7 @@ def write_current_state(tasks: list[Task]):
     for task in tasks:
         state["tasks"][task.name] = {}
         state["tasks"][task.name]["state"] = {
-            "active": task.active,
+            "status": task.state.name
             "finished": task.finished,
         }
         state["tasks"][task.name]["modules"] = {}

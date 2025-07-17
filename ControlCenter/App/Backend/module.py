@@ -8,7 +8,6 @@ class ModuleState(Enum):
     """
     All possible states of a Module.
     """
-
     NotExecuted = 1
     Running = 2
     Finished = 3

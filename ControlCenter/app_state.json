@@ -1,0 +1,37 @@
+{
+    "tasks": [
+        {
+            "name": "Test Task2",
+            "description": "This is a test taks",
+            "modules": [
+                {
+                    "name": "Module 1",
+                    "settings": {}
+                },
+                {
+                    "name": "Module 2",
+                    "settings": {}
+                }
+            ],
+            "status": "Paused"
+        },
+        {
+            "name": "Test Task 2",
+            "description": "Test 2",
+            "modules": [
+                {
+                    "name": "Module 1",
+                    "settings": {
+                        "delay_ms": 3000
+                    }
+                },
+                {
+                    "name": "Module 2",
+                    "settings": {}
+                }
+            ],
+            "status": "Paused"
+        }
+    ],
+    "current_task_index": 0
+}

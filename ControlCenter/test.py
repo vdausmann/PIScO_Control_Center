@@ -4,12 +4,13 @@ import os
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QListView, QLabel, QLineEdit, QDialog, QFormLayout,
-    QMessageBox, QScrollArea, QSizePolicy, QSpacerItem, QComboBox
+    QMessageBox, QScrollArea, QSizePolicy, QSpacerItem, QComboBox,
+    QMenu, QStackedWidget
 )
 from PySide6.QtCore import (
-    Qt, QAbstractListModel, QModelIndex, Signal, Slot, QObject
+    Qt, QAbstractListModel, QModelIndex, Signal, Slot, QObject, QSize
 )
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtGui import QColor, QPalette, QAction, QIcon
 
 # --- Data Models ---
 
@@ -398,30 +399,25 @@ class TaskListModel(QAbstractListModel):
         except ValueError:
             pass # Task might have been removed or not found
 
-# --- Main Window ---
+# --- New Page Classes ---
 
-class MainWindow(QMainWindow):
-    """Main application window for the scientific device controller."""
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Scientific Device Controller")
-        self.setGeometry(100, 100, 1000, 700) # Initial window size
+class TaskPage(QWidget):
+    """Encapsulates the task management UI."""
+    # Signals to communicate task status changes back to MainWindow for menu actions
+    task_status_changed = Signal(Task)
+    task_selection_changed = Signal(Task) # Emits the newly selected task or None
 
-        self.state_manager = StateManager()
-        self.tasks, self.current_task_index = self.state_manager.load_state()
-        self.current_task = None # Will be set after model is initialized
-
-        self.task_model = TaskListModel(self.tasks)
+    def __init__(self, task_model: TaskListModel, parent=None):
+        super().__init__(parent)
+        self.task_model = task_model
+        self.current_task = None # Reference to the currently selected task
         self.init_ui()
-        self._load_initial_current_task()
+        # Connect to the model's dataChanged signal to update display if task data changes externally
+        self.task_model.dataChanged.connect(self._on_model_data_changed)
 
-        # Connect application about to quit signal for state saving
-        QApplication.instance().aboutToQuit.connect(self._save_app_state)
 
     def init_ui(self):
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
+        main_layout = QHBoxLayout(self)
 
         # --- Left Pane: Task List ---
         left_pane = QVBoxLayout()
@@ -446,7 +442,7 @@ class MainWindow(QMainWindow):
         task_buttons_layout.addWidget(self.delete_task_button)
         left_pane.addLayout(task_buttons_layout)
 
-        main_layout.addLayout(left_pane, 2) # Give left pane 1 unit of stretch
+        main_layout.addLayout(left_pane, 1) # Give left pane 1 unit of stretch
 
         # --- Right Pane: Current Task Info & Controls ---
         right_pane = QVBoxLayout()
@@ -497,7 +493,7 @@ class MainWindow(QMainWindow):
         self._update_button_states() # Initialize button states
 
         self.setStyleSheet("""
-            QMainWindow {
+            QWidget#TaskPage { /* Style the TaskPage itself */
                 background-color: #e0e0e0;
             }
             QLabel {
@@ -550,11 +546,12 @@ class MainWindow(QMainWindow):
                 background-color: white;
             }
         """)
+        self.setObjectName("TaskPage") # Set object name for styling
 
-    def _load_initial_current_task(self):
+    def load_initial_current_task(self, initial_index: int):
         """Sets the initial current task based on loaded state."""
-        if self.current_task_index != -1 and 0 <= self.current_task_index < len(self.tasks):
-            index = self.task_model.index(self.current_task_index, 0)
+        if initial_index != -1 and 0 <= initial_index < self.task_model.rowCount():
+            index = self.task_model.index(initial_index, 0)
             self.task_list_view.setCurrentIndex(index)
             self._on_task_selection_changed(index, QModelIndex()) # Manually trigger update
 
@@ -573,13 +570,29 @@ class MainWindow(QMainWindow):
             self.pause_button.setEnabled(self.current_task.status == "Running")
             self.finish_button.setEnabled(self.current_task.status in ["Running", "Paused"])
 
+        # Emit signal to inform MainWindow about state changes
+        self.task_status_changed.emit(self.current_task)
+        self.task_selection_changed.emit(self.current_task)
+
+
     @Slot(QModelIndex, QModelIndex)
     def _on_task_selection_changed(self, current_index: QModelIndex, previous_index: QModelIndex):
         """Updates the right pane when a task is selected."""
         self.current_task = self.task_model.get_task_at_index(current_index)
-        self.current_task_index = current_index.row() if current_index.isValid() else -1
         self._update_current_task_display()
         self._update_button_states()
+
+    @Slot(QModelIndex, QModelIndex, list)
+    def _on_model_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list):
+        """Slot to react to changes in the underlying TaskListModel."""
+        # If the changed data includes the current task, refresh its display
+        if self.current_task:
+            current_task_row = self.task_model.get_task_index(self.current_task)
+            if top_left.row() <= current_task_row <= bottom_right.row():
+                if Qt.DisplayRole in roles or Qt.ForegroundRole in roles:
+                    self._update_current_task_display()
+                    self._update_button_states() # Status change might affect button states
+
 
     def _update_current_task_display(self):
         """Updates the labels and module list in the right pane."""
@@ -658,9 +671,9 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Yes:
                 if self.task_model.remove_task(selected_index):
                     # If the deleted task was the current one, clear current task display
-                    if self.current_task_index == selected_index.row(): # This check might need adjustment after removal
+                    if self.current_task and self.task_model.get_task_index(self.current_task) == -1:
                         self.current_task = None
-                        self.current_task_index = -1
+                        # No need to explicitly set current_task_index as it's managed by selection model
                         self._update_current_task_display()
                     self._update_button_states()
         else:
@@ -715,40 +728,305 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.information(self, "Task Control", "No task selected to finish.")
 
+
+class OtherPage(QWidget):
+    """A placeholder page for other application features."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        label = QLabel("<h2>Other Application Features</h2>"
+                       "<p>This is a placeholder for other functionalities of your device controller.</p>"
+                       "<p>You can add graphs, real-time data displays, calibration tools, etc., here.</p>")
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        layout.addStretch(1) # Push content to top
+
+        self.setStyleSheet("""
+            QWidget#OtherPage {
+                background-color: #f5f5f5;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+            }
+            QLabel {
+                color: #555;
+                font-size: 16px;
+            }
+            h2 {
+                color: #007bff;
+            }
+        """)
+        self.setObjectName("OtherPage") # Set object name for styling
+
+
+# --- Main Window ---
+
+class MainWindow(QMainWindow):
+    """Main application window for the scientific device controller."""
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Scientific Device Controller")
+        self.setGeometry(100, 100, 1000, 700) # Initial window size
+
+        self.state_manager = StateManager()
+        self.tasks, self.current_task_index = self.state_manager.load_state()
+
+        self.task_model = TaskListModel(self.tasks)
+
+        # Initialize menu action references to None before _create_menubar is called
+        self.menu_new_task_action = None
+        self.menu_save_state_action = None
+        self.menu_start_action = None
+        self.menu_pause_action = None
+        self.menu_finish_action = None
+        self.menu_edit_task_action = None
+        self.menu_delete_task_action = None
+
+        self.init_ui()
+        self.task_page.load_initial_current_task(self.current_task_index)
+
+        # Connect application about to quit signal for state saving
+        QApplication.instance().aboutToQuit.connect(self._save_app_state)
+
+    def init_ui(self):
+        # --- Menubar Setup ---
+        self._create_menubar()
+
+        # --- Central Widget: QStackedWidget ---
+        self.stacked_widget = QStackedWidget()
+        self.setCentralWidget(self.stacked_widget)
+
+        # Create pages
+        self.task_page = TaskPage(self.task_model)
+        self.other_page = OtherPage()
+
+        # Add pages to the stacked widget
+        self.stacked_widget.addWidget(self.task_page) # Index 0
+        self.stacked_widget.addWidget(self.other_page) # Index 1
+
+        # Connect signals from TaskPage to update MainWindow's menu actions
+        self.task_page.task_status_changed.connect(self._update_menu_action_states)
+        self.task_page.task_selection_changed.connect(self._update_menu_action_states)
+
+        # Initial update of menu actions
+        # Call with the current task from the task_page (which might be None initially)
+        self._update_menu_action_states(self.task_page.current_task)
+
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #e0e0e0;
+            }
+            QMenuBar {
+                background-color: #d0d0d0;
+                border-bottom: 1px solid #b0b0b0;
+            }
+            QMenuBar::item {
+                padding: 5px 10px;
+                background: transparent;
+            }
+            QMenuBar::item:selected {
+                background: #c0c0c0;
+            }
+            QMenu {
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+            QMenu::item {
+                padding: 5px 20px 5px 10px;
+            }
+            QMenu::item:selected {
+                background-color: #a0d0ff;
+            }
+            QStackedWidget {
+                border: none; /* No border for the stacked widget itself */
+            }
+        """)
+
+    def _create_menubar(self):
+        """Creates and populates the application menubar."""
+        menubar = self.menuBar()
+
+        # --- File Menu ---
+        file_menu = menubar.addMenu("&File") # &F creates an Alt+F shortcut
+
+        # New Task Action (delegated to task_page)
+        self.menu_new_task_action = QAction(QIcon.fromTheme("document-new", QIcon()), "&New Task...", self)
+        self.menu_new_task_action.setToolTip("Create a new scientific task")
+        self.menu_new_task_action.setShortcut(Qt.CTRL | Qt.Key_N) # Ctrl+N shortcut
+        self.menu_new_task_action.triggered.connect(self._create_new_task_from_menu) # Connect to a new slot
+        file_menu.addAction(self.menu_new_task_action)
+
+        # Save State Action
+        self.menu_save_state_action = QAction(QIcon.fromTheme("document-save", QIcon()), "&Save State", self)
+        self.menu_save_state_action.setToolTip("Save the current application state")
+        self.menu_save_state_action.setShortcut(Qt.CTRL | Qt.Key_S) # Ctrl+S shortcut
+        self.menu_save_state_action.triggered.connect(self._save_app_state)
+        file_menu.addAction(self.menu_save_state_action)
+
+        file_menu.addSeparator()
+
+        # Exit Action
+        exit_action = QAction(QIcon.fromTheme("application-exit", QIcon()), "E&xit", self)
+        exit_action.setToolTip("Exit the application")
+        exit_action.setShortcut(Qt.ALT | Qt.Key_F4) # Alt+F4 shortcut
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+        # --- Task Menu ---
+        task_menu = menubar.addMenu("&Task") # &T creates an Alt+T shortcut
+
+        # Start Task Action
+        self.menu_start_action = QAction(QIcon.fromTheme("media-playback-start", QIcon()), "&Start Task", self)
+        self.menu_start_action.setToolTip("Start the selected task")
+        self.menu_start_action.setShortcut(Qt.Key_F5) # F5 shortcut
+        self.menu_start_action.triggered.connect(self._start_task_from_menu)
+        task_menu.addAction(self.menu_start_action)
+
+        # Pause Task Action
+        self.menu_pause_action = QAction(QIcon.fromTheme("media-playback-pause", QIcon()), "&Pause Task", self)
+        self.menu_pause_action.setToolTip("Pause the running task")
+        self.menu_pause_action.setShortcut(Qt.Key_F6) # F6 shortcut
+        self.menu_pause_action.triggered.connect(self._pause_task_from_menu)
+        task_menu.addAction(self.menu_pause_action)
+
+        # Finish Task Action
+        self.menu_finish_action = QAction(QIcon.fromTheme("media-playback-stop", QIcon()), "&Finish Task", self)
+        self.menu_finish_action.setToolTip("Finish the current task")
+        self.menu_finish_action.setShortcut(Qt.Key_F7) # F7 shortcut
+        self.menu_finish_action.triggered.connect(self._finish_task_from_menu)
+        task_menu.addAction(self.menu_finish_action)
+
+        task_menu.addSeparator()
+
+        # Edit Task Action
+        self.menu_edit_task_action = QAction(QIcon.fromTheme("document-edit", QIcon()), "&Edit Selected Task...", self)
+        self.menu_edit_task_action.setToolTip("Edit the details of the currently selected task")
+        self.menu_edit_task_action.setShortcut(Qt.CTRL | Qt.Key_E)
+        self.menu_edit_task_action.triggered.connect(self._edit_selected_task_from_menu)
+        task_menu.addAction(self.menu_edit_task_action)
+
+        # Delete Task Action
+        self.menu_delete_task_action = QAction(QIcon.fromTheme("edit-delete", QIcon()), "&Delete Selected Task", self)
+        self.menu_delete_task_action.setToolTip("Delete the currently selected task")
+        self.menu_delete_task_action.setShortcut(Qt.Key_Delete)
+        self.menu_delete_task_action.triggered.connect(self._delete_selected_task_from_menu)
+        task_menu.addAction(self.menu_delete_task_action)
+
+        # --- View Menu (New) ---
+        view_menu = menubar.addMenu("&View")
+
+        self.action_show_tasks = QAction("Show &Tasks", self)
+        self.action_show_tasks.setCheckable(True)
+        self.action_show_tasks.setChecked(True) # Tasks page is initially visible
+        self.action_show_tasks.setShortcut(Qt.CTRL | Qt.Key_1)
+        self.action_show_tasks.triggered.connect(lambda: self._show_page(0))
+        view_menu.addAction(self.action_show_tasks)
+
+        self.action_show_other = QAction("Show &Other Features", self)
+        self.action_show_other.setCheckable(True)
+        self.action_show_other.setChecked(False)
+        self.action_show_other.setShortcut(Qt.CTRL | Qt.Key_2)
+        self.action_show_other.triggered.connect(lambda: self._show_page(1))
+        view_menu.addAction(self.action_show_other)
+
+        # Ensure only one view action is checked at a time
+        self.action_show_tasks.toggled.connect(lambda checked: self.action_show_other.setChecked(not checked) if checked else None)
+        self.action_show_other.toggled.connect(lambda checked: self.action_show_tasks.setChecked(not checked) if checked else None)
+
+
+    @Slot(int)
+    def _show_page(self, index: int):
+        """Switches the currently visible page in the stacked widget."""
+        self.stacked_widget.setCurrentIndex(index)
+        # Update menu action states when page changes, as task actions might become irrelevant
+        self._update_menu_action_states(self.task_page.current_task)
+
+
+    @Slot(Task)
+    def _update_menu_action_states(self, current_task: Task | None):
+        """Enables/disables menubar actions based on current task selection and status, and active page."""
+        # Only enable task-related actions if the TaskPage is currently visible
+        is_task_page_active = self.stacked_widget.currentWidget() == self.task_page
+
+        # Use bool() to ensure a strict boolean is passed to setEnabled
+        self.menu_start_action.setEnabled(
+            bool(is_task_page_active and current_task and current_task.status in ["Idle", "Paused", "Finished"])
+        )
+        self.menu_pause_action.setEnabled(
+            bool(is_task_page_active and current_task and current_task.status == "Running")
+        )
+        self.menu_finish_action.setEnabled(
+            bool(is_task_page_active and current_task and current_task.status in ["Running", "Paused"])
+        )
+        self.menu_edit_task_action.setEnabled(
+            bool(is_task_page_active and current_task is not None)
+        )
+        self.menu_delete_task_action.setEnabled(
+            bool(is_task_page_active and current_task is not None)
+        )
+
+        # The 'New Task' action can be enabled even if no task is selected, but still only on task page
+        self.menu_new_task_action.setEnabled(is_task_page_active)
+
+
+    # --- Menu Action Slots (delegating to TaskPage) ---
+    @Slot()
+    def _create_new_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._create_new_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to create a new task.")
+
+    @Slot()
+    def _edit_selected_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._edit_selected_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to edit a task.")
+
+    @Slot()
+    def _delete_selected_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._delete_selected_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to delete a task.")
+
+    @Slot()
+    def _start_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._start_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to start a task.")
+
+    @Slot()
+    def _pause_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._pause_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to pause a task.")
+
+    @Slot()
+    def _finish_task_from_menu(self):
+        if self.stacked_widget.currentWidget() == self.task_page:
+            self.task_page._finish_task()
+        else:
+            QMessageBox.information(self, "Action Not Available", "Please switch to the 'Tasks' page to finish a task.")
+
+
     def _save_app_state(self):
-        """Called when the application is about to quit to save the state."""
-        print("Save app state")
+        """Called when the application is about to quit to save the state, or manually from menubar."""
         all_tasks = self.task_model.get_all_tasks()
-        current_task_idx = self.task_model.get_task_index(self.current_task) if self.current_task else -1
+        # Get current task index from TaskPage's current selection
+        current_task_idx = self.task_page.task_model.get_task_index(self.task_page.current_task) if self.task_page.current_task else -1
         self.state_manager.save_state(all_tasks, current_task_idx)
+        QMessageBox.information(self, "Save State", "Application state saved successfully.")
+
 
 # --- Application Entry Point ---
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    # Set a consistent font (optional, but good for aesthetics)
-    # font = app.font()
-    # font.setFamily("Inter")
-    # app.setFont(font)
-
-    # Apply a dark palette for better contrast (optional)
-    # palette = QPalette()
-    # palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    # palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
-    # palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    # palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    # palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
-    # palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
-    # palette.setColor(QPalette.Text, QColor(255, 255, 255))
-    # palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    # palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
-    # palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
-    # palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    # palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    # palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
-    # app.setPalette(palette)
-
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+

@@ -1,21 +1,6 @@
 {
     "tasks": [
         {
-            "name": "Test Task2",
-            "description": "This is a test taks",
-            "modules": [
-                {
-                    "name": "Module 1",
-                    "settings": {}
-                },
-                {
-                    "name": "Module 2",
-                    "settings": {}
-                }
-            ],
-            "status": "Paused"
-        },
-        {
             "name": "Test Task 2",
             "description": "Test 2",
             "modules": [
@@ -31,7 +16,49 @@
                 }
             ],
             "status": "Paused"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
+        },
+        {
+            "name": "New Task",
+            "description": "",
+            "modules": [],
+            "status": "Idle"
         }
     ],
-    "current_task_index": 0
+    "current_task_index": 7
 }

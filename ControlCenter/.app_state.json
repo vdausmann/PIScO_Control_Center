@@ -1,0 +1,119 @@
+{
+  "task_window": {
+    "unfinished_tasks": {
+      "Task 1": {
+        "name": "Task 1",
+        "modules": [
+          {
+            "name": "Module2",
+            "external_settings": [
+              {
+                "name": "Setting1",
+                "value": 1,
+                "setting_type": "int"
+              },
+              {
+                "name": "Setting2",
+                "value": 3,
+                "setting_type": "int"
+              },
+              {
+                "name": "Long name Setting3",
+                "value": "Test",
+                "setting_type": "str"
+              }
+            ],
+            "internal_settings": [],
+            "state": "NotExecuted"
+          },
+          {
+            "name": "Module2_1",
+            "external_settings": [
+              {
+                "name": "Setting1",
+                "value": 1,
+                "setting_type": "int"
+              },
+              {
+                "name": "Setting2",
+                "value": 2,
+                "setting_type": "int"
+              },
+              {
+                "name": "Long name Setting3",
+                "value": "Test",
+                "setting_type": "str"
+              }
+            ],
+            "internal_settings": [],
+            "state": "Finished"
+          }
+        ],
+        "state": "Idle",
+        "meta_data": {}
+      },
+      "Task 2": {
+        "name": "Task 2",
+        "modules": [
+          {
+            "name": "Module1",
+            "external_settings": [
+              {
+                "name": "Setting1",
+                "value": 1,
+                "setting_type": "int"
+              },
+              {
+                "name": "Setting2",
+                "value": 2,
+                "setting_type": "int"
+              }
+            ],
+            "internal_settings": [],
+            "state": "NotExecuted"
+          },
+          {
+            "name": "Module2",
+            "external_settings": [
+              {
+                "name": "Setting1",
+                "value": 1,
+                "setting_type": "int"
+              },
+              {
+                "name": "Setting2",
+                "value": 2,
+                "setting_type": "int"
+              },
+              {
+                "name": "Long name Setting3",
+                "value": "Test",
+                "setting_type": "str"
+              }
+            ],
+            "internal_settings": [],
+            "state": "NotExecuted"
+          },
+          {
+            "name": "Module3",
+            "external_settings": [
+              {
+                "name": "Setting1",
+                "value": 1,
+                "setting_type": "int"
+              }
+            ],
+            "internal_settings": [],
+            "state": "NotExecuted"
+          }
+        ],
+        "state": "Idle",
+        "meta_data": {
+          "test": "Das ist ein Test wobei hier ein sehr langer Text benutzt wird um den Word-Wrap zu testen.",
+          "test2": "Das ist ein Kurzer Text"
+        }
+      }
+    },
+    "finished_tasks": {}
+  }
+}

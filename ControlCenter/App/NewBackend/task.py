@@ -63,11 +63,16 @@ class Task(QObject):
         self._modules.remove(module)
         self.task_modules_changed_signal.emit()
 
-    def edit_meta_data(self, key: str, val, delete: bool = False):
+    def edit_meta_data(self, key: str, val, delete: bool = False, emit_signal: bool = True):
         if key in self._meta_data.keys() and delete:
             self._meta_data.pop(key)
         else:
             self._meta_data[key] = val
+        if emit_signal:
+            self.task_meta_data_changed_signal.emit()
+
+    def new_meta_data(self, meta_data: dict):
+        self._meta_data = meta_data
         self.task_meta_data_changed_signal.emit()
 
     def to_dict(self):

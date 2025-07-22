@@ -71,15 +71,18 @@ class TaskInfo(QFrame):
         meta_data_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #555; padding: 2px; border: none;")
         task_info_layout.addWidget(meta_data_label)
         self.meta_data_scroll_area = QScrollArea()
-        self.meta_data_scroll_area_layout = QVBoxLayout()
         self.meta_data_scroll_area.setWidgetResizable(True)
         self.meta_data_scroll_area.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOn
         )
-
         self.meta_data_scroll_area.setStyleSheet(f"border: none; background-color: {BG1};")
-        self.meta_data_scroll_area.setLayout(self.meta_data_scroll_area_layout)
-        task_info_layout.addWidget(self.meta_data_scroll_area, 2)
+
+        self.meta_data_scroll_area_container = QFrame(self.meta_data_scroll_area)
+        self.meta_data_scroll_area_container.setLayout(QVBoxLayout())
+
+        # self.meta_data_scroll_area.setLayout(self.meta_data_scroll_area_layout)
+        self.meta_data_scroll_area.setWidget(self.meta_data_scroll_area_container)
+        task_info_layout.addWidget(self.meta_data_scroll_area, 3)
 
         self.edit_meta_data_button = QPushButton("Edit Metadata")
         self.edit_meta_data_button.setStyleSheet(get_push_button_style())
@@ -92,16 +95,17 @@ class TaskInfo(QFrame):
         module_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #555; padding: 2px; border: none;")
         task_info_layout.addWidget(module_label)
         self.module_scroll_area = QScrollArea()
-        self.module_scroll_area_layout = QVBoxLayout()
         self.module_scroll_area.setWidgetResizable(True)
         self.module_scroll_area.setVerticalScrollBarPolicy(
-            # Qt.ScrollBarPolicy.ScrollBarAsNeeded
             Qt.ScrollBarPolicy.ScrollBarAlwaysOn
         )
-
         self.module_scroll_area.setStyleSheet(f"border: none; background-color: {BG1};")
-        self.module_scroll_area.setLayout(self.module_scroll_area_layout)
-        task_info_layout.addWidget(self.module_scroll_area, 3)
+
+        self.module_scroll_area_container = QFrame(self.module_scroll_area)
+        self.module_scroll_area_container.setLayout(QVBoxLayout())
+
+        self.module_scroll_area.setWidget(self.module_scroll_area_container)
+        task_info_layout.addWidget(self.module_scroll_area, 2)
 
         task_info_layout.addStretch()
 
@@ -162,8 +166,8 @@ class TaskInfo(QFrame):
 
     @Slot()
     def update_meta_data(self):
-        while self.meta_data_scroll_area_layout.count():
-            item = self.meta_data_scroll_area_layout.takeAt(0) # Take from index 0 repeatedly
+        while self.meta_data_scroll_area_container.layout().count():
+            item = self.meta_data_scroll_area_container.layout().takeAt(0) # Take from index 0 repeatedly
             if item.widget():
                 widget = item.widget()
                 widget.setParent(None) 
@@ -173,8 +177,13 @@ class TaskInfo(QFrame):
         if self.task is None:
             return
 
+        # spacer = QWidget()
+        # spacer.setStyleSheet(f"background-color: {BORDER};")
+        # spacer.setFixedHeight(4)
+        # self.meta_data_scroll_area_layout.addWidget(spacer)
         for name in self.task._meta_data.keys():
-            row = QHBoxLayout()
+            row_widget = QWidget()
+            row = QHBoxLayout(row_widget)
             row.setContentsMargins(0, 0, 0, 0)
             name_label = QLabel(name)
             name_label.setStyleSheet("font-size: 12px;")
@@ -183,17 +192,17 @@ class TaskInfo(QFrame):
             value_label.setWordWrap(True)
             row.addWidget(name_label)
             row.addWidget(value_label)
-            self.meta_data_scroll_area_layout.addLayout(row)
+            self.meta_data_scroll_area_container.layout().addWidget(row_widget)
             spacer = QWidget()
             spacer.setStyleSheet(f"background-color: {BORDER};")
             spacer.setFixedHeight(4)
-            self.meta_data_scroll_area_layout.addWidget(spacer)
+            self.meta_data_scroll_area_container.layout().addWidget(spacer)
 
-        self.meta_data_scroll_area_layout.addStretch()
+        self.meta_data_scroll_area_container.layout().addStretch()
 
     def update_module_list(self):
-        while self.module_scroll_area_layout.count():
-            item = self.module_scroll_area_layout.takeAt(0) # Take from index 0 repeatedly
+        while self.module_scroll_area_container.layout().count():
+            item = self.module_scroll_area_container.layout().takeAt(0) # Take from index 0 repeatedly
             if item.widget():
                 widget = item.widget()
                 widget.setParent(None) 
@@ -209,10 +218,11 @@ class TaskInfo(QFrame):
         for m in self.task._modules:
             label = ClickableLabel(m._name, m)
             label.setStyleSheet("font-size: 12px;")
-            self.module_scroll_area_layout.addWidget(label)
+            self.module_scroll_area_container.layout().addWidget(label)
             self.module_labels[m] = label
             label.clicked_signal.connect(self.module_clicked)
-        self.module_scroll_area_layout.addStretch()
+
+        self.module_scroll_area_container.layout().addStretch()
 
     @Slot(Module)
     def module_clicked(self, module: Module | None):
@@ -242,8 +252,12 @@ class TaskInfo(QFrame):
         self.update_module_list()
 
     def edit_meta_data(self):
-        editor = MetaDataEditor()
-        editor.exec()
+        editor = MetaDataEditor(self.task._meta_data)
+        ret = editor.exec()
+        if ret == 0:
+            return
+
+        self.task.new_meta_data(editor.meta_data)
 
 
 class ModuleInfo(QFrame):
@@ -300,12 +314,12 @@ class ModuleInfo(QFrame):
         module_info_layout.addWidget(self.remove_module_button)
 
 
-        b1 = QPushButton("Idle")
-        b1.clicked.connect(lambda: self.module.set_state(ModuleState.NotExecuted))
-        b2 = QPushButton("Finished")
-        b2.clicked.connect(lambda: self.module.set_state(ModuleState.Finished))
-        module_info_layout.addWidget(b1)
-        module_info_layout.addWidget(b2)
+        # b1 = QPushButton("Idle")
+        # b1.clicked.connect(lambda: self.module.set_state(ModuleState.NotExecuted))
+        # b2 = QPushButton("Finished")
+        # b2.clicked.connect(lambda: self.module.set_state(ModuleState.Finished))
+        # module_info_layout.addWidget(b1)
+        # module_info_layout.addWidget(b2)
 
 
     @Slot(Module)

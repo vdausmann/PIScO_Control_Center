@@ -50,7 +50,19 @@
           }
         ],
         "state": "Idle",
-        "meta_data": {}
+        "meta_data": {
+          "profile_id": "1",
+          "date": "6/22/2025",
+          "local_time": "10:25",
+          "station": "PO1",
+          "D_ship_ID": "M202_4-1",
+          "lat": "38\u00b049.537'N",
+          "lon": "27\u00b040.188'W",
+          "max_depth": "2300",
+          "TAG_amplitude": "55",
+          "n_raw_images": "30369",
+          "comment": "Bilder schwarz in oberen 300m"
+        }
       },
       "Task 2": {
         "name": "Task 2",
@@ -109,8 +121,7 @@
         ],
         "state": "Idle",
         "meta_data": {
-          "test": "Das ist ein Test wobei hier ein sehr langer Text benutzt wird um den Word-Wrap zu testen.",
-          "test2": "Das ist ein Kurzer Text"
+          "test": "Das ist ein Test wobei hier ein sehr langer Text benutzt wird um den Word-Wrap zu testen."
         }
       }
     },

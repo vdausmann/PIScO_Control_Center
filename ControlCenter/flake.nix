@@ -33,6 +33,12 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         pandas
                         pyyaml
                         psutil
+                        fastapi
+                        uvicorn
+                        pydantic
+                        python-multipart
+                        requests
+                        pyyaml
                     ]))
                 ];
                 shellHook = ''

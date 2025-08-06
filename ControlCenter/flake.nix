@@ -39,6 +39,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         python-multipart
                         requests
                         pyyaml
+						websockets
                     ]))
                 ];
                 shellHook = ''

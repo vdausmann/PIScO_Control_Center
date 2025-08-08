@@ -17,3 +17,6 @@ if __name__ == '__main__':
 
     for p in processes:
         p.join()
+
+    # raise ValueError
+    print("Finished")

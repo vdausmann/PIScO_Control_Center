@@ -40,6 +40,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         requests
                         pyyaml
 						websockets
+						qasync
                     ]))
                 ];
                 shellHook = ''

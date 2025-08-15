@@ -1,6 +1,6 @@
 
-def task_added_msg(task_name: str, task_id: str) -> dict:
-    return {"type": "task_added", "task_id": task_id, "task_name": task_name}
+def task_added_msg(task_id: str) -> dict:
+    return {"type": "task_added", "task_id": task_id}
 
 def task_started_msg(task_id: str) -> dict:
     return {"type": "task_started", "task_id": task_id}
@@ -18,6 +18,12 @@ def error_msg(http_code: int, text: str, task_id: str = "", module_id: str = "")
         msg["module_name"] = module_id
     return msg
 
+def success_msg(text: str) -> dict:
+    return {"type": "success", "text": text}
+
+def save_msg(success: bool, text: str) -> dict:
+    return {"type": "save", "success": success, "text": text}
+
 def stdout_msg(text: str, module_id: str, task_id: str):
     return {"type": "stdout", "text": text, "module_id": module_id, "task_id": task_id}
 
@@ -27,3 +33,7 @@ def stderr_msg(text: str, module_id: str, task_id: str):
 def module_finished_msg(task_id: str, module_id: str, ret_code: int) -> dict:
     return {"type": "module_finished", "task_id": task_id, "module_id": module_id,
             "ret_code": ret_code}
+
+
+def shutdown_msg() -> dict:
+    return {"type": "shutdown"}

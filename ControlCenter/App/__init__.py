@@ -1,2 +1,1 @@
-# from .Frontend import PIScOControlCenter
-from .NewFrontend import PIScOControlCenter
+from .Frontend import PIScOControlCenter

@@ -1,0 +1,128 @@
+from PySide6.QtCore import QMimeData, Qt, Signal
+from PySide6.QtGui import QDrag, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+)
+
+
+class DragItem(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setContentsMargins(25, 5, 25, 5)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet("border: 1px solid black;")
+        # Store data separately from display label, but use label for default.
+        self.data = self.text()
+
+    def set_data(self, data):
+        self.data = data
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            drag.setMimeData(mime)
+
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
+
+            drag.exec(Qt.DropAction.MoveAction)
+
+
+class DragWidget(QWidget):
+    """
+    Generic list sorting handler.
+    """
+
+    orderChanged = Signal(list)
+
+    def __init__(self, *args, orientation=Qt.Orientation.Vertical, **kwargs):
+        super().__init__()
+        self.setAcceptDrops(True)
+
+        # Store the orientation for drag checks later.
+        self.orientation = orientation
+
+        if self.orientation == Qt.Orientation.Vertical:
+            self.blayout = QVBoxLayout()
+        else:
+            self.blayout = QHBoxLayout()
+
+        self.setLayout(self.blayout)
+
+    def dragEnterEvent(self, e):
+        e.accept()
+
+    def dropEvent(self, e):
+        pos = e.position()
+        widget = e.source()
+        self.blayout.removeWidget(widget)
+
+        for n in range(self.blayout.count()):
+            # Get the widget at each index in turn.
+            w = self.blayout.itemAt(n).widget()
+            if self.orientation == Qt.Orientation.Vertical:
+                # Drag drop vertically.
+                drop_here = pos.y() < w.y() + w.size().height() // 2
+            else:
+                # Drag drop horizontally.
+                drop_here = pos.x() < w.x() + w.size().width() // 2
+
+            if drop_here:
+                break
+
+        else:
+            # We aren't on the left hand/upper side of any widget,
+            # so we're at the end. Increment 1 to insert after.
+            n += 1
+
+        self.blayout.insertWidget(n, widget)
+        self.orderChanged.emit(self.get_item_data())
+
+        e.accept()
+
+    def add_item(self, item):
+        self.blayout.addWidget(item)
+
+    def get_item_data(self):
+        data = []
+        for n in range(self.blayout.count()):
+            # Get the widget at each index in turn.
+            w = self.blayout.itemAt(n).widget()
+            data.append(w.data)
+        return data
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.drag = DragWidget(orientation=Qt.Orientation.Vertical)
+        for n, l in enumerate(["A", "B", "C", "D"]):
+            item = DragItem(l)
+            item.set_data(n)  # Store the data.
+            self.drag.add_item(item)
+
+        # Print out the changed order.
+        self.drag.orderChanged.connect(print)
+
+        container = QWidget()
+        layout = QVBoxLayout()
+        layout.addStretch(1)
+        layout.addWidget(self.drag)
+        layout.addStretch(1)
+        container.setLayout(layout)
+
+        self.setCentralWidget(container)
+
+
+app = QApplication([])
+w = MainWindow()
+w.show()
+
+app.exec()

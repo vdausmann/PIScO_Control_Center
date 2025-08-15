@@ -2,16 +2,27 @@ from asyncio.subprocess import Process
 from fastapi import WebSocket
 import uuid
 import asyncio
+from threading import Lock
+import json
+import os
+import tempfile
+from pathlib import Path
 
-from .communication import error_msg, module_finished_msg, module_started_msg, stdout_msg, stderr_msg
-from .types import STATE_FINISHED, STATE_RUNNING, TaskClient, TaskServer, ModuleServer
+from .communication import error_msg, module_finished_msg, module_started_msg, save_msg, stdout_msg, stderr_msg, success_msg, task_added_msg
+from .types import TaskTemplate, Module, Task
+
+
+SAVEFILE = Path(".server_state.json")
+
 
 class TaskManager:
     def __init__(self, connected_clients: list[WebSocket]) -> None:
         self.connected_clients = connected_clients
+        self.loop = None
+        self._save_lock = Lock()
 
-        self.tasks: dict[str, TaskServer] = {}
-        self.modules: dict[str, ModuleServer] = {}
+        self.tasks: dict[str, Task] = {}
+        self.modules: dict[str, Module] = {}
 
         self.started_tasks: list[str] = [] # [task_id]
         self.running_modules: list[str] = [] # [module_id]
@@ -20,8 +31,11 @@ class TaskManager:
         # Settings
         self.max_cores: int = 12
 
+    def set_loop(self):
+        """Call this once from inside FastAPI lifespan or startup."""
+        self.loop = asyncio.get_running_loop()
     
-    def add_task(self, task: TaskClient) -> TaskClient:
+    async def add_task(self, task: TaskTemplate) -> Task:
         """Adds a task to the server.
 
         The client will create tasks using the TaskBase class. These tasks contain
@@ -36,32 +50,26 @@ class TaskManager:
 
         task_id = str(uuid.uuid4())
         # modify task and modules and split modules from task for serverside handling
-        task.task_id = task_id
         modules = []
         for module in task.modules:
             module_id = str(uuid.uuid4())
-            module.module_id = module_id
-            module.parent_task_id = task_id
             modules.append(module_id)
-            self.modules[module_id] = ModuleServer(module_id=module_id,
-                                                   parent_task_id=task_id,
-                                                   command=module.command,
-                                                   num_cores=module.num_cores,
-                                                   priority=module.priority,
-                                                   settings=module.settings,
-                                                   finished=(module.state ==
-                                                             STATE_FINISHED),
-                                                   error=False
-                                                   )
-        self.tasks[task_id] = TaskServer(task_id = task_id, modules=modules)
-        return task
+            print(module.model_dump())
+            m = Module(**module.model_dump(), module_id=module_id, parent_task_id=task_id,
+                       finished=False) 
+            self.modules[module_id] = m
 
-    def get_task(self, task_id: str):
+        self.tasks[task_id] = Task(name=task.name, meta_data=task.meta_data, task_id = task_id, modules=modules)
+        await self._send_message_to_clients(task_added_msg(task_id))
+        await self.save_state()
+        return self.tasks[task_id]
+
+    def get_task(self, task_id: str) -> Task:
         if task_id not in self.tasks:
             raise KeyError(f"Task with Id {task_id} not found")
         return self.tasks[task_id]
 
-    def get_module(self, module_id: str):
+    def get_module(self, module_id: str) -> Module:
         if module_id not in self.modules:
             raise KeyError(f"Module with Id {module_id} not found")
         return self.modules[module_id]
@@ -69,7 +77,6 @@ class TaskManager:
     async def _send_message_to_clients(self, msg: dict):
         for ws in self.connected_clients:
             await ws.send_json(msg)
-
 
     def _start_task(self, task_id: str):
         self.started_tasks.append(task_id)
@@ -85,6 +92,7 @@ class TaskManager:
             for module_id in self.running_modules:
                 process = self.processes[module_id]
                 
+                # check for outputs and errors:
                 if process.stdout:
                     try: 
                         line = await asyncio.wait_for(process.stdout.readline(),
@@ -111,6 +119,7 @@ class TaskManager:
                     except asyncio.TimeoutError:
                         pass
 
+                # check for finished processes:
                 ret_code = process.returncode
                 if ret_code is not None:
                     # get all remaining output:
@@ -137,11 +146,11 @@ class TaskManager:
                     await self._send_message_to_clients(
                             module_finished_msg(self.modules[module_id].parent_task_id, module_id, ret_code)
                             )
-
-
+            # save if a module finished 
+            if to_remove:
+                await self.save_state()
             for id in to_remove:
                 self.running_modules.remove(id)
-
             await asyncio.sleep(0.1)
 
 
@@ -156,7 +165,7 @@ class TaskManager:
 
     async def _run_module(self, module_id: str) -> Process | None:
         try:
-            module: ModuleServer = self.modules[module_id]
+            module: Module= self.modules[module_id]
         except KeyError:
             await self._send_message_to_clients(
                     error_msg(404, f"Module with id {module_id} not found!"))
@@ -210,5 +219,106 @@ class TaskManager:
                 current_used_cores += self.modules[module_id].num_cores
                 self.processes[module_id] = process
                 self.running_modules.append(module_id)
+        await self.save_state()
 
+    def _save_state_sync(self) -> dict:
+        """Synchronous file save and validation logic."""
+        with self._save_lock:
+            # Creating temp file:
+            fd, tmp_path = tempfile.mkstemp(dir=".", prefix="state_", suffix=".tmp")
+            success = True
+            msg = ""
+            try:
+                data_to_save = {}
+                for key in self.tasks.keys():
+                    data_to_save[key] = {}
+                    data_to_save[key]["task_id"] = self.tasks[key].task_id
+                    data_to_save[key]["modules"] = []
+                    for module_id in self.tasks[key].modules:
+                        data_to_save[key]["modules"].append(self.modules[module_id].model_dump())
+                    
+                # Saving to temporary file: 
+                with os.fdopen(fd, "w") as tmp_file:
+                    json.dump(data_to_save, tmp_file)
+                    tmp_file.flush()
+                    os.fsync(tmp_file.fileno())
+
+                # validating:
+                with open(tmp_path, "r") as f:
+                    loaded_data = json.load(f)
+                if loaded_data != data_to_save:
+                    success = False
+                    msg = "Validation of save file failed: written data does not match original data."
+                else:
+                    # Moving temporary file to SAVEFILE
+                    os.replace(tmp_path, SAVEFILE)
+            except Exception as e:
+                success = False
+                msg = f"Saving failed: {e}"
+            finally:
+                if os.path.exists(tmp_path) and tmp_path != SAVEFILE:
+                    os.remove(tmp_path)
+            return save_msg(success, msg)
+
+    async def save_state(self) -> dict:
+        """Async wrapper for saving state without blocking the event loop."""
+        result = await asyncio.to_thread(self._save_state_sync)
+
+        # Send WS message in the correct loop
+        if self.loop:
+            asyncio.run_coroutine_threadsafe(
+                self._send_message_to_clients(result),
+                self.loop
+            )
+
+        return result
+
+    def save_state_sync(self) -> dict:
+        """Sync version safe to call from anywhere."""
+        result = self._save_state_sync()
+
+        # Send WS message even from sync context
+        if self.loop:
+            asyncio.run_coroutine_threadsafe(
+                self._send_message_to_clients(result),
+                self.loop
+            )
+
+        return result
+
+    def change_task_properties(self, task_id: str, property_key: str, property_value) -> dict:
+        try:
+            setattr(self.tasks[task_id], property_key, property_value)
+            self.save_state_sync()
+            return success_msg(f"Changed task property of task {task_id}")
+        except KeyError:
+            return error_msg(404, f"Invalid property key: {property_key}")
+        except ValueError:
+            return error_msg(404, f"Invalid property key: {property_key}")
+        except Exception as e:
+            return error_msg(400, f"Unknown exception when changing task property: {e}")
+
+    def change_module_properties(self, module_id: str, property_key: str, property_value) -> dict:
+        try:
+            # check if module is running or finished:
+            if module_id in self.running_modules:
+                return error_msg(409, f"Module {module_id} is running and can not be modified.")
+            elif self.modules[module_id].finished:
+                return error_msg(409, f"Module {module_id} is finished and can not be modified.")
+            setattr(self.modules[module_id], property_key, property_value)
+            self.save_state_sync()
+            return success_msg(f"Changed module property of task {module_id}")
+        except KeyError:
+            return error_msg(404, f"Invalid property key: {property_key}")
+        except ValueError:
+            return error_msg(404, f"Invalid property key: {property_key}")
+        except Exception as e:
+            return error_msg(400, f"Unknown exception when changing task property: {e}")
+
+    def set_module_unfinished(self, module_id: str) -> dict:
+        if not self.modules[module_id].finished:
+            return error_msg(409, f"Module {module_id} is not finished and can not be set to 'unfinished'.")
+        self.modules[module_id].finished = False
+        self.save_state_sync()
+        return success_msg(f"Changed state of module {module_id} to unfinished.")
 

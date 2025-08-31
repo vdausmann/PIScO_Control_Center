@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget,
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget,
                                QGraphicsBlurEffect, QFrame)
 from PySide6.QtCore import Qt, Signal, Slot
 from pydantic import main
@@ -193,6 +193,9 @@ class ServerViewer(QWidget):
         self.server_connect_button.setDisabled(not connected)
         self.server_stop_button.setDisabled(not connected)
 
+        if connected:
+            self.client.connect_to_server()
+
     @Slot(dict)
     def websocket_msg(self, msg: dict):
         scrollbar = self.server_output.verticalScrollBar()
@@ -205,9 +208,52 @@ class ServerViewer(QWidget):
         if at_bottom:  
             scrollbar.setValue(scrollbar.maximum())
 
-class TaskList(QWidget):
+class AddTaskDialog(QDialog):
+
     def __init__(self) -> None:
         super().__init__()
+
+        self.init_ui()
+
+    def init_ui(self):
+        self.setFixedSize(400, 200)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        label = QLabel("Add task")
+        label.setStyleSheet("font-size: 25px; color: #456;")
+        main_layout.addWidget(label)
+
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        row.addWidget(QLabel("Name:"))
+        self.name_edit = QLineEdit()
+        row.addWidget(self.name_edit)
+        main_layout.addLayout(row)
+
+        main_layout.addStretch()
+
+        button_row = QHBoxLayout()
+        accept_button = QPushButton("Ok")
+        accept_button.clicked.connect(self.accept)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        button_row.addWidget(accept_button)
+        button_row.addWidget(cancel_button)
+        main_layout.addLayout(button_row)
+
+    def accept(self) -> None:
+        print("Accepted")
+        return super().accept()
+
+class TaskList(QWidget):
+    task_selected_signal = Signal(Task)
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.selected_task = None
 
         self.init_ui()
 
@@ -230,6 +276,7 @@ class TaskList(QWidget):
         self.task_list_layout.setContentsMargins(4, 0, 4, 0)
         self.task_list_layout.setSpacing(4)
 
+
         main_layout.addWidget(label, 1)
         main_layout.addWidget(self.task_list, 10)
         main_layout.addStretch()
@@ -247,11 +294,18 @@ class TaskList(QWidget):
         for task in tasks.values():
             self.task_list_layout.addWidget(TaskViewObject(task))
 
+        self.add_task_button = QPushButton("Add task")
+        self.add_task_button.clicked.connect(self.add_task)
+        self.task_list_layout.addWidget(self.add_task_button)
         self.task_list_layout.addStretch(1)
 
     def change_task_object_pos(self, pos):
         # find closest two widgets:
         print(pos)
+
+    def add_task(self):
+        dialog = AddTaskDialog()
+        dialog.exec()
 
 
 class TaskInspector(QWidget):
@@ -261,7 +315,7 @@ class TaskInspector(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setStyleSheet(f"border: 2px solid {BORDER}; background-color: red;")
+        self.setStyleSheet(f"border: 2px solid {BORDER};")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -294,6 +348,7 @@ class TaskViewer(QWidget):
         self.client.websocket_message_received_signal.connect(self.websocket_msg)
 
         self.tasks: dict[str, Task] = {}
+        self.selected_task = None
         self._get_tasks()
 
 

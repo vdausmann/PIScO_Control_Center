@@ -38,6 +38,7 @@ class StatusLight(QWidget):
 
 class TaskViewObject(QWidget):
     # drag_signal = Signal(int, int)
+    clicked_signal = Signal()
 
     def __init__(self, task: Task) -> None:
         super().__init__()
@@ -71,14 +72,17 @@ class TaskViewObject(QWidget):
 
         main_layout.addWidget(self.frame)
 
+    def select(self, selected: bool):
+        if selected:
+            self.frame.setStyleSheet(get_task_widget_style_clicked())
+        else:
+            self.frame.setStyleSheet(get_task_widget_style())
+
+
     def mousePressEvent(self, event):
         # this would be better over signals to the task_viewer!
         if event.button() == Qt.MouseButton.LeftButton:
-            if self.is_selected:
-                self.frame.setStyleSheet(get_task_widget_style_clicked())
-            else:
-                self.frame.setStyleSheet(get_task_widget_style())
-            self.is_selected = not self.is_selected
+            self.clicked_signal.emit()
         super().mousePressEvent(event)
 
     # def mousePressEvent(self, event: QMouseEvent):

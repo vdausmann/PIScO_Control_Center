@@ -97,7 +97,7 @@ async def save_state_endpoint() -> dict:
 
 @app.post("/change-task-properties/{task_id}")
 async def change_task_properties_endpoint(task_id: str, property_key: str, property_value):
-    return task_manager.change_task_properties(task_id, property_key, property_value)
+    return await task_manager.change_task_properties(task_id, property_key, property_value)
 
 @app.post("/change-module-properties/{module_id}")
 async def change_module_properties_endpoint(module_id: str, property_key: str, property_value):
@@ -117,6 +117,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     connected_clients.append(websocket)
     try:
+        await websocket.send_json({"type": "Websocket connection status", "success": True})
         while True:
             msg = await websocket.receive_json()
             print("Server received message:", msg)

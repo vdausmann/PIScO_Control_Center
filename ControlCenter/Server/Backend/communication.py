@@ -34,6 +34,8 @@ def module_finished_msg(task_id: str, module_id: str, ret_code: int) -> dict:
     return {"type": "module_finished", "task_id": task_id, "module_id": module_id,
             "ret_code": ret_code}
 
+def task_property_changed_msg(task_id: str, property_key: str) -> dict:
+    return {"type": "task_property_changed", "task_id": task_id, "property_key": property_key}
 
 def shutdown_msg() -> dict:
     return {"type": "shutdown"}

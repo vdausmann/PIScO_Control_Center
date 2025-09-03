@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-python3 main.py --host "$HOST" --port "$PORT" $REMOTE
+python3 main.py --host "$HOST" --port "$PORT" $REMOTE > .server.log 2>&1
 
 # uvicorn Backend.server:app --port 8000
 # # For remote server: Use ssh port-forwarding: ssh -L 8000:localhost:8000 user@ip

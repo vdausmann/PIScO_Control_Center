@@ -8,9 +8,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSize, Slot, Qt
 from PySide6.QtGui import QIcon, QAction
 
-from .task_viewer import TaskViewer
-from .callibration_viewer import CallibrationViewer
-from .profile_viewer import ProfileViewer
+from .TaskViewerPane import TaskViewer
+from .CallibrationPane import CallibrationViewer
+from .ProfileViewerPane import ProfileViewer
 from .styles import *
 
 class PIScOControlCenter(QMainWindow):

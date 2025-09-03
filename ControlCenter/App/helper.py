@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QWidget
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QPen, QRgba64
 
@@ -47,3 +47,25 @@ class LoadingSpinner(QWidget):
         elif not on and self._timer.isActive():
             self._timer.stop()
 
+
+class SelectAllLineEdit(QLineEdit):
+    def mouseDoubleClickEvent(self, arg__1) -> None:
+        self.selectAll()
+
+class LabelEntry(QWidget):
+
+    def __init__(self, parent = None, label_ratio: int = 1, entry_ratio: int = 1,
+                 label_class = QLabel, entry_class = QLineEdit) -> None:
+        super().__init__(parent)
+        self.init_ui(label_ratio, entry_ratio, label_class, entry_class)
+
+    def init_ui(self, label_ratio, entry_ratio, label_class, entry_class):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.label = label_class("Label is accessable via .label")
+        self.entry = entry_class("LineEdit is accessable via .entry")
+
+        layout.addWidget(self.label, label_ratio)
+        layout.addWidget(self.entry, entry_ratio)

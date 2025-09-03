@@ -1,4 +1,4 @@
-from .styles import get_task_label_style, get_task_widget_style, get_task_widget_style_clicked
+from ..styles import get_task_label_style, get_task_widget_style, get_task_widget_style_clicked
 from Server.Backend.types import Task
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QWidget, QLabel, QSizePolicy,
 QVBoxLayout)
@@ -38,11 +38,11 @@ class StatusLight(QWidget):
 
 class TaskViewObject(QWidget):
     # drag_signal = Signal(int, int)
-    clicked_signal = Signal()
+    clicked_signal = Signal(str) # emits the task_id of the task if clicked
 
     def __init__(self, task: Task) -> None:
         super().__init__()
-        self.task = task
+        self.task: Task = task
         self.is_selected = False
 
         self.init_ui()
@@ -82,7 +82,7 @@ class TaskViewObject(QWidget):
     def mousePressEvent(self, event):
         # this would be better over signals to the task_viewer!
         if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked_signal.emit()
+            self.clicked_signal.emit(self.task.task_id)
         super().mousePressEvent(event)
 
     # def mousePressEvent(self, event: QMouseEvent):

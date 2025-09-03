@@ -8,7 +8,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from .communication import error_msg, module_finished_msg, module_started_msg, save_msg, stdout_msg, stderr_msg, success_msg, task_added_msg
+from .communication import error_msg, module_finished_msg, module_started_msg, save_msg, stdout_msg, stderr_msg, success_msg, task_added_msg, task_property_changed_msg
 from .types import TaskTemplate, Module, Task
 
 
@@ -286,10 +286,11 @@ class TaskManager:
 
         return result
 
-    def change_task_properties(self, task_id: str, property_key: str, property_value) -> dict:
+    async def change_task_properties(self, task_id: str, property_key: str, property_value) -> dict:
         try:
             setattr(self.tasks[task_id], property_key, property_value)
             self.save_state_sync()
+            await self._send_message_to_clients(task_property_changed_msg(task_id, property_key))
             return success_msg(f"Changed task property of task {task_id}")
         except KeyError:
             return error_msg(404, f"Invalid property key: {property_key}")

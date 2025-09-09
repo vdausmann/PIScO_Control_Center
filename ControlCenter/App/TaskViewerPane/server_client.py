@@ -129,7 +129,7 @@ class ServerClient(QObject):
 
     def connect_to_server(self, remote: bool = False):
         self.remote = remote
-        self.worker = ServerConnectWorker(self._connect_to_server, remote)
+        self.worker = ServerConnectWorker(self._connect_to_server)
         self.worker.start()
         self.worker.finished_signal.connect(self.connection_finished)
 

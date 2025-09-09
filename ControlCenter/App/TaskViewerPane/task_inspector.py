@@ -111,7 +111,7 @@ class TaskInspector(QWidget):
     def update_task(self, selected_task: str | None):
         self.inspected_task_id = selected_task
 
-        if self.inspected_task_id is None:
+        if self.inspected_task_id is None  or not self.inspected_task_id:
             self.inspected_task = None
             self.task_label.setText("No task selected")
             self.task_id_label.entry.setText("")

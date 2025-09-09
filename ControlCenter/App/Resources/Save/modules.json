@@ -1,0 +1,32 @@
+{
+    "Test 2": {
+        "settings": {
+            "s3": "int",
+            "s4": "int"
+        },
+        "internal_settings": {
+            "command": [
+                "./test.sh"
+            ],
+            "num_cores": 1,
+            "priority": 1,
+            "order": 2
+        }
+    },
+    "Test 1": {
+        "settings": {
+            "s1": "string",
+            "s2": "int"
+        },
+        "internal_settings": {
+            "command": [
+                "python3",
+                "test.py",
+                "test"
+            ],
+            "num_cores": 2,
+            "priority": 1,
+            "order": 4
+        }
+    }
+}

@@ -1,7 +1,7 @@
 from time import sleep
 import json
 import requests
-from Server.Backend.types import TaskTemplate, ModuleTemplate
+from Server.Backend.types import InternalModuleSettings, TaskTemplate, ModuleTemplate
 
 
 ip = "http://localhost:8000/"
@@ -10,18 +10,24 @@ ip = "http://localhost:8000/"
 m1 = ModuleTemplate(
         name="Test Module 1",
         settings={},
-        command=["python3","/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/TestModules/multicores.py"],
-        num_cores=6,
-        priority=1
+        internal_settings=InternalModuleSettings(
+            command=["python3","/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/TestModules/multicores.py"],
+            num_cores=6,
+            priority=1,
+            order=1,
         )
+    )
 
 m2 = ModuleTemplate(
         name="Test Module 2",
         settings={},
-        command=["python3","/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/TestModules/multicores.py"],
-        num_cores=2,
-        priority=1
+        internal_settings=InternalModuleSettings(
+            command=["python3","/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/TestModules/multicores.py"],
+            num_cores=2,
+            priority=1,
+            order=2
         )
+    )
 
 task1 = TaskTemplate(name="Test Task 1", meta_data={"Desc": "This is a test task", "ID": 1},
             modules=[m1])

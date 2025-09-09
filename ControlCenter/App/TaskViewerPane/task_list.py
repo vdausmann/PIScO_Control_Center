@@ -1,12 +1,18 @@
-from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
                                QSizePolicy, QVBoxLayout, QWidget)
 
 from PySide6.QtCore import Qt, Signal, Slot
 
-from ..styles import BORDER
+from .module_editor import AddModulesDialog
+
 from .server_client import ServerClient
 from .task_view_object import TaskViewObject
-from Server.Backend.types import Task, TaskTemplate
+from .meta_data_editor import EditMetaDataDialog
+
+from ..styles import BORDER
+from ..helper import clear_layout, replace_widget
+
+from Server.Backend.types import ModuleTemplate, Task, TaskTemplate
 
 
 class AddTaskDialog(QDialog):
@@ -14,27 +20,75 @@ class AddTaskDialog(QDialog):
     def __init__(self) -> None:
         super().__init__()
 
+        self.meta_data: dict[str, str] = {}
+        self.modules: list[ModuleTemplate] = []
         self.task: TaskTemplate | None = None
         self.init_ui()
 
     def init_ui(self):
-        self.setFixedSize(400, 200)
+        self.setFixedSize(400, 500)
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # main_layout.setContentsMargins(0, 0, 0, 0)
+        # main_layout.setSpacing(0)
 
         label = QLabel("Add task")
         label.setStyleSheet("font-size: 25px; color: #456;")
-        main_layout.addWidget(label)
+        main_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         row = QHBoxLayout()
         row.setSpacing(10)
-        row.addWidget(QLabel("Name:"))
+        name_label = QLabel("Name:")
+        name_label.setStyleSheet(f"font-size: 15px; color: #456; border: none;")
+        row.addWidget(name_label)
         self.name_edit = QLineEdit()
-        row.addWidget(self.name_edit)
+        row.addWidget(self.name_edit, 1)
         main_layout.addLayout(row)
 
-        main_layout.addStretch()
+        #############################
+        ## Metadata:
+        #############################
+        meta_data_label = QLabel("Meta data:")
+        meta_data_label.setStyleSheet(f"font-size: 15px; color: #456; border: none;")
+        main_layout.addWidget(meta_data_label)
+
+        meta_data_area = QScrollArea()
+        meta_data_area.setWidgetResizable(True)
+        meta_data_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        meta_data_container =QWidget()
+        self.meta_data_layout = QVBoxLayout(meta_data_container)
+        self.meta_data_layout.setContentsMargins(0, 0, 0, 0)
+        self.meta_data_layout.setSpacing(2)
+        # self.meta_data_layout
+        # meta_data_area.setLayout(self.meta_data_layout)
+        meta_data_area.setWidget(meta_data_container)
+        main_layout.addWidget(meta_data_area, 6)
+
+        meta_data_button = QPushButton("Edit metadata")
+        meta_data_button.clicked.connect(self.edit_meta_data)
+        main_layout.addWidget(meta_data_button, 1)
+
+        #############################
+        ## Modules:
+        #############################
+        modules_label = QLabel("Modules:")
+        modules_label.setStyleSheet(f"font-size: 15px; color: #456; border: none;")
+        main_layout.addWidget(modules_label)
+
+        modules_area = QScrollArea()
+        modules_area.setWidgetResizable(True)
+        modules_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        modules_container = QWidget()
+        self.modules_layout = QVBoxLayout(modules_container)
+        modules_area.setWidget(modules_container)
+        main_layout.addWidget(modules_area, 6)
+
+        modules_button = QPushButton("Add modules")
+        modules_button.clicked.connect(self.add_modules)
+        main_layout.addWidget(modules_button, 1)
+
+        # main_layout.addStretch()
 
         button_row = QHBoxLayout()
         accept_button = QPushButton("Ok")
@@ -46,13 +100,11 @@ class AddTaskDialog(QDialog):
         main_layout.addLayout(button_row)
 
     def accept(self) -> None:
-        print("Accepted")
-
         try:
             self.task = TaskTemplate(
                     name=self.name_edit.text(),
-                    meta_data={},
-                    modules=[]
+                    meta_data=self.meta_data,
+                    modules=self.modules
                     )
         except:
             self.task = None
@@ -62,8 +114,26 @@ class AddTaskDialog(QDialog):
     def get_task(self):
         return self.task
 
+
+    def edit_meta_data(self):
+        dialog = EditMetaDataDialog(meta_data=self.meta_data)
+        dialog.exec()
+        self.meta_data = dialog.meta_data
+
+        clear_layout(self.meta_data_layout)
+        for key in self.meta_data:
+            label = QLabel(f"{key}: {self.meta_data[key]}")
+            self.meta_data_layout.addWidget(label, 1)
+
+    def add_modules(self):
+        dialog = AddModulesDialog(modules=self.modules)
+        dialog.exec()
+
+
+
+
 class TaskList(QWidget):
-    task_selected_signal = Signal(object) # emits Task or None
+    task_selected_signal = Signal(str) # emits task_id or None
 
     def __init__(self, client: ServerClient) -> None:
         super().__init__()
@@ -122,6 +192,22 @@ class TaskList(QWidget):
         self.task_list_layout.addStretch(1)
 
     @Slot(str)
+    def update_task(self, task_id: str):
+        new_task = self.client.get_task_from_server(task_id)
+        if new_task is None:
+            # TODO: Remove widget?
+            ...
+        else:
+            new_object = TaskViewObject(new_task)
+            replace_widget(self.task_list_layout, self.task_objects[task_id], new_object)
+            self.task_objects[task_id] = new_object
+
+        print("Updating task", task_id, self.selected_task)
+        # send info to task inspector to update the displayed task
+        if task_id == self.selected_task:
+            self.task_selected_signal.emit(self.selected_task)
+
+    @Slot(str)
     def task_clicked(self, task_id: str):
         # unselect current task:
         if self.selected_task:
@@ -136,7 +222,7 @@ class TaskList(QWidget):
         # select current task:
         if self.selected_task:
             self.task_objects[self.selected_task].select(True)
-            self.task_selected_signal.emit(self.task_objects[self.selected_task].task)
+            self.task_selected_signal.emit(self.selected_task)
         else:
             self.task_selected_signal.emit(None)
 

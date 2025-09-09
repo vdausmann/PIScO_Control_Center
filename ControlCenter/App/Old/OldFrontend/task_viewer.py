@@ -12,38 +12,6 @@ from .styles import *
 from .settings_editor import SettingsEditor
 from .metadata_editor import MetaDataEditor
 
-class ClickableLabel(QWidget):
-    clicked_signal = Signal(Task)
-
-    def __init__(self, text: str = "", bound_object = None):
-        super().__init__()
-        self.text = text
-        self.is_clicked = False
-        self.object = bound_object
-        self.init_ui()
-
-    def init_ui(self):
-        self.setFixedHeight(20)
-        layout = QHBoxLayout(self)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 6, 0)
-        self.label = QLabel(self.text)
-        self.label.setStyleSheet(get_task_label_style())
-        layout.addWidget(self.label, 1)
-        layout.addStretch()
-
-    @override
-    def mousePressEvent(self, event):
-        self.clicked_signal.emit(self.object)
-
-    def clicked(self):
-        if self.is_clicked:
-            self.is_clicked = False
-            self.label.setStyleSheet(get_task_label_style())
-        else:
-            self.is_clicked = True
-            self.label.setStyleSheet(get_task_label_style_clicked())
-
 
 class TaskInfo(QFrame):
     selected_module_changed_signal = Signal(Module)

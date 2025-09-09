@@ -2,7 +2,7 @@ import asyncio
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect, BackgroundTasks
 from contextlib import asynccontextmanager
 from .task_manager import TaskManager
-from .types import Module, TaskTemplate, Task
+from .types import ChangePropertyRequest, Module, TaskTemplate, Task
 from .communication import shutdown_msg, task_started_msg
 import uvicorn
 
@@ -96,8 +96,8 @@ async def save_state_endpoint() -> dict:
 
 
 @app.post("/change-task-properties/{task_id}")
-async def change_task_properties_endpoint(task_id: str, property_key: str, property_value):
-    return await task_manager.change_task_properties(task_id, property_key, property_value)
+async def change_task_properties_endpoint(task_id: str, req: ChangePropertyRequest):
+    return await task_manager.change_task_properties(task_id, req.property_key, req.property_value)
 
 @app.post("/change-module-properties/{module_id}")
 async def change_module_properties_endpoint(module_id: str, property_key: str, property_value):

@@ -1,4 +1,5 @@
 from asyncio.subprocess import Process
+from datetime import datetime
 from fastapi import WebSocket
 import uuid
 import asyncio
@@ -54,12 +55,12 @@ class TaskManager:
         for module in task.modules:
             module_id = str(uuid.uuid4())
             modules.append(module_id)
-            print(module.model_dump())
             m = Module(**module.model_dump(), module_id=module_id, parent_task_id=task_id,
                        finished=False) 
             self.modules[module_id] = m
 
-        self.tasks[task_id] = Task(name=task.name, meta_data=task.meta_data, task_id = task_id, modules=modules)
+        self.tasks[task_id] = Task(name=task.name, meta_data=task.meta_data, task_id =
+                                   task_id, modules=modules, next_module_to_execute=0)
         await self._send_message_to_clients(task_added_msg(task_id))
         await self.save_state()
         return self.tasks[task_id]
@@ -163,6 +164,15 @@ class TaskManager:
             line = line_bytes.decode().strip()
             print(f"[{prefix}]: {line}")
 
+    def write_input_file(self, module_id: str) -> str:
+        file_name = f"{datetime.date}_{module_id}.cfg"
+        file_name.replace(" ", "_")
+
+        # write file
+        ...
+
+        return file_name
+
     async def _run_module(self, module_id: str) -> Process | None:
         try:
             module: Module= self.modules[module_id]
@@ -171,8 +181,11 @@ class TaskManager:
                     error_msg(404, f"Module with id {module_id} not found!"))
             return None
         try:
+            # TODO: Write input file from settings
+            input_file = ""
+
             process = await asyncio.create_subprocess_exec(
-                    *module.command,
+                    *module.internal_settings.command + [input_file],
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
             )
@@ -183,40 +196,40 @@ class TaskManager:
 
         except FileNotFoundError:
             await self._send_message_to_clients(
-                    error_msg(404, f"Command not found: {" ".join(module.command)}",
+                    error_msg(404, f"Command not found: {" ".join(module.internal_settings.command)}",
                                                           module.parent_task_id,
                               module.module_id))
         except Exception as e:
             await self._send_message_to_clients(
-                    error_msg(400, f"Unknown exception {e} for command: {" ".join(module.command)}",
+                    error_msg(400, f"Unknown exception {e} for command: {" ".join(module.internal_settings.command)}",
                                                           module.parent_task_id,
                               module.module_id))
         return None
 
 
     async def _run_next_modules(self):
-        current_used_cores = sum([self.modules[id].num_cores for id in self.running_modules])
+        current_used_cores = sum([self.modules[id].get_num_cores() for id in self.running_modules])
         possible_modules: list[str] = []
 
         for task_id in self.started_tasks:
             for module_id in self.tasks[task_id].modules:
                 if (module_id not in self.running_modules and not
                     self.modules[module_id].finished and current_used_cores +
-                    self.modules[module_id].num_cores <= self.max_cores):
+                    self.modules[module_id].get_num_cores() <= self.max_cores):
                     possible_modules.append(module_id)
 
-        possible_modules.sort(key=lambda id: self.modules[id].priority)
+        possible_modules.sort(key=lambda id: self.modules[id].internal_settings.priority)
 
         while possible_modules and current_used_cores < self.max_cores:
             module_id = possible_modules.pop()
-            if self.modules[module_id].num_cores + current_used_cores > self.max_cores:
+            if self.modules[module_id].get_num_cores() + current_used_cores > self.max_cores:
                 break
 
             # process = asyncio.run(self._run_module(module_id))
             process = await self._run_module(module_id)
 
             if process is not None:
-                current_used_cores += self.modules[module_id].num_cores
+                current_used_cores += self.modules[module_id].get_num_cores()
                 self.processes[module_id] = process
                 self.running_modules.append(module_id)
         await self.save_state()
@@ -262,7 +275,7 @@ class TaskManager:
 
     async def save_state(self) -> dict:
         """Async wrapper for saving state without blocking the event loop."""
-        result = await asyncio.to_thread(self._save_state_sync)
+        result: dict = await asyncio.to_thread(self._save_state_sync)
 
         # Send WS message in the correct loop
         if self.loop:
@@ -288,14 +301,20 @@ class TaskManager:
 
     async def change_task_properties(self, task_id: str, property_key: str, property_value) -> dict:
         try:
-            setattr(self.tasks[task_id], property_key, property_value)
+            if property_key.startswith("meta_data."):
+                meta_data_key = property_key.split(".", 1)[1]
+                self.tasks[task_id].meta_data[meta_data_key] = property_value
+            else:
+                if not hasattr(self.tasks[task_id], property_key):
+                    return error_msg(404, f"Invalid property key: {property_key}")
+                setattr(self.tasks[task_id], property_key, property_value)
             self.save_state_sync()
             await self._send_message_to_clients(task_property_changed_msg(task_id, property_key))
             return success_msg(f"Changed task property of task {task_id}")
         except KeyError:
-            return error_msg(404, f"Invalid property key: {property_key}")
+            return error_msg(404, f"Invalid task id: {task_id}")
         except ValueError:
-            return error_msg(404, f"Invalid property key: {property_key}")
+            return error_msg(404, f"Invalid property value: {property_value}")
         except Exception as e:
             return error_msg(400, f"Unknown exception when changing task property: {e}")
 

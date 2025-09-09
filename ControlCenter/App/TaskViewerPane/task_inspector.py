@@ -1,15 +1,21 @@
 from PySide6.QtWidgets import (QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
 from PySide6.QtCore import Qt, Slot
 
+from .server_client import ServerClient
+from .meta_data_editor import EditMetaDataDialog
+
 from ..styles import BORDER, get_push_button_style
-from ..helper import LabelEntry, SelectAllLineEdit
+from ..helper import LabelEntry, SelectAllLineEdit, clear_layout
 
 from Server.Backend.types import Task
 
 class TaskInspector(QWidget):
 
-    def __init__(self) -> None:
+    def __init__(self, client: ServerClient) -> None:
         super().__init__()
+        self.client = client
+        self.inspected_task_id: str | None = None
+        self.inspected_task: Task | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -51,16 +57,19 @@ class TaskInspector(QWidget):
         meta_data_label.setStyleSheet(f"font-size: 15px; color: #456; border: none;")
         self.task_view_layout.addWidget(meta_data_label)
         meta_data_area = QScrollArea()
+        meta_data_area.setWidgetResizable(True)
         meta_data_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
 
-        self.meta_data_layout = QVBoxLayout()
+        meta_data_container = QWidget()
+        self.meta_data_layout = QVBoxLayout(meta_data_container)
         self.meta_data_layout.setContentsMargins(2, 2, 2, 2)
-        meta_data_area.setLayout(self.meta_data_layout)
+        meta_data_area.setWidget(meta_data_container)
 
         self.task_view_layout.addWidget(meta_data_area, 1)
 
         edit_metadata_button = QPushButton("Edit metadata")
         edit_metadata_button.setStyleSheet(get_push_button_style())
+        edit_metadata_button.clicked.connect(self.edit_meta_data)
         self.task_view_layout.addWidget(edit_metadata_button)
 
         ##########################
@@ -70,11 +79,13 @@ class TaskInspector(QWidget):
         modules_label.setStyleSheet(f"font-size: 15px; color: #456; border: none;")
         self.task_view_layout.addWidget(modules_label)
         modules_area = QScrollArea()
+        modules_area.setWidgetResizable(True)
         modules_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
 
-        self.modules_layout = QVBoxLayout()
+        modules_container = QWidget()
+        self.modules_layout = QVBoxLayout(modules_container)
         self.modules_layout.setContentsMargins(2, 2, 2, 2)
-        modules_area.setLayout(self.modules_layout)
+        modules_area.setWidget(modules_container)
 
         self.task_view_layout.addWidget(modules_area, 1)
 
@@ -97,42 +108,57 @@ class TaskInspector(QWidget):
         main_layout.addStretch()
 
     @Slot(object)
-    def update_task(self, selected_task: Task | None):
-        if selected_task is None:
+    def update_task(self, selected_task: str | None):
+        self.inspected_task_id = selected_task
+
+        if self.inspected_task_id is None:
+            self.inspected_task = None
             self.task_label.setText("No task selected")
             self.task_id_label.entry.setText("")
-            self.update_metadata_area({})
-            self.update_modules_area([])
+            self.update_meta_data_area()
+            self.update_modules_area()
         else:
-            self.task_label.setText(selected_task.name)
-            self.task_id_label.entry.setText(f"{selected_task.task_id}")
-            self.update_metadata_area(selected_task.meta_data)
-            self.update_modules_area(selected_task.modules)
+            self.inspected_task = self.client.get_task_from_server(self.inspected_task_id)
+            if self.inspected_task is None:
+                return self.update_task(None)
+            
+            self.task_label.setText(self.inspected_task.name)
+            self.task_id_label.entry.setText(f"{self.inspected_task_id}")
+            self.update_meta_data_area()
+            self.update_modules_area()
 
-    def clear_layout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0) # Take from index 0 repeatedly
-            if item.widget():
-                widget = item.widget()
-                widget.setParent(None) 
-                widget.deleteLater()  
-            del item
-
-    def update_metadata_area(self, meta_data: dict):
-        self.clear_layout(self.meta_data_layout)
-        for key in meta_data.keys():
-            l = QLabel(f"{key}: {meta_data[key]}")
+    def update_meta_data_area(self):
+        clear_layout(self.meta_data_layout)
+        if self.inspected_task is None:
+            return
+        for key in self.inspected_task.meta_data.keys():
+            l = QLabel(f"{key}: {self.inspected_task.meta_data[key]}")
             l.setStyleSheet(f"font-size: 12px; color: #456; border: none;")
             self.meta_data_layout.addWidget(l)
         self.meta_data_layout.addStretch()
 
-    def update_modules_area(self, modules: list[str]):
-        self.clear_layout(self.modules_layout)
-        print(modules)
-        for module_id in modules:
+    def update_modules_area(self):
+        clear_layout(self.modules_layout)
+        if self.inspected_task is None:
+            return
+        for module_id in self.inspected_task.modules:
             l = SelectAllLineEdit(module_id)
             l.setReadOnly(True)
             l.setStyleSheet(f"font-size: 12px; color: #456; border: none; background-color: transparent;")
             self.modules_layout.addWidget(l)
         self.modules_layout.addStretch()
 
+    @Slot()
+    def edit_meta_data(self):
+        if self.inspected_task is None:
+            return
+        meta_data = self.inspected_task.meta_data
+        dialog = EditMetaDataDialog(meta_data=meta_data)
+        dialog.exec()
+
+        for key in dialog.meta_data:
+            if not key in self.inspected_task.meta_data or dialog.meta_data[key] != self.inspected_task.meta_data[key]:
+                self.client.change_task_property(self.inspected_task.task_id, f"meta_data.{key}", dialog.meta_data[key])
+
+        # self.inspected_task.meta_data = dialog.meta_data
+        # self.update_meta_data_area()

@@ -12,6 +12,7 @@ from .TaskViewerPane import TaskViewer
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
 from .styles import *
+from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):
     """Main application window for the PISCO-Controller."""
@@ -120,6 +121,21 @@ class PIScOControlCenter(QMainWindow):
         file_menu.addAction(load_state_action)
         file_menu.addSeparator()
 
+        modules_menu = menu.addMenu("&Modules")
+        create_new_module = QAction("&Create new module", self)
+        create_new_module.setToolTip("Create new module")
+        create_new_module.triggered.connect(self._create_new_module)
+        modules_menu.addAction(create_new_module)
+        modules_menu.addSeparator()
+        
+        edit_module = QAction("&Edit existing module", self)
+        edit_module.setToolTip("Edit existing module")
+        edit_module.triggered.connect(self._edit_module)
+        modules_menu.addAction(edit_module)
+        modules_menu.addSeparator()
+
+
+
     @Slot(int)
     def _show_page(self, index: int):
         """Switches the currently visible page in the stacked widget."""
@@ -128,4 +144,17 @@ class PIScOControlCenter(QMainWindow):
     def _quit(self):
         self.task_viewer.client.disconnect_from_server()
 
-    
+    @Slot()
+    def _create_new_module(self):
+        dialog = CreateNewModule()
+        dialog.exec()
+
+    @Slot()
+    def _edit_module(self):
+        dialog = EditModule()
+        dialog.exec()
+        selected_module = dialog.get_selected()
+
+        print(selected_module)
+        dialog = CreateNewModule(selected_module)
+        dialog.exec()

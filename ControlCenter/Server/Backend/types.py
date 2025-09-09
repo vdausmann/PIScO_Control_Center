@@ -10,11 +10,17 @@ STATE_ERROR = "error"
 ########################################
 ## Helper types for initialization
 ########################################
+
+class InternalModuleSettings(BaseModel):
+    command: list[str]
+    num_cores: int | str    # use a name (str) to link this to another setting
+    priority: int
+    order: int
+
+
 class ModuleTemplate(BaseModel):
     name: str
-    command: list[str]
-    num_cores: int
-    priority: int
+    internal_settings: InternalModuleSettings
     settings: dict 
 
 class TaskTemplate(BaseModel):
@@ -29,11 +35,15 @@ class Module(BaseModel):
     module_id: str 
     parent_task_id: str 
     name: str
-    command: list[str]
-    num_cores: int
-    priority: int
+    internal_settings: InternalModuleSettings
     settings: dict 
     finished: bool
+
+    def get_num_cores(self) -> int:
+        if type(self.internal_settings.num_cores) == int:
+            return self.internal_settings.num_cores
+        else:
+            return self.settings[self.internal_settings.num_cores]
 
 
 class Task(BaseModel):
@@ -41,4 +51,11 @@ class Task(BaseModel):
     meta_data: dict
     task_id: str
     modules: list[str]
+    next_module_to_execute: int
+
+
+class ChangePropertyRequest(BaseModel):
+    property_key: str
+    property_value: str | int | float | dict | list | None
+
 

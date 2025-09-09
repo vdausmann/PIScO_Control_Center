@@ -10,7 +10,6 @@ def main():
 
     if args.remote:
         print(f"Remember to run SSH port-forwarding: ssh -L {args.port}:localhost:{args.port} user@ip")
-
     run(args.host, args.port, args.remote)
 
 if __name__ == "__main__":

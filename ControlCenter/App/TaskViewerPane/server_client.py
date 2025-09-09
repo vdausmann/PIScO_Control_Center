@@ -1,14 +1,16 @@
+from asyncio import subprocess
 from PySide6.QtCore import QByteArray, QObject, QProcess, QUrl, QUrlQuery, Slot, Signal, QThread
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PySide6.QtWidgets import (QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTextEdit,
-                               QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTextEdit,
+                               QVBoxLayout, QWidget, QDialog, QFormLayout, QLineEdit)
 
 from ..helper import LoadingSpinner
 from ..styles import get_delete_button_style, get_push_button_style, get_toolbar_style, BG1
                                
 from Server.Backend.types import TaskTemplate, Task
+import subprocess
 import json
 import requests
 from time import sleep
@@ -17,10 +19,9 @@ from time import sleep
 class ServerConnectWorker(QThread):
     finished_signal = Signal(bool)  
 
-    def __init__(self, callback, remote: bool = False):
+    def __init__(self, callback):
         super().__init__()
         self.callback = callback
-        self.remote = remote
 
     def run(self):
         # Blocking function runs here
@@ -30,6 +31,37 @@ class ServerConnectWorker(QThread):
         except:
             self.finished_signal.emit(False)
 
+class SSHLoginDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("SSH Connection")
+        self.setFixedSize(300, 200)
+
+        layout = QVBoxLayout(self)
+
+        self.form_layout = QFormLayout()
+
+        self.user_edit = QLineEdit()
+        self.form_layout.addRow("User:", self.user_edit)
+
+        self.ip_edit = QLineEdit()
+        self.form_layout.addRow("IP / Host:", self.ip_edit)
+
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.form_layout.addRow("Password:", self.password_edit)
+
+        layout.addLayout(self.form_layout)
+
+        self.info_label = QLabel("Leave password empty if using SSH keys.")
+        layout.addWidget(self.info_label)
+
+        self.ok_button = QPushButton("Connect")
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+
+    def get_data(self):
+        return self.user_edit.text(), self.ip_edit.text(), self.password_edit.text()
 
 class ServerClient(QObject):
     websocket_message_received_signal = Signal(dict)
@@ -69,9 +101,12 @@ class ServerClient(QObject):
             return
 
         print("Starting server...")
+        args = [self.START_SERVER_SCRIPT]
+        if self.remote:
+            args.append("--remote")
         QProcess.startDetached(
             "bash",
-            [self.START_SERVER_SCRIPT],
+            args,
             "./Server" 
         )
         sleep(2)
@@ -82,7 +117,7 @@ class ServerClient(QObject):
         except:
             ...
 
-    def _connect_to_server(self, remote: bool = False) -> bool:
+    def _connect_to_server(self) -> bool:
         # check if server is running, if not start a new one: 
         try:
             if not self.check_server(1):
@@ -93,14 +128,40 @@ class ServerClient(QObject):
 
 
     def connect_to_server(self, remote: bool = False):
+        self.remote = remote
         self.worker = ServerConnectWorker(self._connect_to_server, remote)
         self.worker.start()
         self.worker.finished_signal.connect(self.connection_finished)
+
+    def port_forwarding(self, ip, user, password):
+        # ssh = paramiko.SSHClient()
+        # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        #
+        # ssh.connect(ip, username=user, password=password)
+        # cmd = f"cd {workdir} && nohup uvicorn Backend.server:app --port {port} > server.log 2>&1 &"
+        # ssh.exec_command(cmd)
+        # print(f"Started server on {ip}:{port} in {workdir} (detached).")
+        # ssh.close()
+
+        dialog = SSHLoginDialog()
+        dialog.exec()
+        user, ip, password = dialog.get_data()
+        port = 8000
+        target = f"{user}@{ip}"
+        ssh_cmd = [
+                "ssh",
+                "-L",
+                f"{port}:localhost:{port}",
+                target
+                ]
+        subprocess.Popen(ssh_cmd)
 
     @Slot(bool)
     def connection_finished(self, success: bool):
         self.worker = None
         if success:
+            # if self.remote:
+            #     self.port_forwarding()
             self.connect_websocket()
             self.websocket_connected_signal.emit(True)
             print("Socket connected")
@@ -188,7 +249,7 @@ class ServerClient(QObject):
         resp = requests.get(self.SERVER_URL + f"get-task/{task_id}")
         if resp.status_code == 200:
             res = resp.json()
-            return res
+            return Task(**res)
 
     def get_all_tasks_from_server(self) -> list[Task] | None:
         if not self.connected:
@@ -199,6 +260,16 @@ class ServerClient(QObject):
             res = [Task(**task) for task in res]
             return res
 
+
+    def change_task_property(self, task_id: str, property_key: str, property_value) -> Task | None:
+        if not self.connected:
+            return
+        payload = {"property_key": property_key, "property_value": property_value}
+        resp = requests.post(self.SERVER_URL + f"change-task-properties/{task_id}",
+                             json=payload)
+        if resp.status_code == 200:
+            res = resp.json()
+            return res
 
     # def _connect_to_server(self, remote: bool = False) -> bool:
     #     if remote:
@@ -293,6 +364,8 @@ class ServerViewer(QWidget):
         server_settings_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         server_settings_label.setStyleSheet("border: none;")
 
+        server_settings_container_layout.addWidget(server_settings_label)
+
         self.server_status_container = QHBoxLayout()
         self.server_status_container.setContentsMargins(0, 0, 0, 0)
         server_status_label = QLabel("Server status: ")
@@ -302,24 +375,35 @@ class ServerViewer(QWidget):
         self.server_status_container.addWidget(server_status_label)
         self.server_status_container.addWidget(self.server_status)
 
+        server_settings_container_layout.addLayout(self.server_status_container)
+
+        remote_row = QWidget()
+        remote_row.setStyleSheet("border: none;")
+        remote_row_layout = QHBoxLayout(remote_row)
+        remote_row_label = QLabel("Remote: ")
+        remote_row_label.setStyleSheet("border: none;")
+        self.remote_checkbox = QCheckBox()
+        self.remote_checkbox.setStyleSheet("border: none;")
+        remote_row_layout.addWidget(remote_row_label)
+        remote_row_layout.addWidget(self.remote_checkbox)
+        server_settings_container_layout.addWidget(remote_row)
+
+        server_settings_container_layout.addStretch()
 
         ########################
         ## Buttons:
         ########################
         self.server_connect_button = QPushButton("Connect to Server")
         self.server_connect_button.setStyleSheet(get_push_button_style())
-        self.server_connect_button.setFixedHeight(30)
+        self.server_connect_button.setFixedHeight(20)
         self.server_connect_button.clicked.connect(self.connect_to_server)
 
         self.server_stop_button = QPushButton("Stop Server")
         self.server_stop_button.setStyleSheet(get_delete_button_style())
-        self.server_stop_button.setFixedHeight(30)
+        self.server_stop_button.setFixedHeight(20)
         self.server_stop_button.clicked.connect(self.client.stop_server)
         self.server_stop_button.setDisabled(True)
 
-        server_settings_container_layout.addWidget(server_settings_label)
-        server_settings_container_layout.addLayout(self.server_status_container)
-        server_settings_container_layout.addStretch()
         server_settings_container_layout.addWidget(self.server_connect_button)
         server_settings_container_layout.addWidget(self.server_stop_button)
 
@@ -346,7 +430,6 @@ class ServerViewer(QWidget):
         row_layout.addWidget(server_output_container, 1)
         row_layout.addStretch()
 
-
         layout.addWidget(label)
         layout.addWidget(self.row, 1)
         layout.addStretch()
@@ -365,6 +448,7 @@ class ServerViewer(QWidget):
             self.server_connect_button.setStyleSheet(get_delete_button_style())
             self.server_connect_button.clicked.disconnect()
             self.server_connect_button.clicked.connect(self.client.disconnect_from_server)
+            self.remote_checkbox.setDisabled(True)
 
             self.server_status.setText("Connected")
             self.server_status.setStyleSheet("color: green; border: none;")
@@ -378,6 +462,7 @@ class ServerViewer(QWidget):
             self.server_connect_button.setStyleSheet(get_push_button_style())
             self.server_connect_button.clicked.disconnect()
             self.server_connect_button.clicked.connect(self.connect_to_server)
+            self.remote_checkbox.setDisabled(False)
 
     # @Slot(bool)
     # def server_state(self, running: bool):

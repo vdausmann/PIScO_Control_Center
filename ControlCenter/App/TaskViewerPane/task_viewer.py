@@ -50,10 +50,12 @@ class TaskViewer(QWidget):
         
         self.task_list = TaskList(self.client)
         self.task_list_changed_signal.connect(self.task_list.update_tasks)
+        self.task_changed_signal.connect(self.task_list.update_task)
 
 
-        self.task_inspector = TaskInspector()
+        self.task_inspector = TaskInspector(self.client)
         self.task_list.task_selected_signal.connect(self.task_inspector.update_task)
+        # self.task_changed_signal.connect(self.task_list.
 
         # Server-connection visualization:
         self.blur_effect_list = QGraphicsBlurEffect()
@@ -85,6 +87,7 @@ class TaskViewer(QWidget):
 
     def hide_overlay(self):
         if self.overlay:
+            self.overlay.loading(False)
             self.server_viewer.loading_signal.disconnect(self.overlay.loading)
             self.overlay.close()
             self.overlay.deleteLater()
@@ -121,13 +124,12 @@ class TaskViewer(QWidget):
                 self.show_overlay()
             self.tasks = {}
             self.task_list_changed_signal.emit(self.tasks)
-            # self.task_list.task_clicked(None)
+            self.task_list.task_clicked(None)
 
     @Slot(dict)
     def websocket_msg(self, msg: dict):
         if msg["type"] == "task_added":
             self._get_tasks()
-            # self.task_list.update_tasks(self.tasks)
             self.task_list_changed_signal.emit(self.tasks)
         if msg["type"] == "task_property_changed":
             try:
@@ -135,8 +137,7 @@ class TaskViewer(QWidget):
                 new_task = self.client.get_task_from_server(task_id)
                 if new_task is not None:
                     self.tasks[task_id] = new_task
-                self.task_changed_signal.emit(self.tasks[task_id])
+                self.task_changed_signal.emit(task_id)
             except:
                 pass
-            # self.task_inspector.update_task(self.task_list.selected_task)
 

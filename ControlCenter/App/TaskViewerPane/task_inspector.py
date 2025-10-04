@@ -4,7 +4,6 @@ from PySide6.QtCore import Qt, Slot
 from .server_client import ServerClient
 from .meta_data_editor import EditMetaDataDialog
 
-from ..styles import BORDER, get_push_button_style
 from ..helper import LabelEntry, SelectAllLineEdit, clear_layout
 
 from Server.Backend.types import Task
@@ -19,8 +18,9 @@ class TaskInspector(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setStyleSheet(f"border: 2px solid {BORDER};")
+        # self.setStyleSheet(f"border: 2px solid {BORDER};")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -68,7 +68,6 @@ class TaskInspector(QWidget):
         self.task_view_layout.addWidget(meta_data_area, 1)
 
         edit_metadata_button = QPushButton("Edit metadata")
-        edit_metadata_button.setStyleSheet(get_push_button_style())
         edit_metadata_button.clicked.connect(self.edit_meta_data)
         self.task_view_layout.addWidget(edit_metadata_button)
 
@@ -90,7 +89,6 @@ class TaskInspector(QWidget):
         self.task_view_layout.addWidget(modules_area, 1)
 
         edit_modules_button = QPushButton("Edit modules")
-        edit_modules_button.setStyleSheet(get_push_button_style())
         self.task_view_layout.addWidget(edit_modules_button)
 
 

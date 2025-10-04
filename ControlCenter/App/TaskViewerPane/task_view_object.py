@@ -1,4 +1,3 @@
-from ..styles import get_task_label_style, get_task_widget_style, get_task_widget_style_clicked
 from Server.Backend.types import Task
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QWidget, QLabel, QSizePolicy,
 QVBoxLayout)
@@ -51,11 +50,11 @@ class TaskViewObject(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+        self.setObjectName("TaskWidget")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.frame = QWidget()
-        self.frame.setStyleSheet(get_task_widget_style())
         layout = QHBoxLayout(self.frame)
-
         
         name_label = QLabel(f"{self.task.name}")
         name_label.setStyleSheet("background-color: transparent; border: none;")
@@ -74,9 +73,13 @@ class TaskViewObject(QWidget):
 
     def select(self, selected: bool):
         if selected:
-            self.frame.setStyleSheet(get_task_widget_style_clicked())
+            self.setObjectName("TaskWidgetClicked")
+            self.style().unpolish(self)
+            self.style().polish(self)
         else:
-            self.frame.setStyleSheet(get_task_widget_style())
+            self.setObjectName("TaskWidget")
+            self.style().unpolish(self)
+            self.style().polish(self)
 
 
     def mousePressEvent(self, event):

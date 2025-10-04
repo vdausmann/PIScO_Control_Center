@@ -1,13 +1,15 @@
 import json
 import os
-from PySide6.QtCore import Slot, QSize, Signal
+from PySide6.QtCore import QStringDecoder, Slot, QSize, Signal
 from PySide6.QtGui import QIcon, Qt
+from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (QComboBox, QDialog, QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QSizePolicy,
                                QVBoxLayout, QWidget, QLabel)
 
+from .server_client import ServerClient
 from Server.Backend.types import InternalModuleSettings, Module, ModuleTemplate
 
-from ..helper import LabelEntry, clear_layout, ClickableLabel
+from ..helper import LabelEntry, LoadingSpinner, clear_layout, ClickableLabel
 
 
 class SettingInput(QWidget):
@@ -36,7 +38,7 @@ class SettingInput(QWidget):
         layout.addWidget(self.type_name)
 
         delete_button = QPushButton()
-        delete_button.setIcon(QIcon("/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/App/Resources/Icons/delete_24dp_000000_FILL0_wght400_GRAD0_opsz24.png"))
+        delete_button.setIcon(QIcon("App/Resources/Icons/delete_24dp_000000_FILL0_wght400_GRAD0_opsz24.png"))
         delete_button.setIconSize(QSize(18, 18))
         delete_button.setFixedSize(20, 20)
         delete_button.clicked.connect(lambda: self.deleted_signal.emit(self))
@@ -281,11 +283,15 @@ class EditModule(QDialog):
 
 class AddModulesDialog(QDialog):
 
-    def __init__(self, modules: list[Module], parent=None) -> None:
+    def __init__(self, server_client: ServerClient, parent=None) -> None:
         super().__init__(parent)
-        self.modules = modules
         self.inputs = {}
         self.init_ui()
+        self.modules: list[ModuleTemplate] = []
+
+        # fetch all modules from server
+        reply = server_client.get_module_templates()
+        reply.finished.connect(lambda: self.load_module_templates(reply))
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -299,10 +305,14 @@ class AddModulesDialog(QDialog):
         area = QScrollArea()
         area.setWidgetResizable(True)
         area_container = QWidget()
-        area_layout = QVBoxLayout(area_container)
+        self.area_layout = QVBoxLayout(area_container)
         area.setWidget(area_container)
 
-        area_layout.addStretch()
+
+        spinner = LoadingSpinner()
+        spinner.toggle(True)
+        self.area_layout.addWidget(spinner, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.area_layout.addStretch()
 
         main_layout.addWidget(area, 1)
         main_layout.addStretch()
@@ -315,6 +325,17 @@ class AddModulesDialog(QDialog):
         button_row.addWidget(accept_button)
         button_row.addWidget(cancel_button)
         main_layout.addLayout(button_row)
+
+    @Slot()
+    def load_module_templates(self, reply: QNetworkReply):
+        b = bytes(reply.readAll().data())
+        self.modules = [ModuleTemplate(**m) for m in json.loads(b.decode("utf-8"))]
+
+        clear_layout(self.area_layout)
+        for module in self.modules:
+            label = QLabel(module.name)
+            self.area_layout.addWidget(label)
+        self.area_layout.addStretch()
 
     def accept(self) -> None:
         # try:

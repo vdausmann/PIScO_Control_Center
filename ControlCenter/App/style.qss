@@ -1,0 +1,130 @@
+
+/* ----- Main Window ----- */
+QMainWindow {
+    background-color: @BG;
+    color: @TEXT;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    font-size: 12px;
+}
+
+/* ---------- Standard QWidget ---------- */
+QWidget {
+    background-color: #f9f9f9;       /* very light neutral background */
+    color: #222222;                  /* dark gray text */
+    border: 1px solid #d0d0d5;       /* subtle border for structure */
+    font-family: "Inter", "Segoe UI", sans-serif;
+    font-size: 12px;
+}
+
+/* ---------- Standard QLabel ---------- */
+QLabel {
+    background-color: transparent;      /* default transparent */
+    color: #222222;                     /* dark gray text */
+    font-family: "Inter", "Segoe UI", sans-serif;
+    font-size: 12px;
+    border: 1px solid #d0d0d5;       /* subtle border for structure */
+}
+
+/* ----- Menubar ----- */
+QMenuBar {
+    background-color: @BG;
+    border-bottom: 1px solid @BORDER;
+}
+QMenuBar::item {
+    padding: 4px 8px;
+}
+QMenuBar::item:selected {
+    background: @BG_ALT;
+    border-radius: 4px;
+}
+
+
+/* ----- Menus ----- */
+QMenu {
+    background-color: white;
+    border: 1px solid @BORDER;
+}
+QMenu::item {
+    padding: 4px 12px;
+}
+QMenu::item:selected {
+    background-color: @ACCENT;
+    color: white;
+}
+
+/* ----- Push Buttons ----- */
+QPushButton {
+    background-color: @ACCENT;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+}
+QPushButton:hover {
+    background-color: @ACCENT_HOVER;
+}
+QPushButton:pressed {
+    background-color: #1f3d63;
+}
+QPushButton:disabled {
+    background-color: #d0d3d8;
+    color: #888888;
+}
+
+/* Start Button */
+QPushButton#StartButton {
+    background-color: #4a90e2;
+}
+QPushButton#StartButton:hover {
+    background-color: #357ab8;
+}
+
+/* Delete Button */
+QPushButton#DeleteButton {
+    background-color: @ERROR;
+}
+QPushButton#DeleteButton:hover {
+    background-color: #c9302c;
+}
+
+/* ----- Toolbar ----- */
+QWidget#Toolbar {
+    background-color: @BG_ALT;
+    border: 1px solid @BORDER;
+}
+
+/* ----- Task Widgets ----- */
+QWidget#TaskWidget {
+    border-radius: 6px;
+    background-color: white;
+    border: 1px solid @BORDER;
+    padding: 4px;
+}
+QWidget#TaskWidget:hover {
+    border-color: @ACCENT;
+    background-color: @BG;
+}
+
+QWidget#TaskWidgetClicked {
+    border-radius: 6px;
+    background-color: @BG_ALT;
+    border: 1px solid @ACCENT;
+}
+
+/* ----- Task Labels ----- */
+QLabel#TaskLabel {
+    background-color: transparent;
+    font-size: 13px;
+    color: @TEXT;
+    text-align: center;
+}
+QLabel#TaskLabel:hover {
+    color: @ACCENT;
+}
+
+QLabel#TaskLabelClicked {
+    font-size: 13px;
+    font-weight: bold;
+    color: @ACCENT;
+}

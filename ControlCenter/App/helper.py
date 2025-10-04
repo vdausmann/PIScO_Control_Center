@@ -1,8 +1,6 @@
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QSizePolicy, QVBoxLayout, QWidget, QLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QSizePolicy, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QPainter, QColor, QPen, QRgba64
-
-from .styles import get_task_widget_style, get_task_widget_style_clicked
+from PySide6.QtGui import QPainter, QColor, QPen
 
 
 class ClickableLabel(QLabel):
@@ -17,8 +15,10 @@ class ClickableLabel(QLabel):
 
     def init_ui(self):
         self.setText(self._text)
-        self.setStyleSheet(get_task_widget_style())
+        self.setObjectName("TaskWidget")
+
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
         if self._width is not None:
             self.setFixedWidth(self._width)
         if self._height is not None:
@@ -29,9 +29,9 @@ class ClickableLabel(QLabel):
 
     def clicked(self, clicked: bool):
         if clicked:
-            self.setStyleSheet(get_task_widget_style_clicked())
+            self.setObjectName("TaskWidgetClicked")
         else:
-            self.setStyleSheet(get_task_widget_style())
+            self.setObjectName("TaskWidget")
 
 
 class LoadingSpinner(QWidget):

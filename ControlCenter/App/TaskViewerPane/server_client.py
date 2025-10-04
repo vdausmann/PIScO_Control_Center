@@ -1,4 +1,5 @@
 from asyncio import subprocess
+from typing import Callable
 from PySide6.QtCore import QByteArray, QObject, QProcess, QUrl, QUrlQuery, Slot, Signal, QThread
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtCore import Qt, Signal, Slot
@@ -7,7 +8,6 @@ from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QPushButton, QSiz
                                QVBoxLayout, QWidget, QDialog, QFormLayout, QLineEdit)
 
 from ..helper import LoadingSpinner
-from ..styles import get_delete_button_style, get_push_button_style, get_toolbar_style, BG1
                                
 from Server.Backend.types import TaskTemplate, Task
 import subprocess
@@ -88,6 +88,9 @@ class ServerClient(QObject):
         self.socket.textMessageReceived.connect(self.on_message)
 
         self.connected = None
+
+        # try to connect to server if one is running:
+        self.connect_to_server()
 
     def check_server(self, timeout: float = 2) -> bool:
         try:
@@ -211,15 +214,21 @@ class ServerClient(QObject):
         
         reply.deleteLater()
 
-    def send_get_request(self, req: str, req_key: str, req_value: str, callback: None):
+    def send_get_request(self, req: str, **kwargs) -> QNetworkReply:
+        """
+        Sends a get request to the req url with the additional parameters defined in the
+        kwargs. Returns the reply object to which one can connect a callback.
+        """
         url = QUrl(f"{self.SERVER_URL}/{req}")
         query = QUrlQuery()
-        query.addQueryItem(req_key, req_value)
+        for key, val in kwargs:
+            query.addQueryItem(key, val)
         url.setQuery(query)
 
         request = QNetworkRequest(url)
         reply = self.network.get(request)
-        reply.finished.connect(callback)
+        # reply.finished.connect(callback)
+        return reply
 
     def send_post_request(self, req: str, req_data: bytes | None, callback: None):
         url = QUrl(f"{self.SERVER_URL}/{req}")
@@ -270,6 +279,11 @@ class ServerClient(QObject):
         if resp.status_code == 200:
             res = resp.json()
             return res
+
+    def get_module_templates(self) -> QNetworkReply:
+        req = "get-module-templates"
+        reply = self.send_get_request(req)
+        return reply
 
     # def _connect_to_server(self, remote: bool = False) -> bool:
     #     if remote:
@@ -337,7 +351,11 @@ class ServerViewer(QWidget):
         self.client.websocket_message_received_signal.connect(self.websocket_msg)
 
     def init_ui(self):
-        self.setStyleSheet(get_toolbar_style())
+        # self.setStyleSheet(get_toolbar_style())
+        self.setObjectName("Toolbar")
+        self.setStyleSheet("border-left: none;")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -394,12 +412,14 @@ class ServerViewer(QWidget):
         ## Buttons:
         ########################
         self.server_connect_button = QPushButton("Connect to Server")
-        self.server_connect_button.setStyleSheet(get_push_button_style())
+        # self.server_connect_button.setStyleSheet(get_push_button_style())
         self.server_connect_button.setFixedHeight(20)
         self.server_connect_button.clicked.connect(self.connect_to_server)
 
         self.server_stop_button = QPushButton("Stop Server")
-        self.server_stop_button.setStyleSheet(get_delete_button_style())
+        # self.server_stop_button.setStyleSheet(get_delete_button_style())
+        self.server_stop_button.setObjectName("DeleteButton")
+
         self.server_stop_button.setFixedHeight(20)
         self.server_stop_button.clicked.connect(self.client.stop_server)
         self.server_stop_button.setDisabled(True)
@@ -410,15 +430,17 @@ class ServerViewer(QWidget):
 
 
         server_output_container = QWidget()
+        # server_output_container.setStyleSheet("border: none;")
         server_output_container_layout = QVBoxLayout(server_output_container)
-        server_output_container_layout.setContentsMargins(2, 0, 2, 0)
+        server_output_container_layout.setContentsMargins(0, 0, 0, 0)
         server_output_container_layout.setSpacing(0)
 
         server_output_label = QLabel("Websocket Output:")
+        # server_output_label.setStyleSheet("border: 1px solid red;")
         server_output_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        server_output_label.setStyleSheet("border: none;")
+
         self.server_output = QTextEdit()
-        self.server_output.setStyleSheet(f"background-color: {BG1}; border: none;")
+        # self.server_output.setStyleSheet(f"background-color: {BG1}; border: none;")
         self.server_output.setReadOnly(True)
         self.server_output.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
 
@@ -445,7 +467,10 @@ class ServerViewer(QWidget):
         self.server_stop_button.setDisabled(not success)
         if success:
             self.server_connect_button.setText("Disconnect")
-            self.server_connect_button.setStyleSheet(get_delete_button_style())
+            self.server_connect_button.style().unpolish(self.server_connect_button)
+            self.server_connect_button.style().polish(self.server_connect_button)
+            # self.server_connect_button.setStyleSheet(get_delete_button_style())
+            self.server_connect_button.setObjectName("DeleteButton")
             self.server_connect_button.clicked.disconnect()
             self.server_connect_button.clicked.connect(self.client.disconnect_from_server)
             self.remote_checkbox.setDisabled(True)
@@ -459,7 +484,11 @@ class ServerViewer(QWidget):
             self.server_output.clear()
 
             self.server_connect_button.setText("Connect")
-            self.server_connect_button.setStyleSheet(get_push_button_style())
+            self.server_connect_button.setObjectName("")
+            self.server_connect_button.style().unpolish(self.server_connect_button)
+            self.server_connect_button.style().polish(self.server_connect_button)
+            # self.server_connect_button.setStyleSheet(get_push_button_style())
+
             self.server_connect_button.clicked.disconnect()
             self.server_connect_button.clicked.connect(self.connect_to_server)
             self.remote_checkbox.setDisabled(False)

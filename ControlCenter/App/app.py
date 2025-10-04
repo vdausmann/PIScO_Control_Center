@@ -11,7 +11,7 @@ from PySide6.QtGui import QIcon, QAction
 from .TaskViewerPane import TaskViewer
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
-from .styles import *
+from .styles import COLORS
 from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):
@@ -24,15 +24,26 @@ class PIScOControlCenter(QMainWindow):
 
 
         self.setWindowTitle("PISCO-Controller")
-        self.setMinimumSize(800, 600)
-        # self.setGeometry(0, 0, 1920, 1080) # Initial window size
+        w = 1080
+        h = 720
+        # self.setMinimumSize(800, 600)
+        self.setGeometry((1920 - w) // 2, (1080 - h) // 2, w, h) # Initial window size
+
+
+        # self.setStyleSheet(get_main_window_style())
+        with open("App/style.qss", "r") as f:
+            style = f.read()
+
+        for key in COLORS:
+            style = style.replace(key, COLORS[key])
+        self.app.setStyleSheet(style)
+        # print(style)
 
         self.init_ui()
 
         # Connect application about to quit signal for state saving
         self.app.aboutToQuit.connect(self._quit)
-
-        self.move(self.screen().geometry().topLeft())
+        # self.move(self.screen().geometry().topLeft())
 
         # self.show()
         self.showMaximized()
@@ -47,8 +58,9 @@ class PIScOControlCenter(QMainWindow):
         main_layout.setSpacing(0)
 
         toolbar_frame = QWidget()
+        toolbar_frame.setObjectName("Toolbar")
+        toolbar_frame.setStyleSheet("border-top: none;")
         toolbar_frame.setFixedWidth(44)
-        toolbar_frame.setStyleSheet(get_toolbar_style())
         toolbar_layout = QVBoxLayout()
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
         b1 = QPushButton("1")
@@ -102,8 +114,6 @@ class PIScOControlCenter(QMainWindow):
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
         main_layout.addWidget(self.stacked_widget, 1)
-
-        self.setStyleSheet(get_main_window_style())
 
     def add_menubar(self):
         menu = self.menuBar()

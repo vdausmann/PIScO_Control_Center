@@ -2,8 +2,10 @@ import asyncio
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect, BackgroundTasks
 from contextlib import asynccontextmanager
 from .task_manager import TaskManager
-from .types import ChangePropertyRequest, Module, TaskTemplate, Task
-from .communication import shutdown_msg, task_started_msg
+from .types import ChangePropertyRequest, Module, ModuleTemplate, TaskTemplate, Task
+from .communication import shutdown_msg, success_msg, task_started_msg
+import json
+import os
 import uvicorn
 
 
@@ -28,6 +30,8 @@ app = FastAPI(lifespan=lifespan)
 connected_clients: list[WebSocket] = []
 task_manager = TaskManager(connected_clients)
 
+MODULES_SAVE_FILE = ".modules.json"
+
 ##############################################################
 ## HTTP endpoints:
 ##############################################################
@@ -35,6 +39,11 @@ task_manager = TaskManager(connected_clients)
 @app.get("/")
 async def root_endpoint():
     return True;
+
+
+@app.get("/cwd")
+async def get_cwd():
+    return os.getcwd()
 
 @app.post("/shutdown")
 async def shutdown_endpoint():
@@ -106,6 +115,28 @@ async def change_module_properties_endpoint(module_id: str, property_key: str, p
 @app.post("/set-module-unfinished/{module_id}")
 async def set_module_unfinished_endpoint(module_id: str):
     return task_manager.set_module_unfinished(module_id)
+
+
+@app.get("/get-module-templates", response_model=list[ModuleTemplate])
+async def get_module_templates() -> list[ModuleTemplate]:
+    with open(MODULES_SAVE_FILE, "r") as f:
+        modules = json.load(f)
+    return modules.values()
+
+
+@app.post("/add-module-template")
+async def add_module_template(module: ModuleTemplate):
+    with open(MODULES_SAVE_FILE, "r") as f:
+        try:
+            modules = json.load(f)
+        except json.JSONDecodeError:
+            modules = {}
+    m = module.model_dump()
+    modules[module.name] = m
+    with open(MODULES_SAVE_FILE, "w") as f:
+        json.dump(modules, f, indent=4)
+    return success_msg("Changed module templates")
+
 
 
 ##############################################################

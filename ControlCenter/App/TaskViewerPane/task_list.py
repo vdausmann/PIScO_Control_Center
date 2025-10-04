@@ -17,8 +17,9 @@ from Server.Backend.types import ModuleTemplate, Task, TaskTemplate
 
 class AddTaskDialog(QDialog):
 
-    def __init__(self) -> None:
+    def __init__(self, server_client: ServerClient) -> None:
         super().__init__()
+        self.server_client = server_client
 
         self.meta_data: dict[str, str] = {}
         self.modules: list[ModuleTemplate] = []
@@ -126,7 +127,7 @@ class AddTaskDialog(QDialog):
             self.meta_data_layout.addWidget(label, 1)
 
     def add_modules(self):
-        dialog = AddModulesDialog(modules=self.modules)
+        dialog = AddModulesDialog(self.server_client)
         dialog.exec()
 
 
@@ -231,7 +232,7 @@ class TaskList(QWidget):
         print(pos)
 
     def add_task(self):
-        dialog = AddTaskDialog()
+        dialog = AddTaskDialog(self.client)
         dialog.exec()
         task = dialog.get_task()
         if task is not None:

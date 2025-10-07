@@ -4,8 +4,6 @@ from PySide6.QtCore import Qt, Signal, Slot
 from pydantic import main
 
 from .server_client import ServerClient, ServerConnectOverlay, ServerViewer
-from .task_view_object import TaskViewObject
-from .task_inspector import TaskInspector
 from .task_list import TaskList
 
 from ..helper import LoadingSpinner, LabelEntry, SelectAllLineEdit
@@ -16,7 +14,7 @@ from Server.Backend.types import Module, Task, TaskTemplate
 
 
 
-class TaskViewer(QWidget):
+class TaskViewerPane(QWidget):
 
     task_changed_signal = Signal(Task)
     task_list_changed_signal = Signal(dict)
@@ -53,14 +51,14 @@ class TaskViewer(QWidget):
         self.task_changed_signal.connect(self.task_list.update_task)
 
 
-        self.task_inspector = TaskInspector(self.client)
-        self.task_list.task_selected_signal.connect(self.task_inspector.update_task)
+        # self.task_inspector = TaskInspector(self.client)
+        # self.task_list.task_selected_signal.connect(self.task_inspector.update_task)
         # self.task_changed_signal.connect(self.task_list.
 
         # Server-connection visualization:
         self.blur_effect_list = QGraphicsBlurEffect()
         self.blur_effect_inspector = QGraphicsBlurEffect()
-        self.task_inspector.setGraphicsEffect(self.blur_effect_inspector)
+        # self.task_inspector.setGraphicsEffect(self.blur_effect_inspector)
         self.task_list.setGraphicsEffect(self.blur_effect_list)
 
         self.blur_effect_list.setEnabled(False)
@@ -68,7 +66,7 @@ class TaskViewer(QWidget):
         self.overlay = None
 
         self.container_layout.addWidget(self.task_list, 4)
-        self.container_layout.addWidget(self.task_inspector, 1)
+        # self.container_layout.addWidget(self.task_inspector, 1)
         main_layout.addWidget(self.container, 8)
 
         self.server_viewer = ServerViewer(self.client)

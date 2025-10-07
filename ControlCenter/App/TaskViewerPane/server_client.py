@@ -221,8 +221,8 @@ class ServerClient(QObject):
         """
         url = QUrl(f"{self.SERVER_URL}/{req}")
         query = QUrlQuery()
-        for key, val in kwargs:
-            query.addQueryItem(key, val)
+        for key in kwargs:
+            query.addQueryItem(key, kwargs[key])
         url.setQuery(query)
 
         request = QNetworkRequest(url)
@@ -282,6 +282,11 @@ class ServerClient(QObject):
 
     def get_module_templates(self) -> QNetworkReply:
         req = "get-module-templates"
+        reply = self.send_get_request(req)
+        return reply
+
+    def get_module(self, module_id: str) -> QNetworkReply:
+        req = f"get-module/{module_id}"
         reply = self.send_get_request(req)
         return reply
 

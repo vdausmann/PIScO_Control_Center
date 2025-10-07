@@ -5,11 +5,12 @@ from PySide6.QtGui import QIcon, Qt
 from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (QComboBox, QDialog, QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QSizePolicy,
                                QVBoxLayout, QWidget, QLabel)
+from pydantic_core.core_schema import is_instance_schema
 
 from .server_client import ServerClient
 from Server.Backend.types import InternalModuleSettings, Module, ModuleTemplate
 
-from ..helper import LabelEntry, LoadingSpinner, clear_layout, ClickableLabel
+from ..helper import DeleteButton, LabelEntry, LoadingSpinner, clear_layout, ClickableLabel
 
 
 class SettingInput(QWidget):
@@ -37,10 +38,7 @@ class SettingInput(QWidget):
             self.type_name.setCurrentText(type_name)
         layout.addWidget(self.type_name)
 
-        delete_button = QPushButton()
-        delete_button.setIcon(QIcon("App/Resources/Icons/delete_24dp_000000_FILL0_wght400_GRAD0_opsz24.png"))
-        delete_button.setIconSize(QSize(18, 18))
-        delete_button.setFixedSize(20, 20)
+        delete_button = DeleteButton()
         delete_button.clicked.connect(lambda: self.deleted_signal.emit(self))
 
         layout.addWidget(delete_button)
@@ -225,6 +223,7 @@ class EditModule(QDialog):
         area_widget = QWidget()
         area_layout = QVBoxLayout(area_widget)
 
+        # TODO: change this to fetch the modules from the server
         with open("App/Resources/Save/modules.json", "r") as f:
             content = f.read().strip()
         if content:
@@ -235,7 +234,6 @@ class EditModule(QDialog):
         for module in self.modules:
             label = ClickableLabel(module, 360)
             label.clicked_signal.connect(lambda m=module: self.module_clicked(m))
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             area_layout.addWidget(label, 1, alignment=Qt.AlignmentFlag.AlignCenter)
             self.labels[module] = label
 
@@ -289,17 +287,20 @@ class AddModulesDialog(QDialog):
         self.init_ui()
         self.modules: list[ModuleTemplate] = []
 
+        self.labels: dict[ClickableLabel, ModuleTemplate] = {}
+        self.selected: list[ClickableLabel] = []
+
         # fetch all modules from server
         reply = server_client.get_module_templates()
         reply.finished.connect(lambda: self.load_module_templates(reply))
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
-        self.setFixedSize(600, 400)
+        self.setFixedSize(300, 400)
 
         label = QLabel("Modules")
-        label.setStyleSheet("font-size: 25px; color: #456;")
-        main_layout.addWidget(label)
+        label.setStyleSheet("font-size: 25px; color: #456; border: none;")
+        main_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
 
         area = QScrollArea()
@@ -333,15 +334,27 @@ class AddModulesDialog(QDialog):
 
         clear_layout(self.area_layout)
         for module in self.modules:
-            label = QLabel(module.name)
+            label = ClickableLabel(module.name)
+            self.labels[label] = module
+            label.clicked_signal.connect(self.module_clicked)
             self.area_layout.addWidget(label)
         self.area_layout.addStretch()
 
+    @Slot()
+    def module_clicked(self):
+        sender = self.sender()
+        if not isinstance(sender, ClickableLabel):
+            return
+
+        if not sender in self.selected:
+            self.selected.append(sender)
+            sender.clicked(True)
+        else:
+            sender.clicked(False)
+            self.selected.remove(sender)
+
     def accept(self) -> None:
-        # try:
-        #     self.meta_data = {key: self.inputs[key].text() for key in self.inputs}
-        # except:
-        #     pass
+        self.modules = [self.labels[l] for l in self.selected]
         return super().accept()
 
 

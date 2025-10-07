@@ -1,1 +1,1 @@
-{"9e690abd-e492-4c01-9564-d770d14f35b8": {"task_id": "9e690abd-e492-4c01-9564-d770d14f35b8", "modules": []}, "25af7dca-e77b-4496-88a9-5352f348318a": {"task_id": "25af7dca-e77b-4496-88a9-5352f348318a", "modules": []}}
+{"e08710cc-f0a8-49f1-ad42-0ef18ad04f44": {"task_id": "e08710cc-f0a8-49f1-ad42-0ef18ad04f44", "modules": [{"module_id": "817f1cba-91aa-4697-997c-cf05a1d96f50", "parent_task_id": "e08710cc-f0a8-49f1-ad42-0ef18ad04f44", "name": "string", "internal_settings": {"command": ["string"], "num_cores": 0, "priority": 0, "order": 0}, "settings": {}, "finished": false}]}}

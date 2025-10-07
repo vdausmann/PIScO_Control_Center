@@ -8,11 +8,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSize, Slot, Qt
 from PySide6.QtGui import QIcon, QAction
 
-from .TaskViewerPane import TaskViewer
+from .TaskViewerPane import TaskViewerPane
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
 from .styles import COLORS
-from .TaskViewerPane.module_editor import CreateNewModule, EditModule
+# from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):
     """Main application window for the PISCO-Controller."""
@@ -26,7 +26,7 @@ class PIScOControlCenter(QMainWindow):
         self.setWindowTitle("PISCO-Controller")
         w = 1080
         h = 720
-        # self.setMinimumSize(800, 600)
+        self.setMinimumSize(w, h)
         self.setGeometry((1920 - w) // 2, (1080 - h) // 2, w, h) # Initial window size
 
 
@@ -88,7 +88,7 @@ class PIScOControlCenter(QMainWindow):
 
         self.stacked_widget = QStackedWidget() 
 
-        self.task_viewer = TaskViewer()
+        self.task_viewer = TaskViewerPane()
 
         # task_pane = QWidget()
         # task_pane_layout = QHBoxLayout(task_pane)
@@ -134,13 +134,13 @@ class PIScOControlCenter(QMainWindow):
         modules_menu = menu.addMenu("&Modules")
         create_new_module = QAction("&Create new module", self)
         create_new_module.setToolTip("Create new module")
-        create_new_module.triggered.connect(self._create_new_module)
+        # create_new_module.triggered.connect(self._create_new_module)
         modules_menu.addAction(create_new_module)
         modules_menu.addSeparator()
         
         edit_module = QAction("&Edit existing module", self)
         edit_module.setToolTip("Edit existing module")
-        edit_module.triggered.connect(self._edit_module)
+        # edit_module.triggered.connect(self._edit_module)
         modules_menu.addAction(edit_module)
         modules_menu.addSeparator()
 
@@ -154,17 +154,17 @@ class PIScOControlCenter(QMainWindow):
     def _quit(self):
         self.task_viewer.client.disconnect_from_server()
 
-    @Slot()
-    def _create_new_module(self):
-        dialog = CreateNewModule()
-        dialog.exec()
-
-    @Slot()
-    def _edit_module(self):
-        dialog = EditModule()
-        dialog.exec()
-        selected_module = dialog.get_selected()
-
-        print(selected_module)
-        dialog = CreateNewModule(selected_module)
-        dialog.exec()
+    # @Slot()
+    # def _create_new_module(self):
+    #     dialog = CreateNewModule()
+    #     dialog.exec()
+    #
+    # @Slot()
+    # def _edit_module(self):
+    #     dialog = EditModule()
+    #     dialog.exec()
+    #     selected_module = dialog.get_selected()
+    #
+    #     print(selected_module)
+    #     dialog = CreateNewModule(selected_module)
+    #     dialog.exec()

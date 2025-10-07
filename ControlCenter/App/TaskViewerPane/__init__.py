@@ -1,1 +1,1 @@
-from .task_viewer import TaskViewer
+from .task_viewer_pane import TaskViewerPane

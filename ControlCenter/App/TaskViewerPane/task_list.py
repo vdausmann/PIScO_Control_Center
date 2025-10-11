@@ -12,7 +12,7 @@ from .metadata_view import MetadataView
 from .modules_view import ModulesView
 from .task_view import TaskView
 
-from Server.Backend.types import ModuleTemplate, Task, TaskTemplate
+from TaskManagerServer.Backend.types import ModuleTemplate, Task, TaskTemplate
 
 
 class TaskWidget(QWidget):

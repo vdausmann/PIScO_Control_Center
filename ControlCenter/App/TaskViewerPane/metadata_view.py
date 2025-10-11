@@ -49,7 +49,7 @@ class MetadataView(QWidget):
             row.setStyleSheet("border: none;")
             row_layout.setContentsMargins(2, 2, 2, 2)
             label = QLabel(key)
-            value = QLineEdit(data[key])
+            value = QLineEdit(str(data[key]))
             value.setStyleSheet("border: 1px solid;")
 
             row_layout.addWidget(label, 1)

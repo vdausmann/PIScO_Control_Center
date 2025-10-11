@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QLabel, QLineEdit, QVBoxLayout, QWidget
 
-from Server.Backend.types import Task, TaskTemplate
+from TaskManagerServer.Backend.types import Task, TaskTemplate
 
 from .server_client import ServerClient
 from .metadata_view import MetadataView
@@ -34,5 +34,8 @@ class TaskView(QWidget):
         main_layout.addWidget(self.metadata_view, 1)
 
         ## Modules
-        self.modules_view = ModulesView(self.task.modules, self.client)
+        if isinstance(self.task, Task):
+            self.modules_view = ModulesView(self.task.task_id, [], self.client)
+        else:
+            self.modules_view = ModulesView("", self.task.modules, self.client)
         main_layout.addWidget(self.modules_view, 1)

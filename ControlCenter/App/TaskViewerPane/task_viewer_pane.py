@@ -9,7 +9,7 @@ from .task_list import TaskList
 from ..helper import LoadingSpinner, LabelEntry, SelectAllLineEdit
 # from ..styles import BORDER, get_delete_button_style, get_main_window_style, get_push_button_style, get_toolbar_style, BG1
 
-from Server.Backend.types import Module, Task, TaskTemplate
+from TaskManagerServer.Backend.types import Module, Task, TaskTemplate
 
 
 

@@ -75,6 +75,14 @@ class TaskManager:
             raise KeyError(f"Module with Id {module_id} not found")
         return self.modules[module_id]
 
+    def get_multiple_modules(self, *module_ids: str) -> list[Module]:
+        modules: list[Module] = []
+        for module_id in module_ids:
+            if module_id not in self.modules:
+                raise KeyError(f"Module with Id {module_id} not found")
+            modules.append(self.modules[module_id])
+        return modules
+
     async def _send_message_to_clients(self, msg: dict):
         for ws in self.connected_clients:
             await ws.send_json(msg)

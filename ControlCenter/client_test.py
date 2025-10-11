@@ -1,7 +1,7 @@
 from time import sleep
 import json
 import requests
-from Server.Backend.types import InternalModuleSettings, TaskTemplate, ModuleTemplate
+from TaskManagerServer.Backend.types import InternalModuleSettings, TaskTemplate, ModuleTemplate
 
 
 ip = "http://localhost:8000/"
@@ -30,7 +30,7 @@ m2 = ModuleTemplate(
     )
 
 task1 = TaskTemplate(name="Test Task 1", meta_data={"Desc": "This is a test task", "ID": 1},
-            modules=[m1])
+            modules=[m1, m2])
 
 resp = requests.post(ip + "add-task", json=task1.model_dump()).json()
 id = resp["task_id"]

@@ -1,2 +1,2 @@
-from .Server import *
+from .TaskManagerServer import *
 from .App import *

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QPushButton, QSiz
 
 from ..helper import LoadingSpinner
                                
-from Server.Backend.types import TaskTemplate, Task
+from TaskManagerServer.Backend.types import TaskTemplate, Task
 import subprocess
 import json
 import requests
@@ -110,7 +110,7 @@ class ServerClient(QObject):
         QProcess.startDetached(
             "bash",
             args,
-            "./Server" 
+            "./TaskManagerServer" 
         )
         sleep(2)
 
@@ -287,6 +287,11 @@ class ServerClient(QObject):
 
     def get_module(self, module_id: str) -> QNetworkReply:
         req = f"get-module/{module_id}"
+        reply = self.send_get_request(req)
+        return reply
+
+    def get_all_modules(self, task_id: str) -> QNetworkReply:
+        req = f"get-all-modules-of-task/{task_id}"
         reply = self.send_get_request(req)
         return reply
 

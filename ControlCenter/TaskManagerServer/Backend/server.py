@@ -83,7 +83,20 @@ def get_module_endpoint(module_id: str):
     try:
         return task_manager.get_module(module_id)
     except KeyError:
-        raise HTTPException(status_code=404, detail=f"Task with Id {module_id} not found")
+        raise HTTPException(status_code=404, detail=f"Module with Id {module_id} not found")
+
+@app.get("/get-all-modules-of-task/{task_id}", response_model=list[Module])
+def get_all_modules_endpoint(task_id: str):
+    try:
+        task = get_task_endpoint(task_id)
+        modules: list[Module] = []
+        for module_id in task.modules:
+            modules.append(get_module_endpoint(module_id))
+        return modules
+    except HTTPException as e:
+        raise HTTPException(e.status_code, e.detail)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Task with Id {task_id} not found")
 
 
 @app.post("/start-task")

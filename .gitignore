@@ -15,7 +15,7 @@ ControlCenter/**/.clangd
 ControlCenter/**/bin/
 ControlCenter/**/binDebug/
 ControlCenter/**/libDebug/
-Data_Analysis/flake.nix
+Data_Analysis/flake.lock
 Data_Analysis/.envrc
 Data_Analysis/.direnv
 

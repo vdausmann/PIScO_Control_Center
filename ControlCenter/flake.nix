@@ -41,6 +41,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                         pyyaml
 						websockets
 						qasync
+						(opencv4.override {enableGtk3 = true;})
                     ]))
                 ];
                 shellHook = ''

@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QScrollArea, QWidget, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
 
+from App.inputs import StringInput
+
 from .server_client import ServerClient
 from App.helper import clear_layout
 from App.styles import BORDER
@@ -19,6 +21,7 @@ class MetadataView(QWidget):
         self.update_data(self.metadata)
 
     def init_ui(self):
+        self.setMinimumSize(300, 200)
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.setStyleSheet("border: none;")
@@ -49,8 +52,9 @@ class MetadataView(QWidget):
             row.setStyleSheet("border: none;")
             row_layout.setContentsMargins(2, 2, 2, 2)
             label = QLabel(key)
-            value = QLineEdit(str(data[key]))
-            value.setStyleSheet("border: 1px solid;")
+            # value = QLineEdit(str(data[key]))
+            # value.setStyleSheet("border: 1px solid;")
+            value = StringInput(str(data[key]))
 
             row_layout.addWidget(label, 1)
             row_layout.addStretch()

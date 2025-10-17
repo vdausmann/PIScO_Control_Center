@@ -1,6 +1,6 @@
 {
 inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils = {
         url = "github:numtide/flake-utils";
         inputs.system.follows = "systems";
@@ -42,6 +42,8 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						websockets
 						qasync
 						(opencv4.override {enableGtk3 = true;})
+						pyqtgraph
+						scikit-image
                     ]))
                 ];
                 shellHook = ''

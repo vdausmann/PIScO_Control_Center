@@ -13,6 +13,7 @@ STATE_ERROR = "error"
 
 class InternalModuleSettings(BaseModel):
     command: list[str]
+    # num_cores: int | str    # use a name (str) to link this to another setting
     num_cores: int | str    # use a name (str) to link this to another setting
     priority: int
     order: int

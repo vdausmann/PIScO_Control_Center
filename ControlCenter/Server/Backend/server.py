@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from .profile_analysis import ProfileAnalysis
+from .utils import endpoint
 
 
 class PISCOServer:
@@ -23,14 +24,28 @@ class PISCOServer:
 
     def _setup_routes(self):
         """Attach all endpoints to the app."""
-        self.app.get("/")(self.root_endpoint)
-        self.app.get("/shutdown")(self.shutdown_endpoint)
-        self.app.get("/load-image-dir/{path}")(self.profile_analysis.load_image_dir_endpoint)
+        self._register_endpoints(self)
+        self._register_endpoints(self.profile_analysis)
 
-    async def root_endpoint(self):
+    def _register_endpoints(self, obj):
+        """Automatically attach decorated methods to FastAPI app."""
+        for attr_name in dir(obj):
+            method = getattr(obj, attr_name)
+            if callable(method) and hasattr(method, "_endpoint_info"):
+                info = method._endpoint_info
+                route_path = info["path"]
+                route_method = info["method"]
+
+                print(f"Registering: {route_method.upper()} {route_path} -> {obj.__class__.__name__}.{attr_name}")
+
+                getattr(self.app, route_method)(route_path)(method)
+
+    @endpoint.get("/")
+    async def root(self):
         return True;
 
-    async def shutdown_endpoint(self):
+    @endpoint.get("/shutdown")
+    async def shutdown(self):
         if self.server is not None:
             self.server.should_exit = True
             return "Shutdown started"

@@ -3,14 +3,14 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-class ProfileViewer(QWidget):
+class HDF5Viewer(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        label = QLabel("<h2>Profile viewer</h2>"
+        label = QLabel("<h2>HDF5 viewer</h2>"
                        "<p>Not Implemented</p>")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)

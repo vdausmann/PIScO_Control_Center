@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal, Slot
 
 from .server_client import ServerClient
 
-from ..styles import BORDER
+from ..Resources.styles import BORDER
 from ..helper import ClickableLabel, StatusLight, clear_layout, replace_widget
 
 from .metadata_view import MetadataView

@@ -11,7 +11,9 @@ from PySide6.QtGui import QIcon, QAction
 from .TaskViewerPane import TaskViewerPane
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
-from .styles import COLORS
+from .HDF5ViewerPane import HDF5Viewer
+from .ServerPane import ServerViewer
+from .Resources.styles import COLORS
 # from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):
@@ -24,14 +26,14 @@ class PIScOControlCenter(QMainWindow):
 
 
         self.setWindowTitle("PISCO-Controller")
-        w = 1080
-        h = 720
+        w = 1920
+        h = 1080
         self.setMinimumSize(w, h)
         self.setGeometry((1920 - w) // 2, (1080 - h) // 2, w, h) # Initial window size
 
 
         # self.setStyleSheet(get_main_window_style())
-        with open("App/style.qss", "r") as f:
+        with open("App/Resources/style.qss", "r") as f:
             style = f.read()
 
         for key in COLORS:
@@ -60,26 +62,51 @@ class PIScOControlCenter(QMainWindow):
         toolbar_frame = QWidget()
         toolbar_frame.setObjectName("Toolbar")
         toolbar_frame.setStyleSheet("border-top: none;")
-        toolbar_frame.setFixedWidth(44)
+        button_size = 40
+        toolbar_frame.setFixedWidth(button_size + 4)
         toolbar_layout = QVBoxLayout()
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        b1 = QPushButton("1")
+
+        b1 = QPushButton("")
         b1.clicked.connect(lambda: self._show_page(0))
-        b1.setFixedWidth(30)
-        b1.setFixedHeight(30)
-        b2 = QPushButton("2")
+        b1.setIcon(QIcon("App/Resources/Icons/task_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b1.setIconSize(QSize(24, 24))
+        b1.setFixedWidth(button_size)
+        b1.setFixedHeight(button_size)
+
+        b2 = QPushButton("")
         b2.clicked.connect(lambda: self._show_page(1))
-        b2.setFixedWidth(30)
-        b2.setFixedHeight(30)
-        b3 = QPushButton("3")
+        b2.setIcon(QIcon("App/Resources/Icons/camera_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b2.setIconSize(QSize(24, 24))
+        b2.setFixedWidth(button_size)
+        b2.setFixedHeight(button_size)
+
+        b3 = QPushButton("")
         b3.clicked.connect(lambda: self._show_page(2))
-        b3.setFixedWidth(30)
-        b3.setFixedHeight(30)
+        b3.setIcon(QIcon("App/Resources/Icons/chart_data_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b3.setIconSize(QSize(24, 24))
+        b3.setFixedWidth(button_size)
+        b3.setFixedHeight(button_size)
+
+        b4 = QPushButton("HDF5")
+        b4.clicked.connect(lambda: self._show_page(3))
+        b4.setStyleSheet("font-size: 10px; padding: 0px;")
+        b4.setFixedWidth(button_size)
+        b4.setFixedHeight(button_size)
+
+        b5 = QPushButton("")
+        b5.clicked.connect(lambda: self._show_page(4))
+        b5.setIcon(QIcon("App/Resources/Icons/host_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b5.setIconSize(QSize(24, 24))
+        b5.setFixedWidth(button_size)
+        b5.setFixedHeight(button_size)
 
         toolbar_layout.addSpacerItem(QSpacerItem(40, 10))
         toolbar_layout.addWidget(b1, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b2, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b3, alignment=Qt.AlignmentFlag.AlignCenter)
+        toolbar_layout.addWidget(b4, alignment=Qt.AlignmentFlag.AlignCenter)
+        toolbar_layout.addWidget(b5, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addStretch()
 
         toolbar_frame.setLayout(toolbar_layout)
@@ -110,9 +137,16 @@ class PIScOControlCenter(QMainWindow):
         self.profile_viewer = ProfileViewer()
         # self.panes.append(profile_viewer)
         #
+
+        self.hdf5_viewer = HDF5Viewer()
+        self.server_viewer = ServerViewer()
+
+
         self.stacked_widget.addWidget(self.task_viewer)
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
+        self.stacked_widget.addWidget(self.hdf5_viewer)
+        self.stacked_widget.addWidget(self.server_viewer)
         main_layout.addWidget(self.stacked_widget, 1)
 
     def add_menubar(self):

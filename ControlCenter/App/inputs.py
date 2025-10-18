@@ -1,4 +1,4 @@
-from App.styles import BG1, BORDER
+from App.Resources.styles import BG1, BORDER
 from PySide6.QtGui import QDoubleValidator, QIntValidator
 from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QWidget, QFrame
 

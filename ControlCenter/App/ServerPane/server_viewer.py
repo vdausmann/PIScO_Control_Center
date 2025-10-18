@@ -3,14 +3,14 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-class CallibrationWindow(QWidget):
+class ServerViewer(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        label = QLabel("<h2>Camera Callibration</h2>"
+        label = QLabel("<h2>Server viewer</h2>"
                        "<p>Not Implemented</p>")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)

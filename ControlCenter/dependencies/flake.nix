@@ -44,6 +44,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						(opencv4.override {enableGtk3 = true;})
 						pyqtgraph
 						scikit-image
+						h5py
                     ]))
                 ];
                 shellHook = ''

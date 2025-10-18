@@ -5,7 +5,7 @@ from App.inputs import StringInput
 
 from .server_client import ServerClient
 from App.helper import clear_layout
-from App.styles import BORDER
+from App.Resources.styles import BORDER
 
 
 

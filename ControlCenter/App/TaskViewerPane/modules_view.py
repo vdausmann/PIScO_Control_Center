@@ -11,7 +11,7 @@ from App.inputs import BoolInput, Input, IntInput, StringInput
 
 from .server_client import ServerClient
 from TaskManagerServer.Backend.types import Module, ModuleTemplate
-from App.styles import BG1, BORDER
+from App.Resources.styles import BG1, BORDER
 
 
 class ModuleValueNode(QWidget):

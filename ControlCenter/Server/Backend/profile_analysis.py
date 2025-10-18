@@ -1,10 +1,13 @@
 import asyncio
 import os
+from os.path import isfile
 from fastapi import HTTPException, Query, Response, status
 from pydantic import BaseModel
 import cv2 as cv
 import numpy as np
 from Utils.types import Image
+import h5py
+import json
 
 from .utils import endpoint
 
@@ -27,6 +30,7 @@ class ProfileAnalysis:
         self.dirpath = None
         self.image_files: list[str] = []
         self.loaded_images: dict[int, Image] = {}
+        self.loaded_hdf_file: h5py.File | None = None
 
         self.valid_file_extensions = [".png", ".jpg", ".tiff"]
 
@@ -42,6 +46,18 @@ class ProfileAnalysis:
         path = os.path.join(self.dirpath, self.image_files[index])
         img = await asyncio.to_thread(cv.imread, path, color_code)
         return Image(self.image_files[index], img, color_code)
+
+    def _serialize_h5_group(self, group):
+        result = {}
+        for name, obj in group.items():
+            if isinstance(obj, h5py.Group):
+                result[name] = self._serialize_h5_group(obj)  # recurse
+            elif isinstance(obj, h5py.Dataset):
+                result[name] = {
+                    "shape": list(obj.shape),
+                    "dtype": str(obj.dtype),
+                }
+        return result
 
     @endpoint.post("/load-image-dir/{path:path}")
     async def load_image_dir(self, path: str):
@@ -113,6 +129,46 @@ class ProfileAnalysis:
             raise HTTPException(status_code=500, detail=f"Error while preparing image for download: {e}")
 
 
-    @endpoint.get("open-hdf5-file/{path:path}")
+    @endpoint.post("/open-hdf5-file/{path:path}")
     async def open_hdf5_file(self, path: str):
-        ...
+        if not os.path.isfile(path):
+            raise HTTPException(status_code=404, detail=f"HDF file {path} does not exist.")
+        if self.loaded_hdf_file is not None:
+            self.loaded_hdf_file.close()
+        self.loaded_hdf_file = h5py.File(path, "r")
+        
+        structure = self._serialize_h5_group(self.loaded_hdf_file)
+        return {"msg": f"Succesfully opened HDF file {path}.", "structure":
+                structure}
+                
+
+    @endpoint.get("/get-hdf5-file-data/{data_path:path}")
+    async def get_data_from_hdf_file(self, data_path: str):
+        if self.loaded_hdf_file is None:
+            raise HTTPException(status_code=400, detail=f"No HDF file opened")
+
+        try:
+            data = self.loaded_hdf_file[data_path]
+            if isinstance(data, h5py.Group):
+                return {"type": "group", "structure": self._serialize_h5_group(data)}
+            elif isinstance(data, h5py.Dataset): 
+                data_type = data.attrs["type"]
+                data = data[()]
+
+                if data_type == "image":
+                    print(data.shape)
+                    success, encoded = cv.imencode(".png", data)
+                    if not success:
+                        raise HTTPException(status_code=500, detail=f"Failed encoding the image to png")
+
+                    return Response(content=encoded.tobytes(), media_type="image/png",
+                                    headers={"type": "image"})
+                elif data_type == "dict":
+                    return Response(content=data, media_type="application/json")
+                else:
+                    # TODO
+                    ...
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"Invalid path to HDF file data: {data_path}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error while trying to access data from HDF file: {e}")

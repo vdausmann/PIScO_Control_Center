@@ -14,6 +14,7 @@ from .ProfileViewerPane import ProfileViewer
 from .HDF5ViewerPane import HDF5Viewer
 from .ServerPane import ServerViewer
 from .Resources.styles import COLORS
+from .ServerPane.server_client import ServerClient
 # from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):
@@ -40,6 +41,8 @@ class PIScOControlCenter(QMainWindow):
             style = style.replace(key, COLORS[key])
         self.app.setStyleSheet(style)
         # print(style)
+
+        self.client = ServerClient()
 
         self.init_ui()
 
@@ -139,7 +142,7 @@ class PIScOControlCenter(QMainWindow):
         #
 
         self.hdf5_viewer = HDF5Viewer()
-        self.server_viewer = ServerViewer()
+        self.server_viewer = ServerViewer(self.client)
 
 
         self.stacked_widget.addWidget(self.task_viewer)

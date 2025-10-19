@@ -45,6 +45,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						pyqtgraph
 						scikit-image
 						h5py
+						paramiko
                     ]))
                 ];
                 shellHook = ''

@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
+import sys
 from .profile_analysis import ProfileAnalysis
 from .utils import endpoint
 
@@ -18,9 +19,16 @@ class PISCOServer:
     def run(self, host: str, port: int, remote: bool):
         config = uvicorn.Config(self.app, host=host, port=port, log_level="info",
         lifespan="on")
-
         self.server = uvicorn.Server(config)
-        self.server.run()
+
+        with open(".server.log", "w") as f:
+            sys.stdout = f
+            sys.stderr = f
+            try:
+                self.server.run()
+            finally:
+                sys.stdout = sys.__stdout__
+                sys.stderr = sys.__stderr__
 
     def _setup_routes(self):
         """Attach all endpoints to the app."""
@@ -44,7 +52,7 @@ class PISCOServer:
     async def root(self):
         return True;
 
-    @endpoint.get("/shutdown")
+    @endpoint.post("/shutdown")
     async def shutdown(self):
         if self.server is not None:
             self.server.should_exit = True

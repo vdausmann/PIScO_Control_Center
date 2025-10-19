@@ -1,39 +1,38 @@
 from PySide6.QtWidgets import (
-        QWidget, QVBoxLayout, QLabel
+        QWidget, QVBoxLayout, QLabel, QSplitter
 )
 from PySide6.QtCore import Qt
 
+from .fast_api_view import FastAPIView
+from .server_settings_view import ServerSettingsView
+from .server_client import ServerClient
+from App.Resources.styles import BORDER
+
 class ServerViewer(QWidget):
-    def __init__(self):
+    def __init__(self, client: ServerClient):
         super().__init__()
+
+        self.client = client
+
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        label = QLabel("<h2>Server viewer</h2>"
-                       "<p>Not Implemented</p>")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(label)
-        layout.addStretch(1) # Push content to top
+        main_layout = QVBoxLayout(self)
+        self.setStyleSheet(f"border: 1px solid {BORDER};")
 
-        self.setStyleSheet("""
-            QWidget#OtherPage {
-                background-color: #f5f5f5;
-                border: 1px solid #ddd;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #555;
-                font-size: 16px;
-            }
-            h2 {
-                color: #007bff;
-            }
-        """)
-        self.setObjectName("OtherPage") # Set object name for styling
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_layout.addWidget(self.splitter, 1)
 
-    def save_state(self, state: dict):
-        ...
+        ########################################
+        ## Server settings:
+        ########################################
+        self.server_settings_view = ServerSettingsView(self.client)
+        self.splitter.addWidget(self.server_settings_view)
 
-    def load_state(self, state: dict):
-        ...
+
+        ########################################
+        ## FastAPI connection:
+        ########################################
+        self.fast_api_view = FastAPIView(self.client)
+        self.splitter.addWidget(self.fast_api_view)
+        self.splitter.setSizes([300, 700])

@@ -22,7 +22,8 @@ QLabel {
     color: #222222;                     /* dark gray text */
     font-family: "Inter", "Segoe UI", sans-serif;
     font-size: 12px;
-    border: 1px solid #d0d0d5;       /* subtle border for structure */
+    /*border: 1px solid #d0d0d5;*/       /* subtle border for structure */
+	border: none;
 }
 
 /* ----- Menubar ----- */

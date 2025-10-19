@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-HOST="0.0.0.0"
-PORT="8000"
+HOST=${1:-127.0.0.1}
+PORT=${2:-8000}
 
 # Parse optional CLI arguments
 while [[ $# -gt 0 ]]; do
@@ -12,7 +12,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-python3 main.py --host "$HOST" --port "$PORT" $REMOTE > .server.log 2>&1
+python3 Server/main.py --host "$HOST" --port "$PORT" $REMOTE #> .server.log 2>&1
+# uvicorn Server:create_app --host "$HOST" --port "$PORT" #> .server.log 2>&1
 
-# uvicorn Backend.server:app --port 8000
 # # For remote server: Use ssh port-forwarding: ssh -L 8000:localhost:8000 user@ip

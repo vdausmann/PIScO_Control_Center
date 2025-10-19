@@ -90,7 +90,7 @@ class ServerClient(QObject):
         self.connected = None
 
         # try to connect to server if one is running:
-        self.connect_to_server()
+        # self.connect_to_server()
 
     def check_server(self, timeout: float = 2) -> bool:
         try:

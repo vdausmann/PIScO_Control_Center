@@ -39,6 +39,36 @@ QMenuBar::item:selected {
     border-radius: 4px;
 }
 
+/* ----- QLineEdit ----- */
+QLineEdit {
+    background-color: white;
+    color: #222222;
+    border: 1px solid #c6c6cc;
+    border-radius: 4px;
+    padding: 2px 6px;
+    selection-background-color: @ACCENT;
+    selection-color: white;
+}
+
+/* Hovered (optional subtle highlight) */
+QLineEdit:hover:!disabled {
+    border: 1px solid @ACCENT;
+    background-color: #fdfdfd;
+}
+
+/* Focused */
+QLineEdit:focus {
+    border: 1px solid @ACCENT;
+    background-color: #ffffff;
+}
+
+/* Disabled */
+QLineEdit:disabled {
+    background-color: #eeeeee;       /* Light gray background */
+    color: #888888;                  /* Muted text color */
+    border: 1px dashed #bbbbbb;      /* Dashed border to clearly signal inactive state */
+}
+
 
 /* ----- Menus ----- */
 QMenu {

@@ -6,6 +6,7 @@ from PySide6.QtGui import QIntValidator, Qt
 from PySide6.QtCore import Qt
 from App.Resources.styles import BORDER
 
+from .ssh_connection import SSHConnectionClient, SSHConnectionSettings
 from .server_client import ServerClient
 
 class ServerSettingsView(QWidget):
@@ -29,6 +30,8 @@ class ServerSettingsView(QWidget):
         split.addWidget(server_settings)
 
         settings = QFormLayout()
+        server_settings_layout.addWidget(QLabel("Server settings"),
+                                         alignment=Qt.AlignmentFlag.AlignCenter)
         server_settings_layout.addLayout(settings)
 
         self.host_edit = QLineEdit()
@@ -44,10 +47,27 @@ class ServerSettingsView(QWidget):
         self.port_edit.textChanged.connect(self.port_edit_changed)
         settings.addRow("Port:", self.port_edit)
 
+        self.path_to_server_script = QLineEdit()
+        self.path_to_server_script.textChanged.connect(self.path_to_server_script_changed)
+        self.path_to_server_script.setText("./start_server.py")
+        self.path_to_server_script.setStyleSheet(f"border: 1px solid {BORDER};")
+        settings.addRow("Path to server script (remote or local):", self.path_to_server_script)
+
+        ########################################
+        ## Remote:
+        ########################################
         self.remote_checkbox = QCheckBox()
         self.remote_checkbox.stateChanged.connect(self.remote_checkbox_changed)
         settings.addRow("Remote:", self.remote_checkbox)
 
+        self.ssh_connection_settings = SSHConnectionSettings(self.client.ssh_client)
+        self.ssh_connection_settings.setDisabled(True)
+        server_settings_layout.addWidget(self.ssh_connection_settings)
+        server_settings_layout.addStretch()
+
+        ########################################
+        ## Buttons:
+        ########################################
         self.start_server_button = QPushButton("Start server")
         self.start_server_button.clicked.connect(self.client.start_server)
         server_settings_layout.addWidget(self.start_server_button)
@@ -92,4 +112,8 @@ class ServerSettingsView(QWidget):
 
     def remote_checkbox_changed(self):
         self.client.remote = self.remote_checkbox.isChecked()
+        self.ssh_connection_settings.setDisabled(not self.client.remote)
+
+    def path_to_server_script_changed(self):
+        self.client.path_to_server_script = self.path_to_server_script.text()
 

@@ -190,6 +190,10 @@ class PIScOControlCenter(QMainWindow):
 
     def _quit(self):
         self.task_viewer.client.disconnect_from_server()
+        self.client.close()
+
+
+
 
     # @Slot()
     # def _create_new_module(self):

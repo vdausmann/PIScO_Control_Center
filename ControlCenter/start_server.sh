@@ -12,7 +12,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-python3 Server/main.py --host "$HOST" --port "$PORT" $REMOTE #> .server.log 2>&1
-# uvicorn Server:create_app --host "$HOST" --port "$PORT" #> .server.log 2>&1
-
-# # For remote server: Use ssh port-forwarding: ssh -L 8000:localhost:8000 user@ip
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+# nohup python3 start_server.py --host "$HOST" --port "$PORT" > /dev/null >2&1 &
+nix develop ./dependencies/flake.nix --command bash -c "python3 start_server.py --host $HOST --port $PORT"

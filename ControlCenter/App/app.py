@@ -14,7 +14,7 @@ from .ProfileViewerPane import ProfileViewer
 from .HDF5ViewerPane import HDF5Viewer
 from .ServerPane import ServerViewer
 from .Resources.styles import COLORS
-from .ServerPane.server_client import ServerClient
+from Server.Client import ServerClient
 # from .TaskViewerPane.module_editor import CreateNewModule, EditModule
 
 class PIScOControlCenter(QMainWindow):

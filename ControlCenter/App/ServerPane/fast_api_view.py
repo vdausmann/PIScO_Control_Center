@@ -6,7 +6,7 @@ QVBoxLayout, QWidget)
 
 from App.helper import LoadingSpinner
 
-from .server_client import ServerClient
+from Server.Client import ServerClient
 
 
 class FastAPIView(QWidget):

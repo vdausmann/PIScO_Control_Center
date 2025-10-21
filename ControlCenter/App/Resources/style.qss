@@ -118,6 +118,10 @@ QPushButton#DeleteButton {
 QPushButton#DeleteButton:hover {
     background-color: #c9302c;
 }
+QPushButton#DeleteButton:disabled {
+    background-color: #d0d3d8;
+    color: #888888;
+}
 
 /* ----- Toolbar ----- */
 QWidget#Toolbar {

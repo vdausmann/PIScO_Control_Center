@@ -1,0 +1,249 @@
+{
+  "Workflows": {
+    "Workflow 0": {
+      "nodes": [
+        {
+          "type": "GrayScaleSourceNode",
+          "x": -571.0,
+          "y": 270.5,
+          "connections": [],
+          "values": [
+            "0"
+          ],
+          "id": "07d4737b-8804-450c-bc64-b538d8da7c36"
+        },
+        {
+          "type": "MinNode",
+          "x": -269.0,
+          "y": 28.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 1
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "d93a86e6-0ef5-4a37-908e-0e8109647bf1"
+        },
+        {
+          "type": "MinNode",
+          "x": -270.0,
+          "y": 160.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 2
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 3
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "1e69f74b-4d15-4f11-a9fa-528e1b155245"
+        },
+        {
+          "type": "MaxNode",
+          "x": -42.0,
+          "y": 19.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "d93a86e6-0ef5-4a37-908e-0e8109647bf1",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "1e69f74b-4d15-4f11-a9fa-528e1b155245",
+                "index": 0
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "eb1e02a7-d23e-4725-bc4d-c68d1754811d"
+        },
+        {
+          "type": "ABSDiffNode",
+          "x": 309.0,
+          "y": -8.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "eb1e02a7-d23e-4725-bc4d-c68d1754811d",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 0
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "b8594a95-a6af-45c5-9b54-f0639af2033c"
+        },
+        {
+          "type": "ABSDiffNode",
+          "x": 308.0,
+          "y": 105.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "eb1e02a7-d23e-4725-bc4d-c68d1754811d",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 1
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "2b6d0379-a850-4b58-ba9c-a4dfe53da6aa"
+        },
+        {
+          "type": "ABSDiffNode",
+          "x": 307.0,
+          "y": 220.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "eb1e02a7-d23e-4725-bc4d-c68d1754811d",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 2
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "97e6b5d5-778b-4cbb-bc6b-a912e79bf802"
+        },
+        {
+          "type": "ABSDiffNode",
+          "x": 308.0,
+          "y": 334.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "eb1e02a7-d23e-4725-bc4d-c68d1754811d",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "07d4737b-8804-450c-bc64-b538d8da7c36",
+                "index": 3
+              }
+            }
+          ],
+          "values": [
+            null,
+            null
+          ],
+          "id": "97c3eb80-b078-452d-984f-5b12c243a8c6"
+        },
+        {
+          "type": "ThresholdNode",
+          "x": 553.0,
+          "y": 13.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "b8594a95-a6af-45c5-9b54-f0639af2033c",
+                "index": 0
+              }
+            }
+          ],
+          "values": [
+            null,
+            "20.0",
+            "255.0",
+            "Triangle"
+          ],
+          "id": "be551ca4-3f81-421a-a4f1-4635889e4e95"
+        },
+        {
+          "type": "ThresholdNode",
+          "x": 847.0,
+          "y": 170.5,
+          "connections": [
+            {
+              "input": 0,
+              "output": {
+                "node": "97c3eb80-b078-452d-984f-5b12c243a8c6",
+                "index": 0
+              }
+            },
+            {
+              "input": 1,
+              "output": {
+                "node": "be551ca4-3f81-421a-a4f1-4635889e4e95",
+                "index": 0
+              }
+            }
+          ],
+          "values": [
+            null,
+            "7.0",
+            "255.0",
+            "Binary"
+          ],
+          "id": "1a0bf53a-3308-45f4-b211-0effe2383c57"
+        }
+      ]
+    }
+  }
+}

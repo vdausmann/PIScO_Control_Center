@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSize, Slot, Qt
 from PySide6.QtGui import QIcon, QAction
 
+
+from .CV_Image_SequencerPane.image_sequencer_pane import ImageSequencer
 from .TaskViewerPane import TaskViewerPane
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
@@ -104,12 +106,21 @@ class PIScOControlCenter(QMainWindow):
         b5.setFixedWidth(button_size)
         b5.setFixedHeight(button_size)
 
+        b6 = QPushButton("")
+        b6.clicked.connect(lambda: self._show_page(5))
+        b6.setIcon(QIcon("App/Resources/Icons/graph_1_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b6.setIconSize(QSize(24, 24))
+        b6.setFixedWidth(button_size)
+        b6.setFixedHeight(button_size)
+
+
         toolbar_layout.addSpacerItem(QSpacerItem(40, 10))
         toolbar_layout.addWidget(b1, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b2, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b3, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b4, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addWidget(b5, alignment=Qt.AlignmentFlag.AlignCenter)
+        toolbar_layout.addWidget(b6, alignment=Qt.AlignmentFlag.AlignCenter)
         toolbar_layout.addStretch()
 
         toolbar_frame.setLayout(toolbar_layout)
@@ -144,12 +155,15 @@ class PIScOControlCenter(QMainWindow):
         self.hdf5_viewer = HDF5Viewer()
         self.server_viewer = ServerViewer(self.client)
 
+        self.image_node_system = ImageSequencer(self.app)
+
 
         self.stacked_widget.addWidget(self.task_viewer)
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
         self.stacked_widget.addWidget(self.hdf5_viewer)
         self.stacked_widget.addWidget(self.server_viewer)
+        self.stacked_widget.addWidget(self.image_node_system)
         main_layout.addWidget(self.stacked_widget, 1)
 
     def add_menubar(self):

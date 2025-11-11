@@ -15,7 +15,7 @@ class HDF5Viewer(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-        self._open_file("/home/tim/Documents/Arbeit/HDF5Test/test.h5")
+        self._open_file("./test.h5")
 
     def init_ui(self):
         layout = QVBoxLayout(self)

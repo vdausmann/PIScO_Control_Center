@@ -1,0 +1,6 @@
+[submodule "ControlCenter/App/CV_Image_SequencerPane/CV_Image_Sequencer"]
+	path = ControlCenter/App/CV_Image_SequencerPane/CV_Image_Sequencer
+	url = git@github.com:Tim3720/CV_Image_Sequencer.git
+[submodule "ControlCenter/dependencies/CV_Image_Sequencer"]
+	path = ControlCenter/dependencies/CV_Image_Sequencer
+	url = git@github.com:Tim3720/CV_Image_Sequencer.git

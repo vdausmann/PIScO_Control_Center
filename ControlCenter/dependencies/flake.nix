@@ -47,8 +47,10 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						h5py
 						paramiko
                     ]))
+					qt6.qtwayland
                 ];
                 shellHook = ''
+					export QT_QPA_PLATFORM=xcb
                 '';
                 LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath libs}";
             };

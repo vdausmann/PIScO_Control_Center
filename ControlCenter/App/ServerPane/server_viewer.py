@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 
 from .fast_api_view import FastAPIView
 from .server_settings_view import ServerSettingsView
-from .server_client import ServerClient
+from Server.Client import ServerClient
 from App.Resources.styles import BORDER
 
 class ServerViewer(QWidget):

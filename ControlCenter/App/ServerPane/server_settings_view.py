@@ -6,8 +6,8 @@ from PySide6.QtGui import QIntValidator, Qt
 from PySide6.QtCore import Qt
 from App.Resources.styles import BORDER
 
-from .ssh_connection import SSHConnectionClient, SSHConnectionSettings
-from .server_client import ServerClient
+from .ssh_settings_view import SSHConnectionSettings
+from Server.Client import ServerClient, SSHConnectionClient
 
 class ServerSettingsView(QWidget):
     def __init__(self, client: ServerClient):
@@ -30,26 +30,28 @@ class ServerSettingsView(QWidget):
         split.addWidget(server_settings)
 
         settings = QFormLayout()
-        server_settings_layout.addWidget(QLabel("Server settings"),
+        label = QLabel("Server settings")
+        label.setStyleSheet("font-size: 16px;")
+        server_settings_layout.addWidget(label,
                                          alignment=Qt.AlignmentFlag.AlignCenter)
         server_settings_layout.addLayout(settings)
 
         self.host_edit = QLineEdit()
         self.host_edit.setStyleSheet(f"border: 1px solid {BORDER};")
-        self.host_edit.setText(self.client.host)
         self.host_edit.textChanged.connect(self.host_edit_changed)
+        self.host_edit.setText(self.client.host)
         settings.addRow("Host:", self.host_edit)
 
         self.port_edit = QLineEdit()
         self.port_edit.setValidator(QIntValidator(1024, 49151))
+        self.port_edit.textChanged.connect(self.port_edit_changed)
         self.port_edit.setText(str(self.client.port))
         self.port_edit.setStyleSheet(f"border: 1px solid {BORDER};")
-        self.port_edit.textChanged.connect(self.port_edit_changed)
         settings.addRow("Port:", self.port_edit)
 
         self.path_to_server_script = QLineEdit()
         self.path_to_server_script.textChanged.connect(self.path_to_server_script_changed)
-        self.path_to_server_script.setText("./start_server.py")
+        self.path_to_server_script.setText("/home/tim/Documents/Arbeit/PIScO_Control_Center/ControlCenter/start_server.sh")
         self.path_to_server_script.setStyleSheet(f"border: 1px solid {BORDER};")
         settings.addRow("Path to server script (remote or local):", self.path_to_server_script)
 
@@ -74,6 +76,11 @@ class ServerSettingsView(QWidget):
 
         self.disconnect_button = QPushButton("Disconnect")
         server_settings_layout.addWidget(self.disconnect_button)
+
+        self.stop_server_button = QPushButton("Stop Server")
+        self.stop_server_button.setObjectName("DeleteButton")
+        server_settings_layout.addWidget(self.stop_server_button)
+        self.stop_server_button.clicked.connect(self.client.stop_server)
             
         ########################################
         ## Websocket:

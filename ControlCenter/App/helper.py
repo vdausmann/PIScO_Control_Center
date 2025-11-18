@@ -1,6 +1,10 @@
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                               QVBoxLayout, QWidget, QDialog, QTreeWidget,
+                               QTreeWidgetItem)
 from PySide6.QtCore import Qt, QTimer, Signal, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QIcon
+import paramiko
+
 
 
 class ClickableLabel(QWidget):
@@ -183,3 +187,40 @@ class StatusLight(QWidget):
         diameter = min(self.width(), self.height())
         painter.drawEllipse(0, 0, diameter, diameter)
 
+
+
+class RemoteFileDialog(QDialog):
+    def __init__(self, sftp, start_path="/", parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select remote file")
+        self.sftp = sftp
+        
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(["Name", "Type"])
+        self.load_directory(start_path, self.tree.invisibleRootItem())
+
+        btn = QPushButton("Select")
+        btn.clicked.connect(self.accept)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.tree)
+        layout.addWidget(btn)
+
+    def load_directory(self, path, parent_item):
+        for item in self.sftp.listdir_attr(path):
+            full = f"{path}/{item.filename}"
+            node = QTreeWidgetItem([item.filename])
+            parent_item.addChild(node)
+
+            if paramiko.S_ISDIR(item.st_mode):
+                node.setText(1, "Dir")
+                # Expandable directory
+                node.setData(0, 32, full)
+                self.load_directory(full, node)
+            else:
+                node.setText(1, "File")
+                node.setData(0, 32, full)
+
+    def selected_path(self):
+        item = self.tree.currentItem()
+        return item.data(0, 32)

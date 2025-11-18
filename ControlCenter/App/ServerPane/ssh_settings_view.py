@@ -86,7 +86,7 @@ class SSHConnectionSettings(QWidget):
             QMessageBox.critical(self, "Connection Failed", f"SSH connection failed: {exception}")
 
     def _disconnect(self):
-        success = self.ssh_client.disconnect()
+        success = self.ssh_client.close()
         if success:
             QMessageBox.information(self, "Disconnected", f"Closed ssh connection.")
 

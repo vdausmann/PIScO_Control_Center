@@ -48,6 +48,8 @@ class PIScOControlCenter(QMainWindow):
 
         self.init_ui()
 
+        self._show_page(2)
+
         # Connect application about to quit signal for state saving
         self.app.aboutToQuit.connect(self._quit)
         # self.move(self.screen().geometry().topLeft())
@@ -130,31 +132,10 @@ class PIScOControlCenter(QMainWindow):
         self.stacked_widget = QStackedWidget() 
 
         self.task_viewer = TaskViewerPane()
-
-        # task_pane = QWidget()
-        # task_pane_layout = QHBoxLayout(task_pane)
-        # task_pane_layout.setContentsMargins(0, 0, 0, 0)
-        # task_pane_layout.setSpacing(0)
-        # task_window = TaskWindow([])
-        # # task_window.add_task(get_test_task("Task 1"))
-        # # task_window.add_task(get_test_task("Task 2", True))
-        # task_pane_layout.addWidget(task_window, 8)
-        # viewer_pane = TaskViewer(task_window)
-        # task_pane_layout.addWidget(viewer_pane, 4)
-        # task_pane_layout.addStretch()
-        # self.panes.append(task_window)
-        #
         self.callibration_viewer = CallibrationViewer()
-        # self.panes.append(callibration_pane)
-        #
-        #
         self.profile_viewer = ProfileViewer()
-        # self.panes.append(profile_viewer)
-        #
-
         self.hdf5_viewer = HDF5Viewer()
         self.server_viewer = ServerViewer(self.client)
-
         self.image_node_system = ImageSequencer(self.app)
 
 

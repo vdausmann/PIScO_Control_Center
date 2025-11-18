@@ -1,95 +1,125 @@
-# from App.HDF5ViewerPane.crops_to_hdf import generate_crop_hdf_file
-#
-#
-# generate_crop_hdf_file(
-#         "/home/tim/Documents/Arbeit/HDF5Test/SO298_298-10-1_PISCO2_20230422-2334_Results/Crops/",
-#         "/home/tim/Documents/Arbeit/HDF5Test/SO298_298-10-1_PISCO2_20230422-2334_Results/Data/",
-#         "/home/tim/Documents/Arbeit/HDF5Test/test.h5",
-#         )
-
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-from matplotlib.backends.backend_qtagg import (
-    FigureCanvasQTAgg as FigureCanvas,
-    NavigationToolbar2QT as NavigationToolbar
+import sys
+import traceback
+from PySide6.QtWidgets import (
+    QApplication, QWidget, QSplitter, QVBoxLayout, QHBoxLayout, QPushButton,
+    QFileDialog, QMessageBox
 )
-from matplotlib.lines import Line2D
+from PySide6.QtCore import Qt
+
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-import numpy as np
-import matplotlib
-
-matplotlib.use("QtAgg")
 
 
-class MplWidget(FigureCanvas):
-    def __init__(self, parent=None):
-        self.fig = Figure(tight_layout=True)
+# ------------------ Matplotlib Canvas ------------------
+
+class MatplotlibCanvas(FigureCanvasQTAgg):
+    def __init__(self):
+        self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
         super().__init__(self.fig)
-        self.setParent(parent)
 
-        # Connect custom interactions
-        self.mpl_connect("scroll_event", self.on_scroll)
-        self.mpl_connect("pick_event", self.on_pick)
+    def execute_script(self, script: str):
+        """Run user script in a controlled environment."""
+        try:
+            # clear old plot
+            self.fig.clear()
+            ax = self.fig.add_subplot(111)
 
-        self.plot_example()
+            # define execution environment
+            env = {
+                "fig": self.fig,
+                "ax": ax,
+            }
 
-    def plot_example(self):
-        self.ax.clear()
-        x = np.linspace(0, 10, 100)
-        y1 = np.sin(x)
-        y2 = np.cos(x)
-        self.ax.plot(x, y1, label="sin(x)", picker=True)
-        self.ax.plot(x, y2, label="cos(x)", picker=True)
-        self.ax.legend()
-        self.draw()
+            exec(script, env)
 
-    def on_scroll(self, event):
-        ax = event.inaxes
-        if ax is None:
+            self.draw()
+        except Exception as e:
+            traceback.print_exc()
+
+
+# ------------------ Recursive Split Widget ------------------
+
+class PlotSplitWidget(QWidget):
+    """A widget allowing recursive horizontal/vertical splits with matplotlib plots."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+
+        # toolbar with split buttons
+        toolbar = QHBoxLayout()
+        layout.addLayout(toolbar)
+
+        btn_vsplit = QPushButton("Add Vertical Split")
+        btn_hsplit = QPushButton("Add Horizontal Split")
+        btn_load = QPushButton("Load Script")
+        toolbar.addWidget(btn_vsplit)
+        toolbar.addWidget(btn_hsplit)
+        toolbar.addWidget(btn_load)
+
+        # root content (initially a single plot)
+        self.root = MatplotlibCanvas()
+        self.container = self.root
+
+        layout.addWidget(self.root)
+
+        btn_vsplit.clicked.connect(lambda: self.split(Qt.Vertical))
+        btn_hsplit.clicked.connect(lambda: self.split(Qt.Horizontal))
+        btn_load.clicked.connect(self.load_script)
+
+    def split(self, orientation):
+        """Replace the current root widget with a splitter containing two plots."""
+        # create splitter
+        new_splitter = QSplitter(orientation)
+
+        # old content
+        old = self.container
+        old.setParent(None)
+
+        # new content
+        new_canvas = MatplotlibCanvas()
+
+        new_splitter.addWidget(old)
+        new_splitter.addWidget(new_canvas)
+
+        layout = self.layout()
+        layout.replaceWidget(old, new_splitter)
+
+        self.container = new_splitter
+
+    def load_script(self):
+        """Load and execute a user-provided Python script on all plots."""
+        path, _ = QFileDialog.getOpenFileName(self, "Select Plot Script", "", "Python Files (*.py)")
+        if not path:
             return
 
-        scale_factor = 1.2 if event.button == 'down' else 1 / 1.2
-        xdata, ydata = event.xdata, event.ydata
-        xlim = ax.get_xlim()
-        ylim = ax.get_ylim()
+        with open(path, "r") as f:
+            script = f.read()
 
-        new_width = (xlim[1] - xlim[0]) * scale_factor
-        new_height = (ylim[1] - ylim[0]) * scale_factor
-        relx = (xdata - xlim[0]) / (xlim[1] - xlim[0])
-        rely = (ydata - ylim[0]) / (ylim[1] - ylim[0])
+        # apply script to all canvases recursively
+        self._apply_to_canvases(self.container, script)
 
-        ax.set_xlim([xdata - new_width * relx, xdata + new_width * (1 - relx)])
-        ax.set_ylim([ydata - new_height * rely, ydata + new_height * (1 - rely)])
-        self.draw_idle()
+    def _apply_to_canvases(self, widget, script):
+        """Recursively apply script to all Matplotlib canvases."""
+        if isinstance(widget, MatplotlibCanvas):
+            widget.execute_script(script)
+            return
 
-    def on_pick(self, event):
-        artist = event.artist
-        if event.mouseevent.button == 1 and isinstance(artist, Line2D):
-            # Example: emphasize clicked line
-            for line in self.ax.get_lines():
-                line.set_linewidth(1)
-            artist.set_linewidth(4)
-            self.draw_idle()
+        if isinstance(widget, QSplitter):
+            for i in range(widget.count()):
+                child = widget.widget(i)
+                self._apply_to_canvases(child, script)
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Interactive Matplotlib in PySide6")
-
-        self.plot_widget = MplWidget(self)
-        self.toolbar = NavigationToolbar(self.plot_widget, self)
-
-        central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.plot_widget)
-        self.setCentralWidget(central)
-
+# ------------------ Test Application ------------------
 
 if __name__ == "__main__":
-    app = QApplication([])
-    window = MainWindow()
-    window.resize(800, 600)
-    window.show()
-    app.exec()
+    app = QApplication(sys.argv)
+
+    w = PlotSplitWidget()
+    w.resize(1200, 800)
+    w.show()
+
+    sys.exit(app.exec())

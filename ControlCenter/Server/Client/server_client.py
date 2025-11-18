@@ -1,3 +1,4 @@
+import os
 from PySide6.QtCore import QByteArray, QObject, QProcess, QTimer, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import QMessageBox
@@ -7,9 +8,9 @@ from .ssh_connection import SSHConnectionClient
 
 
 class ServerClient(QObject):
-    server_start_started_signal = Signal(bool)
-    server_start_finished_signal = Signal()
+    server_started_signal = Signal(bool)
     request_finished_signal = Signal(object)
+    server_status_signal = Signal(bool)
 
 
     def __init__(self, parent=None) -> None:
@@ -18,7 +19,7 @@ class ServerClient(QObject):
         self.manager = QNetworkAccessManager(self)
         self.manager.finished.connect(self._on_request_finished)
 
-        self.server_started: bool = False
+        self.server_running: bool = False
         self.host: str | None = "127.0.0.1"
         self.port: int | None = 8000
         self.remote: bool = False
@@ -26,13 +27,12 @@ class ServerClient(QObject):
 
         self.ssh_client = SSHConnectionClient()
 
-        self.server_start_timer = QTimer(interval=2000, singleShot=True)
+        self.server_start_timer = QTimer(interval=5000, singleShot=True)
+        self.server_ping_timer = QTimer()
+        self.server_ping_timer.timeout.connect(self._check_server)
 
-    def send_get_request(self, url: str, headers: dict | None = None) -> bool:
+    def send_get_request(self, url: str, headers: dict | None = None):
         """Perform a GET request."""
-        if not self.server_started:
-            return False
-        
         print("Running", url)
         request = QNetworkRequest(QUrl(url))
         if headers:
@@ -41,13 +41,9 @@ class ServerClient(QObject):
 
         self.reply = self.manager.get(request)
         self.reply.errorOccurred.connect(self._on_request_error)
-        return True
 
-    def send_post_request(self, url: str, data=None, headers: dict | None = None) -> bool:
+    def send_post_request(self, url: str, data=None, headers: dict | None = None):
         """Perform a POST request with optional JSON or raw data."""
-        if not self.server_started:
-            return False
-
         request = QNetworkRequest(QUrl(url))
         if headers:
             for key, value in headers.items():
@@ -64,10 +60,16 @@ class ServerClient(QObject):
 
         self.reply = self.manager.post(request, payload)
         self.reply.errorOccurred.connect(self._on_request_error)
-        return True
 
     def get_url(self):
         return f"http://{self.host}:{self.port}"
+
+    def _change_server_status(self, new_status: bool):
+        old_status = self.server_running
+        self.server_running = new_status
+
+        if new_status != old_status:
+            self.server_status_signal.emit(new_status)
 
     def _on_request_finished(self, reply: QNetworkReply):
         """Handle finished request"""
@@ -82,6 +84,11 @@ class ServerClient(QObject):
             "error": None,
         }
 
+        if reply.error() == QNetworkReply.NetworkError.RemoteHostClosedError:
+            self._change_server_status(False)
+        else:
+            self._change_server_status(True)
+
         try:
             if content_type and "application/json" in content_type.lower():
                 result["data"] = json.loads(data.decode())
@@ -90,7 +97,7 @@ class ServerClient(QObject):
         except Exception as e:
             result["error"] = str(e)
 
-        print(result)
+        print("Request result:", result)
         reply.deleteLater()
         self.request_finished_signal.emit(result)
 
@@ -104,13 +111,15 @@ class ServerClient(QObject):
     def stop_server(self):
         url = self.get_url() + "/shutdown"
         self.send_post_request(url)
+        self.server_status_signal.emit(False)
+        self.server_ping_timer.stop()
 
     def ping_server(self):
         url = self.get_url() + "/"
         self.send_get_request(url)
 
     def start_server(self):
-        if self.server_started:
+        if self.server_running:
             QMessageBox.information(None, "Server info", "Server already running.")
             return
 
@@ -141,11 +150,28 @@ class ServerClient(QObject):
                     [ "start_server.py",
                         "--host", self.host,
                         "--port", str(self.port) ])
-            success = process.startDetached()
+            success, _ = process.startDetached()
+        self.connect_to_server(success)
 
-        self.server_start_started_signal.emit(success)
+    def connect_to_server(self, success: bool):
+        self.server_started_signal.emit(success)
         if success:
-            self.server_started = True
-            self.server_start_timer.start()
-            self.server_start_timer.timeout.connect(lambda: self.server_start_finished_signal.emit())
+            self.server_ping_timer.start(2000)
 
+    def _check_server(self):
+        self.ping_server()
+
+    def list_dir(self, path):
+        if not self.server_running:
+            raise ValueError("Requested list_dir from server which is not running")
+        if self.remote:
+            print(self.ssh_client.listdir(path))
+        else:
+            print(os.listdir(path))
+
+    def reconnect(self):
+        if self.server_running:
+            return
+        self._check_server()
+        print(self.server_running)
+        self.connect_to_server(self.server_running)

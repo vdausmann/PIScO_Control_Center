@@ -65,3 +65,8 @@ class SSHConnectionClient:
         self.disconnect()
         self.stop_port_forwarding()
 
+    def listdir(self, path: str):
+        if self.ssh_client is None:
+            raise ValueError("Requested listdir for ssh_client which is not connected")
+        sftp = self.ssh_client.open_sftp()
+        return sftp.listdir_attr(path)

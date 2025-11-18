@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
         QPushButton, QCheckBox
 )
 from PySide6.QtGui import QIntValidator, Qt
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from App.Resources.styles import BORDER
 
 from .ssh_settings_view import SSHConnectionSettings
@@ -15,6 +15,7 @@ class ServerSettingsView(QWidget):
         self.client = client
 
         self.init_ui()
+        self.client.server_status_signal.connect(self._on_server_status)
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -74,10 +75,17 @@ class ServerSettingsView(QWidget):
         self.start_server_button.clicked.connect(self.client.start_server)
         server_settings_layout.addWidget(self.start_server_button)
 
+
+        self.reconnect_button = QPushButton("Reconnect")
+        self.reconnect_button.clicked.connect(self.client.reconnect)
+        server_settings_layout.addWidget(self.reconnect_button)
+
         self.disconnect_button = QPushButton("Disconnect")
         server_settings_layout.addWidget(self.disconnect_button)
+        self.disconnect_button.setDisabled(True)
 
         self.stop_server_button = QPushButton("Stop Server")
+        self.stop_server_button.setDisabled(True)
         self.stop_server_button.setObjectName("DeleteButton")
         server_settings_layout.addWidget(self.stop_server_button)
         self.stop_server_button.clicked.connect(self.client.stop_server)
@@ -124,3 +132,16 @@ class ServerSettingsView(QWidget):
     def path_to_server_script_changed(self):
         self.client.path_to_server_script = self.path_to_server_script.text()
 
+    @Slot(bool)
+    def _on_server_status(self, running: bool):
+        print("Status for buttons:", running)
+        if running:
+            self.start_server_button.setEnabled(False)
+            self.reconnect_button.setEnabled(False)
+            self.stop_server_button.setEnabled(True)
+            self.disconnect_button.setEnabled(True)
+        else:
+            self.start_server_button.setEnabled(True)
+            self.reconnect_button.setEnabled(True)
+            self.stop_server_button.setEnabled(False)
+            self.disconnect_button.setEnabled(False)

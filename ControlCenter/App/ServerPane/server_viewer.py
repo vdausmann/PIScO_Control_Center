@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QLabel, QSplitter
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QTimer, Qt
 
 from .fast_api_view import FastAPIView
 from .server_settings_view import ServerSettingsView
@@ -13,6 +13,7 @@ class ServerViewer(QWidget):
         super().__init__()
 
         self.client = client
+        self.client.server_status_signal.connect(lambda x: print("Server running:", x))
 
         self.init_ui()
 
@@ -36,3 +37,5 @@ class ServerViewer(QWidget):
         self.fast_api_view = FastAPIView(self.client)
         self.splitter.addWidget(self.fast_api_view)
         self.splitter.setSizes([300, 700])
+
+

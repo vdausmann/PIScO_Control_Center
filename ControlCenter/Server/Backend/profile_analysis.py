@@ -32,7 +32,7 @@ class ProfileAnalysis:
         self.loaded_images: dict[int, Image] = {}
         self.loaded_hdf_file: h5py.File | None = None
 
-        self.valid_file_extensions = [".png", ".jpg", ".tiff"]
+        self.valid_file_extensions = [".png", ".jpg", ".tiff", ".tif"]
 
     def _check_file_type(self, fname: str):
         for extension in self.valid_file_extensions:

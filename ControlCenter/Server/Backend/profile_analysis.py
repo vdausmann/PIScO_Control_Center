@@ -47,18 +47,6 @@ class ProfileAnalysis:
         img = await asyncio.to_thread(cv.imread, path, color_code)
         return Image(self.image_files[index], img, color_code)
 
-    def _serialize_h5_group(self, group):
-        result = {}
-        for name, obj in group.items():
-            if isinstance(obj, h5py.Group):
-                result[name] = self._serialize_h5_group(obj)  # recurse
-            elif isinstance(obj, h5py.Dataset):
-                result[name] = {
-                    "shape": list(obj.shape),
-                    "dtype": str(obj.dtype),
-                }
-        return result
-
     @endpoint.post("/load-image-dir/{path:path}")
     async def load_image_dir(self, path: str):
         if os.path.isdir(path):
@@ -133,14 +121,36 @@ class ProfileAnalysis:
     async def open_hdf5_file(self, path: str):
         if not os.path.isfile(path):
             raise HTTPException(status_code=404, detail=f"HDF file {path} does not exist.")
-        if self.loaded_hdf_file is not None:
+        if not self.loaded_hdf_file is None:
             self.loaded_hdf_file.close()
         self.loaded_hdf_file = h5py.File(path, "r")
         
-        structure = self._serialize_h5_group(self.loaded_hdf_file)
+        # structure = self._serialize_h5_group(self.loaded_hdf_file)
+        structure = {}
         return {"msg": f"Succesfully opened HDF file {path}.", "structure":
                 structure}
+
+    @endpoint.post("/close-hdf5-file")
+    async def close_hdf5_file(self):
+        if not self.loaded_hdf_file is None:
+            self.loaded_hdf_file.close()
+            return {"msg": f"Succesfully closed HDF file."}
+        return {"msg": f"No HDF file loaded."}
                 
+
+    def _serialize_h5_group(self, group):
+        result = {}
+        for name, obj in group.items():
+            if isinstance(obj, h5py.Group):
+                # result[name] = self._serialize_h5_group(obj)  # recurse
+                result[name] = {}
+            elif isinstance(obj, h5py.Dataset):
+                result[name] = {
+                    "shape": list(obj.shape),
+                    "dtype": str(obj.dtype),
+                }
+        return result
+
 
     @endpoint.get("/get-hdf5-file-data/{data_path:path}")
     async def get_data_from_hdf_file(self, data_path: str):
@@ -150,13 +160,14 @@ class ProfileAnalysis:
         try:
             data = self.loaded_hdf_file[data_path]
             if isinstance(data, h5py.Group):
-                return {"type": "group", "structure": self._serialize_h5_group(data)}
+                print("hdf group")
+                return Response({"type": "group", "structure": self._serialize_h5_group(data),
+                        "attributes": {key: value for key, value in data.attrs.items()}}, media_type="application/json")
             elif isinstance(data, h5py.Dataset): 
                 data_type = data.attrs["type"]
                 data = data[()]
 
                 if data_type == "image":
-                    print(data.shape)
                     success, encoded = cv.imencode(".png", data)
                     if not success:
                         raise HTTPException(status_code=500, detail=f"Failed encoding the image to png")

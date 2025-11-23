@@ -48,7 +48,7 @@ class PIScOControlCenter(QMainWindow):
 
         self.init_ui()
 
-        self._show_page(2)
+        self._show_page(0)
 
         # Connect application about to quit signal for state saving
         self.app.aboutToQuit.connect(self._quit)
@@ -76,35 +76,35 @@ class PIScOControlCenter(QMainWindow):
 
         b1 = QPushButton("")
         b1.clicked.connect(lambda: self._show_page(0))
-        b1.setIcon(QIcon("App/Resources/Icons/task_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b1.setIcon(QIcon("App/Resources/Icons/host_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
         b1.setIconSize(QSize(24, 24))
         b1.setFixedWidth(button_size)
         b1.setFixedHeight(button_size)
 
         b2 = QPushButton("")
         b2.clicked.connect(lambda: self._show_page(1))
-        b2.setIcon(QIcon("App/Resources/Icons/camera_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b2.setIcon(QIcon("App/Resources/Icons/task_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
         b2.setIconSize(QSize(24, 24))
         b2.setFixedWidth(button_size)
         b2.setFixedHeight(button_size)
 
         b3 = QPushButton("")
         b3.clicked.connect(lambda: self._show_page(2))
-        b3.setIcon(QIcon("App/Resources/Icons/chart_data_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b3.setIcon(QIcon("App/Resources/Icons/camera_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
         b3.setIconSize(QSize(24, 24))
         b3.setFixedWidth(button_size)
         b3.setFixedHeight(button_size)
 
-        b4 = QPushButton("HDF5")
+        b4 = QPushButton("")
         b4.clicked.connect(lambda: self._show_page(3))
-        b4.setStyleSheet("font-size: 10px; padding: 0px;")
+        b4.setIcon(QIcon("App/Resources/Icons/chart_data_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
+        b4.setIconSize(QSize(24, 24))
         b4.setFixedWidth(button_size)
         b4.setFixedHeight(button_size)
 
-        b5 = QPushButton("")
+        b5 = QPushButton("HDF5")
         b5.clicked.connect(lambda: self._show_page(4))
-        b5.setIcon(QIcon("App/Resources/Icons/host_50dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png"))
-        b5.setIconSize(QSize(24, 24))
+        b5.setStyleSheet("font-size: 10px; padding: 0px;")
         b5.setFixedWidth(button_size)
         b5.setFixedHeight(button_size)
 
@@ -134,16 +134,16 @@ class PIScOControlCenter(QMainWindow):
         self.task_viewer = TaskViewerPane()
         self.callibration_viewer = CallibrationViewer()
         self.profile_viewer = ProfileViewer()
-        self.hdf5_viewer = HDF5Viewer()
+        self.hdf5_viewer = HDF5Viewer(self.client)
         self.server_viewer = ServerViewer(self.client)
         self.image_node_system = ImageSequencer(self.app)
 
 
+        self.stacked_widget.addWidget(self.server_viewer)
         self.stacked_widget.addWidget(self.task_viewer)
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
         self.stacked_widget.addWidget(self.hdf5_viewer)
-        self.stacked_widget.addWidget(self.server_viewer)
         self.stacked_widget.addWidget(self.image_node_system)
         main_layout.addWidget(self.stacked_widget, 1)
 

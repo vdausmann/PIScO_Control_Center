@@ -1,5 +1,7 @@
 import subprocess
+from typing import Optional
 import paramiko
+import stat
 
 class SSHConnectionClient:
 
@@ -65,8 +67,16 @@ class SSHConnectionClient:
         self.disconnect()
         self.stop_port_forwarding()
 
-    def listdir(self, path: str):
+    def listdir(self, path: Optional[str]):
         if self.ssh_client is None:
             raise ValueError("Requested listdir for ssh_client which is not connected")
         sftp = self.ssh_client.open_sftp()
-        return sftp.listdir_attr(path)
+        if path is None:
+            path = sftp.normalize(".")
+
+        entries = []
+        for attr in sftp.listdir_attr(path):
+            full = f"{path.rstrip('/')}/{attr.filename}"
+            is_dir = stat.S_ISDIR(attr.st_mode)
+            entries.append((attr.filename, full, is_dir))
+        return entries

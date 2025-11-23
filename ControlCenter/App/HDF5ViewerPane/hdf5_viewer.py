@@ -1,21 +1,26 @@
+from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (
         QSizePolicy, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
         QTreeWidgetItem, QHBoxLayout, QSplitter
 )
 import numpy as np
 import json
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QImage, QPixmap
 import cv2 
 
 import h5py
 from PySide6.QtCore import Qt
+from Server.Client.file_explorer import ServerFileDialog
+from Server.Client.server_client import ServerClient
 
 class HDF5Viewer(QWidget):
-    def __init__(self):
+    def __init__(self, server_client: ServerClient):
         super().__init__()
+
+        self.server_client = server_client
+
         self.init_ui()
-        self._open_file("./test.h5")
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -56,35 +61,55 @@ class HDF5Viewer(QWidget):
 
     # -------------------------------------------------------------------------
     def open_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Open HDF5 File", "", "HDF5 Files (*.h5 *.hdf5)")
-        self._open_file(path)
+        dialog = ServerFileDialog(self.server_client)
+        if dialog.exec():
+            path = dialog.selected_path()
+            print("Opening", path)
+            reply = self.server_client.open_hdf_file(path)
+            reply.finished.connect(self._open_file)
 
-    def _open_file(self, path: str):
-        if not path:
+        # self.server_client.list_dir()
+        # path, _ = QFileDialog.getOpenFileName(self, "Open HDF5 File", "", "HDF5 Files (*.h5 *.hdf5)")
+        # self._open_file(path)
+
+    @Slot()
+    def _open_file(self):
+        print("_open_file")
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply):
             return
-        if self.file:
-            self.file.close()
+        print("reply data:", reply.readAll().data().decode("utf-8"))
 
-        self.file = h5py.File(path, "r")
+        reply = self.server_client.get_hdf_file_path("/")
+        reply.finished.connect(self.populate_tree)
+        # self.file = h5py.File(path, "r")
         self.tree.clear()
-        self.populate_tree(self.file, self.tree.invisibleRootItem(), "/")
+        # self.populate_tree(self.file, self.tree.invisibleRootItem(), "/")
 
 
     # -------------------------------------------------------------------------
-    def populate_tree(self, group, parent_item, path):
-        for key, item in group.items():
-            item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
+    @Slot()
+    def populate_tree(self):
+        print("populate tree")
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply):
+            return
 
-            if isinstance(item, h5py.Group):
-                node = QTreeWidgetItem([key, "Group", "-", "-"])
-                parent_item.addChild(node)
-                self.populate_tree(item, node, item_path)
-            elif isinstance(item, h5py.Dataset):
-                shape = str(item.shape)
-                dtype = str(item.dtype)
-                node = QTreeWidgetItem([key, "Dataset", shape, dtype])
-                node.setData(0, Qt.ItemDataRole.UserRole, item_path)
-                parent_item.addChild(node)
+        data = self.server_client.get_data_from_reply(reply)
+        print(data)
+        # for key, item in group.items():
+        #     item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
+        #
+        #     if isinstance(item, h5py.Group):
+        #         node = QTreeWidgetItem([key, "Group", "-", "-"])
+        #         parent_item.addChild(node)
+        #         self.populate_tree(item, node, item_path)
+        #     elif isinstance(item, h5py.Dataset):
+        #         shape = str(item.shape)
+        #         dtype = str(item.dtype)
+        #         node = QTreeWidgetItem([key, "Dataset", shape, dtype])
+        #         node.setData(0, Qt.ItemDataRole.UserRole, item_path)
+        #         parent_item.addChild(node)
 
     # -------------------------------------------------------------------------
 

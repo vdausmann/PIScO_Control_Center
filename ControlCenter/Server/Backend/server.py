@@ -21,14 +21,15 @@ class PISCOServer:
         lifespan="on")
         self.server = uvicorn.Server(config)
 
-        with open(".server.log", "w") as f:
-            sys.stdout = f
-            sys.stderr = f
-            try:
-                self.server.run()
-            finally:
-                sys.stdout = sys.__stdout__
-                sys.stderr = sys.__stderr__
+        # with open(".server.log", "w") as f:
+        #     sys.stdout = f
+        #     sys.stderr = f
+        try:
+            self.server.run()
+        finally:
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+
 
     def _setup_routes(self):
         """Attach all endpoints to the app."""

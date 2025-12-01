@@ -1,3 +1,4 @@
+from typing import Optional
 from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (
         QSizePolicy, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
@@ -19,6 +20,8 @@ class HDF5Viewer(QWidget):
         super().__init__()
 
         self.server_client = server_client
+
+        self.nodes: dict[str, QTreeWidgetItem] = {}
 
         self.init_ui()
 
@@ -61,98 +64,98 @@ class HDF5Viewer(QWidget):
 
     # -------------------------------------------------------------------------
     def open_file(self):
-        dialog = ServerFileDialog(self.server_client)
+        dialog = ServerFileDialog(self.server_client, "/home/tim/Documents/Arbeit/HDF5Test/")
         if dialog.exec():
             path = dialog.selected_path()
-            print("Opening", path)
             reply = self.server_client.open_hdf_file(path)
             reply.finished.connect(self._open_file)
 
-        # self.server_client.list_dir()
-        # path, _ = QFileDialog.getOpenFileName(self, "Open HDF5 File", "", "HDF5 Files (*.h5 *.hdf5)")
-        # self._open_file(path)
-
     @Slot()
     def _open_file(self):
-        print("_open_file")
         reply = self.sender()
         if not isinstance(reply, QNetworkReply):
             return
-        print("reply data:", reply.readAll().data().decode("utf-8"))
+        reply.deleteLater()
 
-        reply = self.server_client.get_hdf_file_path("/")
-        reply.finished.connect(self.populate_tree)
-        # self.file = h5py.File(path, "r")
+        # get root
+        reply = self.server_client.get_hdf_file_data("/")
+        reply.finished.connect(self.get_roots)
         self.tree.clear()
-        # self.populate_tree(self.file, self.tree.invisibleRootItem(), "/")
 
 
-    # -------------------------------------------------------------------------
+    @Slot()
+    def get_roots(self):
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply):
+            return
+
+        roots = self.server_client.get_data_from_reply(reply)["data"]
+        reply.deleteLater()
+
+        for root in roots["structure"]:
+            reply = self.server_client.get_hdf_file_structure("/" + root)
+            reply.finished.connect(self.populate_tree)
+
     @Slot()
     def populate_tree(self):
-        print("populate tree")
         reply = self.sender()
         if not isinstance(reply, QNetworkReply):
             return
 
-        data = self.server_client.get_data_from_reply(reply)
-        print(data)
-        # for key, item in group.items():
-        #     item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
-        #
-        #     if isinstance(item, h5py.Group):
-        #         node = QTreeWidgetItem([key, "Group", "-", "-"])
-        #         parent_item.addChild(node)
-        #         self.populate_tree(item, node, item_path)
-        #     elif isinstance(item, h5py.Dataset):
-        #         shape = str(item.shape)
-        #         dtype = str(item.dtype)
-        #         node = QTreeWidgetItem([key, "Dataset", shape, dtype])
-        #         node.setData(0, Qt.ItemDataRole.UserRole, item_path)
-        #         parent_item.addChild(node)
+        group = self.server_client.get_data_from_reply(reply)["data"]
+        reply.deleteLater()
+
+        root_node = QTreeWidgetItem([group["root"], "Group", "-", "-"])
+        self.tree.invisibleRootItem().addChild(root_node)
+        self._populate_tree(group["structure"], group["root"], root_node)
+
+
+    def _populate_tree(self, group, path, parent_item):
+        for key, item in group.items():
+            item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
+            if item["type"] == "group":
+                node = QTreeWidgetItem([key, "Group", "-", "-"])
+                parent_item.addChild(node)
+                self._populate_tree(item["structure"], node, item_path)
+            elif item["type"] == "data":
+                shape = str(item["shape"])
+                dtype = str(item["dtype"])
+                node = QTreeWidgetItem([key, "Dataset", shape, dtype])
+                node.setData(0, Qt.ItemDataRole.UserRole, item_path)
+                parent_item.addChild(node)
 
     # -------------------------------------------------------------------------
 
     def on_item_clicked(self, item, column):
-        if not self.file:
-            return
-
         path = item.data(0, Qt.ItemDataRole.UserRole)
+        if path is None:
+            return
+        print(path)
+        reply = self.server_client.get_hdf_file_data(path)
+        reply.finished.connect(self._show_data)
+
+    @Slot(QNetworkReply)
+    def _show_data(self):
         self.image_label.clear()
 
-        if not path:
-            self.text.setPlainText("Group selected.")
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply):
             return
 
-        try:
-            ds = self.file[path]
-            if not isinstance(ds, h5py.Dataset):
-                return
-            info = f"Path: {path}\nShape: {ds.shape}\nDtype: {ds.dtype}\n\n"
-            data = ds[()]
+        result = self.server_client.get_data_from_reply(reply)
+        data = result["data"]
+        print(result)
 
-            # Decode bytes if necessary
-            if isinstance(data, (bytes, np.bytes_)):
-                data = data.decode('utf-8')
-            # Try to parse JSON
-            if isinstance(data, str):
-                try:
-                    json_data = json.loads(data)
-                    formatted_json = json.dumps(json_data, indent=4)
-                    self.text.setPlainText(info + formatted_json)
-                    return
-                except Exception:
-                    pass  # Not valid JSON, fall back to plain text
+        if type(data) == dict:
+            self.text.setPlainText(json.dumps(data, indent=4))
+        elif self.try_show_image(data):
+            self.text.setPlainText("Displayed as image.")
+        else:
+            preview = self.array_preview(data)
+            self.text.setPlainText(preview)
 
-            # Try to display as image
-            if self.try_show_image(data):
-                self.text.setPlainText(info + "Displayed as image.")
-            else:
-                preview = self.array_preview(data)
-                self.text.setPlainText(info + preview)
-
-        except Exception as e:
-            self.text.setPlainText(f"Error reading dataset:\n{e}")
+        # except Exception as e:
+        #     self.text.setPlainText(f"Error reading dataset:\n{e}")
 
     # -------------------------------------------------------------------------
     def set_image(self, qimg: QImage):
@@ -218,9 +221,6 @@ class HDF5Viewer(QWidget):
     # -------------------------------------------------------------------------
     def array_preview(self, arr):
         """Generate small textual preview of array content."""
-        # if type(arr) == bytes:
-        #     data = json.loads(arr.decode())
-        #     return data
         if np.isscalar(arr):
             return str(arr)
         if arr.ndim == 1 and arr.size < 200:

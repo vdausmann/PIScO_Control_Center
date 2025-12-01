@@ -30,3 +30,10 @@ class endpoint:
             func._endpoint_info = {"method": "delete", "path": path}
             return func
         return decorator
+
+    @staticmethod
+    def websocket(path: str):
+        def decorator(func):
+            func._endpoint_info = {"method": "websocket", "path": path}
+            return func
+        return decorator

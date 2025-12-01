@@ -13,7 +13,6 @@ class ServerViewer(QWidget):
         super().__init__()
 
         self.client = client
-        self.client.server_status_signal.connect(lambda x: print("Server running:", x))
 
         self.init_ui()
 

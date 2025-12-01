@@ -1,23 +1,27 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
 import sys
+
+from .websocket import WebSockets
 from .profile_analysis import ProfileAnalysis
 from .utils import endpoint
 
 
-class PISCOServer:
+class PISCOServer(FastAPI):
 
     def __init__(self) -> None:
-        self.app = FastAPI(title="PISCO Server")
+        # self.app = FastAPI(title="PISCO Server")
+        super().__init__(title="PISCO Server")
         self.connected_clients: list[WebSocket] = []
         self.server = None
 
         self.profile_analysis = ProfileAnalysis()
+        self.sockets = WebSockets()
 
         self._setup_routes()
 
     def run(self, host: str, port: int, remote: bool):
-        config = uvicorn.Config(self.app, host=host, port=port, log_level="info",
+        config = uvicorn.Config(self, host=host, port=port, log_level="info",
         lifespan="on")
         self.server = uvicorn.Server(config)
 
@@ -26,6 +30,8 @@ class PISCOServer:
         #     sys.stderr = f
         try:
             self.server.run()
+        except KeyboardInterrupt:
+            print("Server stopped")
         finally:
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
@@ -35,6 +41,7 @@ class PISCOServer:
         """Attach all endpoints to the app."""
         self._register_endpoints(self)
         self._register_endpoints(self.profile_analysis)
+        self._register_endpoints(self.sockets)
 
     def _register_endpoints(self, obj):
         """Automatically attach decorated methods to FastAPI app."""
@@ -47,7 +54,7 @@ class PISCOServer:
 
                 print(f"Registering: {route_method.upper()} {route_path} -> {obj.__class__.__name__}.{attr_name}")
 
-                getattr(self.app, route_method)(route_path)(method)
+                getattr(self, route_method)(route_path)(method)
 
     @endpoint.get("/")
     async def root(self):
@@ -61,6 +68,13 @@ class PISCOServer:
         return "Server not running"
 
 
+    @endpoint.get("/test_ws")
+    async def test_ws(self):
+        await self.sockets.send_to_all("Test websocket")
+        return True
+
+
 def create_app() -> FastAPI:
     server = PISCOServer()
-    return server.app
+
+    return server

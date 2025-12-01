@@ -138,18 +138,45 @@ class ProfileAnalysis:
         return {"msg": f"No HDF file loaded."}
                 
 
-    def _serialize_h5_group(self, group):
+    def _serialize_h5_group(self, group, recursiv: bool = False):
         result = {}
         for name, obj in group.items():
             if isinstance(obj, h5py.Group):
-                # result[name] = self._serialize_h5_group(obj)  # recurse
-                result[name] = {}
+                if recursiv:
+                    result[name] = {}
+                    result[name]["type"] = "group"
+                    result[name]["attributes"] = {key: value for key, value in obj.attrs.items()}
+                    result[name]["structure"] = self._serialize_h5_group(obj, True)
+                else:
+                    result[name] = {}
             elif isinstance(obj, h5py.Dataset):
                 result[name] = {
+                    "type": "data",
                     "shape": list(obj.shape),
                     "dtype": str(obj.dtype),
                 }
         return result
+
+    def _get_data_from_hdf_file(self, data_path: str):
+        if self.loaded_hdf_file is None:
+            raise HTTPException(status_code=400, detail=f"No HDF file opened")
+        data = self.loaded_hdf_file[data_path]
+        data_type = None
+        if isinstance(data, h5py.Group):
+            data = {"type": "group", "structure": self._serialize_h5_group(data),
+                    "attributes": {key: value for key, value in data.attrs.items()},
+                    "path": data_path}
+            data_type = "group"
+        elif isinstance(data, h5py.Dataset): 
+            data_type = data.attrs["type"]
+            data = data[()]
+
+            if data_type == "image":
+                success, encoded = cv.imencode(".png", data)
+                if not success:
+                    raise HTTPException(status_code=500, detail=f"Failed encoding the image to png")
+                data = encoded.tobytes()
+        return data, data_type
 
 
     @endpoint.get("/get-hdf5-file-data/{data_path:path}")
@@ -158,28 +185,28 @@ class ProfileAnalysis:
             raise HTTPException(status_code=400, detail=f"No HDF file opened")
 
         try:
-            data = self.loaded_hdf_file[data_path]
-            if isinstance(data, h5py.Group):
-                print("hdf group")
-                return Response({"type": "group", "structure": self._serialize_h5_group(data),
-                        "attributes": {key: value for key, value in data.attrs.items()}}, media_type="application/json")
-            elif isinstance(data, h5py.Dataset): 
-                data_type = data.attrs["type"]
-                data = data[()]
-
-                if data_type == "image":
-                    success, encoded = cv.imencode(".png", data)
-                    if not success:
-                        raise HTTPException(status_code=500, detail=f"Failed encoding the image to png")
-
-                    return Response(content=encoded.tobytes(), media_type="image/png",
-                                    headers={"type": "image"})
-                elif data_type == "dict":
-                    return Response(content=data, media_type="application/json")
-                else:
-                    # TODO
-                    ...
+            data, data_type = self._get_data_from_hdf_file(data_path)
+            if data_type == "group":
+                return data
+            elif data_type == "image":
+                return Response(content=data, media_type="image/png",
+                                headers={"type": "image"})
+            elif data_type == "dict":
+                return Response(content=data, media_type="application/json")
+            else:
+                raise HTTPException(status_code=500, detail=f"Could not process HDF data.")
         except KeyError:
             raise HTTPException(status_code=404, detail=f"Invalid path to HDF file data: {data_path}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error while trying to access data from HDF file: {e}")
+
+    @endpoint.get("/get-hdf5-file-structure/{starting_path:path}")
+    async def get_hdf_structure(self, starting_path: str):
+        if self.loaded_hdf_file is None:
+            raise HTTPException(status_code=400, detail=f"No HDF file opened")
+        data = self.loaded_hdf_file[starting_path]
+        structure = {}
+        structure["structure"] = self._serialize_h5_group(data, True)
+        structure["root"] = starting_path
+        return structure
+

@@ -49,6 +49,7 @@ class PIScOControlCenter(QMainWindow):
         self.init_ui()
 
         self._show_page(0)
+        self.client.reconnect_to_server()
 
         # Connect application about to quit signal for state saving
         self.app.aboutToQuit.connect(self._quit)
@@ -184,8 +185,8 @@ class PIScOControlCenter(QMainWindow):
         self.stacked_widget.setCurrentIndex(index)
 
     def _quit(self):
-        self.task_viewer.client.disconnect_from_server()
         self.client.close()
+        self.task_viewer.client.disconnect_from_server()
 
 
 

@@ -1,125 +1,99 @@
 import sys
-import traceback
-from PySide6.QtWidgets import (
-    QApplication, QWidget, QSplitter, QVBoxLayout, QHBoxLayout, QPushButton,
-    QFileDialog, QMessageBox
+import json
+
+from PySide6.QtCore import QObject, QUrl, Slot
+from PySide6.QtNetwork import (
+    QNetworkAccessManager,
+    QNetworkRequest,
+    QNetworkReply,
 )
-from PySide6.QtCore import Qt
-
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
+from PySide6.QtWebSockets import QWebSocket
+from PySide6.QtWidgets import QApplication
 
 
-# ------------------ Matplotlib Canvas ------------------
-
-class MatplotlibCanvas(FigureCanvasQTAgg):
+class ApiClient(QObject):
     def __init__(self):
-        self.fig = Figure()
-        self.ax = self.fig.add_subplot(111)
-        super().__init__(self.fig)
+        super().__init__()
+        self.manager = QNetworkAccessManager(self)
 
-    def execute_script(self, script: str):
-        """Run user script in a controlled environment."""
-        try:
-            # clear old plot
-            self.fig.clear()
-            ax = self.fig.add_subplot(111)
+    # ---- HTTP GET --------------------------------------------------------
+    def get(self, url: str) -> QNetworkReply:
+        req = QNetworkRequest(QUrl(url))
+        reply = self.manager.get(req)
+        return reply
 
-            # define execution environment
-            env = {
-                "fig": self.fig,
-                "ax": ax,
-            }
-
-            exec(script, env)
-
-            self.draw()
-        except Exception as e:
-            traceback.print_exc()
+    # ---- HTTP POST -------------------------------------------------------
+    def post(self, url: str, payload: dict) -> QNetworkReply:
+        req = QNetworkRequest(QUrl(url))
+        req.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+        data = json.dumps(payload).encode("utf-8")
+        reply = self.manager.post(req, data)
+        return reply
 
 
-# ------------------ Recursive Split Widget ------------------
+class WebSocketClient(QObject):
+    def __init__(self):
+        super().__init__()
+        self.ws = QWebSocket()
 
-class PlotSplitWidget(QWidget):
-    """A widget allowing recursive horizontal/vertical splits with matplotlib plots."""
+        self.ws.connected.connect(self.on_connected)
+        self.ws.disconnected.connect(self.on_disconnected)
+        self.ws.textMessageReceived.connect(self.on_message)
+        self.ws.errorOccurred.connect(self.on_error)
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def connect(self, url: str):
+        self.ws.open(QUrl(url))
 
-        layout = QVBoxLayout(self)
+    @Slot()
+    def on_connected(self):
+        print("[WS] Connected")
+        self.ws.sendTextMessage("Hello Server!")
 
-        # toolbar with split buttons
-        toolbar = QHBoxLayout()
-        layout.addLayout(toolbar)
+    @Slot()
+    def on_disconnected(self):
+        print("[WS] Disconnected")
 
-        btn_vsplit = QPushButton("Add Vertical Split")
-        btn_hsplit = QPushButton("Add Horizontal Split")
-        btn_load = QPushButton("Load Script")
-        toolbar.addWidget(btn_vsplit)
-        toolbar.addWidget(btn_hsplit)
-        toolbar.addWidget(btn_load)
+    @Slot()
+    def on_message(self, msg):
+        print("[WS] Message:", msg)
 
-        # root content (initially a single plot)
-        self.root = MatplotlibCanvas()
-        self.container = self.root
-
-        layout.addWidget(self.root)
-
-        btn_vsplit.clicked.connect(lambda: self.split(Qt.Vertical))
-        btn_hsplit.clicked.connect(lambda: self.split(Qt.Horizontal))
-        btn_load.clicked.connect(self.load_script)
-
-    def split(self, orientation):
-        """Replace the current root widget with a splitter containing two plots."""
-        # create splitter
-        new_splitter = QSplitter(orientation)
-
-        # old content
-        old = self.container
-        old.setParent(None)
-
-        # new content
-        new_canvas = MatplotlibCanvas()
-
-        new_splitter.addWidget(old)
-        new_splitter.addWidget(new_canvas)
-
-        layout = self.layout()
-        layout.replaceWidget(old, new_splitter)
-
-        self.container = new_splitter
-
-    def load_script(self):
-        """Load and execute a user-provided Python script on all plots."""
-        path, _ = QFileDialog.getOpenFileName(self, "Select Plot Script", "", "Python Files (*.py)")
-        if not path:
-            return
-
-        with open(path, "r") as f:
-            script = f.read()
-
-        # apply script to all canvases recursively
-        self._apply_to_canvases(self.container, script)
-
-    def _apply_to_canvases(self, widget, script):
-        """Recursively apply script to all Matplotlib canvases."""
-        if isinstance(widget, MatplotlibCanvas):
-            widget.execute_script(script)
-            return
-
-        if isinstance(widget, QSplitter):
-            for i in range(widget.count()):
-                child = widget.widget(i)
-                self._apply_to_canvases(child, script)
+    @Slot()
+    def on_error(self, error):
+        print("[WS] Error:", error, self.ws.errorString())
 
 
-# ------------------ Test Application ------------------
+class Tester(QObject):
+    def __init__(self):
+        super().__init__()
+        self.api = ApiClient()
+        self.ws = WebSocketClient()
+
+        # ---- Test GET request --------------------------------------------
+        reply = self.api.get("http://127.0.0.1:8000/test")
+        reply.finished.connect(lambda r=reply: self.handle_reply(r))
+
+        # ---- Test POST request -------------------------------------------
+        reply2 = self.api.post(
+            "http://127.0.0.1:8000/echo",
+            {"message": "Hello from Qt!"}
+        )
+        reply2.finished.connect(lambda r=reply2: self.handle_reply(r))
+
+        # ---- Test WebSocket ----------------------------------------------
+        self.ws.connect("ws://127.0.0.1:8000/ws")
+
+    @Slot()
+    def handle_reply(self, reply: QNetworkReply):
+        if reply.error() != QNetworkReply.NoError:
+            print("[HTTP] Error:", reply.errorString())
+        else:
+            data = reply.readAll().data().decode("utf-8")
+            print("[HTTP] Response:", data)
+
+        reply.deleteLater()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    w = PlotSplitWidget()
-    w.resize(1200, 800)
-    w.show()
-
+    tester = Tester()
     sys.exit(app.exec())

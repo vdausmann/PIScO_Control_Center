@@ -15,7 +15,8 @@ class ServerSettingsView(QWidget):
         self.client = client
 
         self.init_ui()
-        self.client.server_status_signal.connect(self._on_server_status)
+        self.client.server_started.connect(self._on_server_status)
+        self.client.websocket.textMessageReceived.connect(self.on_websocket_msg)
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -77,7 +78,7 @@ class ServerSettingsView(QWidget):
 
 
         self.reconnect_button = QPushButton("Reconnect")
-        self.reconnect_button.clicked.connect(self.client.reconnect)
+        self.reconnect_button.clicked.connect(self.client.reconnect_to_server)
         server_settings_layout.addWidget(self.reconnect_button)
 
         self.disconnect_button = QPushButton("Disconnect")
@@ -134,7 +135,6 @@ class ServerSettingsView(QWidget):
 
     @Slot(bool)
     def _on_server_status(self, running: bool):
-        print("Status for buttons:", running)
         if running:
             self.start_server_button.setEnabled(False)
             self.reconnect_button.setEnabled(False)
@@ -145,3 +145,8 @@ class ServerSettingsView(QWidget):
             self.reconnect_button.setEnabled(True)
             self.stop_server_button.setEnabled(False)
             self.disconnect_button.setEnabled(False)
+
+
+    @Slot(str)
+    def on_websocket_msg(self, msg: str):
+        self.websocket_output.append(msg)

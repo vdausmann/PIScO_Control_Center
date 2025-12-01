@@ -19,8 +19,8 @@ class FastAPIView(QWidget):
         self.loading = False
 
         self.client = client
-        self.client.server_started_signal.connect(self.show_loading)
-        self.client.server_status_signal.connect(self._on_server_status)
+        self.client.start_up_signal.connect(self.show_loading)
+        self.client.server_started.connect(self._on_server_status)
 
         self.init_ui()
 

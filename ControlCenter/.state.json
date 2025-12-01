@@ -2,7 +2,7 @@
   "Workflows": {
     "Workflow 0": {
       "nodes": {
-        "10e7edce-02ec-459a-9100-6260cfc1aba3": {
+        "3e66ceee-93ac-4a2e-87dd-679988ddf48b": {
           "node": {
             "node_type": "SourceNode",
             "params": {
@@ -16,7 +16,7 @@
           "x": -501.0,
           "y": 126.0
         },
-        "63d04eed-b98a-4420-8d39-4739d18e680b": {
+        "ec0c1c8f-f6cc-40ea-bd19-048ce069310b": {
           "node": {
             "node_type": "MinNode",
             "params": {},
@@ -28,7 +28,7 @@
           "x": -270.0,
           "y": 44.0
         },
-        "66c61b76-ec43-4c7a-a5ad-5adbf1513440": {
+        "ed028b9a-33b5-4fb7-86e6-ee7a873d6962": {
           "node": {
             "node_type": "MinNode",
             "params": {},
@@ -40,7 +40,7 @@
           "x": -267.0,
           "y": 238.0
         },
-        "7ccb648c-ef4a-4cfc-871f-9d2b1c2c304e": {
+        "fc821cad-f58c-4eac-9dd2-533879c73d98": {
           "node": {
             "node_type": "MaxNode",
             "params": {},
@@ -52,7 +52,7 @@
           "x": -95.0,
           "y": 44.0
         },
-        "fbe719e7-6545-4d98-8588-613ab1df2011": {
+        "aadd1762-35ca-497e-a3c1-267cb7da5fb5": {
           "node": {
             "node_type": "SourceNode",
             "params": {
@@ -66,7 +66,7 @@
           "x": 109.0,
           "y": 263.0
         },
-        "37217222-1a84-47e9-a3eb-72dc5c7df4f1": {
+        "ffbad80b-34d5-42e0-b50e-4f18ab4fc918": {
           "node": {
             "node_type": "ABSDiffNode",
             "params": {},
@@ -78,7 +78,7 @@
           "x": 299.0,
           "y": 112.0
         },
-        "3db5c12b-54e7-4b3d-acec-47692611ee79": {
+        "35f32a35-09d6-4568-9e5d-029fad42f1cd": {
           "node": {
             "node_type": "ThresholdNode",
             "params": {},
@@ -94,58 +94,58 @@
         }
       },
       "connections": {
-        "63d04eed-b98a-4420-8d39-4739d18e680b": [
+        "ec0c1c8f-f6cc-40ea-bd19-048ce069310b": [
           [
             0,
-            "10e7edce-02ec-459a-9100-6260cfc1aba3",
+            "3e66ceee-93ac-4a2e-87dd-679988ddf48b",
             0
           ],
           [
             1,
-            "10e7edce-02ec-459a-9100-6260cfc1aba3",
+            "3e66ceee-93ac-4a2e-87dd-679988ddf48b",
             1
           ]
         ],
-        "66c61b76-ec43-4c7a-a5ad-5adbf1513440": [
+        "ed028b9a-33b5-4fb7-86e6-ee7a873d6962": [
           [
             0,
-            "10e7edce-02ec-459a-9100-6260cfc1aba3",
+            "3e66ceee-93ac-4a2e-87dd-679988ddf48b",
             2
           ],
           [
             1,
-            "10e7edce-02ec-459a-9100-6260cfc1aba3",
+            "3e66ceee-93ac-4a2e-87dd-679988ddf48b",
             3
           ]
         ],
-        "7ccb648c-ef4a-4cfc-871f-9d2b1c2c304e": [
+        "fc821cad-f58c-4eac-9dd2-533879c73d98": [
           [
             0,
-            "63d04eed-b98a-4420-8d39-4739d18e680b",
+            "ec0c1c8f-f6cc-40ea-bd19-048ce069310b",
             0
           ],
           [
             1,
-            "66c61b76-ec43-4c7a-a5ad-5adbf1513440",
+            "ed028b9a-33b5-4fb7-86e6-ee7a873d6962",
             0
           ]
         ],
-        "37217222-1a84-47e9-a3eb-72dc5c7df4f1": [
+        "ffbad80b-34d5-42e0-b50e-4f18ab4fc918": [
           [
             0,
-            "7ccb648c-ef4a-4cfc-871f-9d2b1c2c304e",
+            "fc821cad-f58c-4eac-9dd2-533879c73d98",
             0
           ],
           [
             1,
-            "fbe719e7-6545-4d98-8588-613ab1df2011",
+            "aadd1762-35ca-497e-a3c1-267cb7da5fb5",
             0
           ]
         ],
-        "3db5c12b-54e7-4b3d-acec-47692611ee79": [
+        "35f32a35-09d6-4568-9e5d-029fad42f1cd": [
           [
             0,
-            "37217222-1a84-47e9-a3eb-72dc5c7df4f1",
+            "ffbad80b-34d5-42e0-b50e-4f18ab4fc918",
             0
           ]
         ]

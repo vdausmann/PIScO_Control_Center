@@ -106,6 +106,7 @@ class HDF5Viewer(QWidget):
         reply.deleteLater()
 
         root_node = QTreeWidgetItem([group["root"], "Group", "-", "-"])
+        root_node.setData(0, Qt.ItemDataRole.UserRole, ("group", group["root"]))
         self.tree.invisibleRootItem().addChild(root_node)
         self._populate_tree(group["structure"], group["root"], root_node)
 
@@ -115,22 +116,24 @@ class HDF5Viewer(QWidget):
             item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
             if item["type"] == "group":
                 node = QTreeWidgetItem([key, "Group", "-", "-"])
+                node.setData(0, Qt.ItemDataRole.UserRole, ("group", item_path))
                 parent_item.addChild(node)
                 self._populate_tree(item["structure"], node, item_path)
+
             elif item["type"] == "data":
                 shape = str(item["shape"])
                 dtype = str(item["dtype"])
                 node = QTreeWidgetItem([key, "Dataset", shape, dtype])
-                node.setData(0, Qt.ItemDataRole.UserRole, item_path)
+                node.setData(0, Qt.ItemDataRole.UserRole, ("data", item_path))
                 parent_item.addChild(node)
 
     # -------------------------------------------------------------------------
 
     def on_item_clicked(self, item, column):
-        path = item.data(0, Qt.ItemDataRole.UserRole)
+        dtype, path = item.data(0, Qt.ItemDataRole.UserRole)
         if path is None:
             return
-        print(path)
+
         reply = self.server_client.get_hdf_file_data(path)
         reply.finished.connect(self._show_data)
 
@@ -144,7 +147,7 @@ class HDF5Viewer(QWidget):
 
         result = self.server_client.get_data_from_reply(reply)
         data = result["data"]
-        print(result)
+        print(data)
 
         if type(data) == dict:
             self.text.setPlainText(json.dumps(data, indent=4))

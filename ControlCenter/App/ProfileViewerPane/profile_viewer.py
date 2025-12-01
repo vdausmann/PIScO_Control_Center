@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (
         QGridLayout, QHBoxLayout, QWidget, QVBoxLayout, QLabel
 )
 from PySide6.QtCore import Qt
+from .matplotlib_widget import MatplotlibWidget
 
 class ProfileViewer(QWidget):
     def __init__(self):
@@ -25,17 +26,13 @@ class ProfileViewer(QWidget):
         plot_grid = QWidget()
         plot_grid_layout = QGridLayout(plot_grid)
 
-        physical_observables = QWidget()
-        physical_observables.setStyleSheet("background-color: red;")
+        physical_observables = MatplotlibWidget()
 
-        particle_distribution = QWidget()
-        particle_distribution.setStyleSheet("background-color: green;")
+        particle_distribution = MatplotlibWidget()
 
-        full_img = QWidget()
-        full_img.setStyleSheet("background-color: yellow;")
+        full_img = MatplotlibWidget()
 
-        crop = QWidget()
-        crop.setStyleSheet("background-color: blue;")
+        crop = MatplotlibWidget()
 
         plot_grid_layout.addWidget(physical_observables, 0, 0, 2, 1)
         plot_grid_layout.addWidget(particle_distribution, 0, 1, 2, 1)

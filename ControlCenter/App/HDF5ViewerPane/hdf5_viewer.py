@@ -1,13 +1,13 @@
 from typing import Optional
 from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (
-        QSizePolicy, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
+        QLineEdit, QSizePolicy, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
         QTreeWidgetItem, QHBoxLayout, QSplitter
 )
 import numpy as np
 import json
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QImage, QIntValidator, QPixmap
 import cv2 
 
 import h5py
@@ -21,7 +21,8 @@ class HDF5Viewer(QWidget):
 
         self.server_client = server_client
 
-        self.nodes: dict[str, QTreeWidgetItem] = {}
+        self.preload_groups = 10
+
 
         self.init_ui()
 
@@ -34,6 +35,21 @@ class HDF5Viewer(QWidget):
         self.open_btn = QPushButton("Open HDF5 File")
         self.open_btn.clicked.connect(self.open_file)
         layout.addWidget(self.open_btn)
+
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        label = QLabel("Number of groups to load:")
+        entry = QLineEdit(str(self.preload_groups))
+        entry.setFixedWidth(100)
+        entry.textChanged.connect(self.change_preload_groups)
+        entry.setValidator(QIntValidator(bottom=-1))
+
+        row_layout.addWidget(label)
+        row_layout.addWidget(entry)
+        row_layout.addStretch()
+
+
+        layout.addWidget(row)
 
         # Splitter for resizable layout
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -62,7 +78,13 @@ class HDF5Viewer(QWidget):
         self._current_pixmap = None  # store the image for resizing
         right_splitter.addWidget(self.image_label)
 
-    # -------------------------------------------------------------------------
+    @Slot()
+    def change_preload_groups(self, text):
+        try:
+            self.preload_groups = int(text)
+        except:
+            pass
+
     def open_file(self):
         dialog = ServerFileDialog(self.server_client, "/home/tim/Documents/Arbeit/HDF5Test/")
         if dialog.exec():
@@ -78,7 +100,7 @@ class HDF5Viewer(QWidget):
         reply.deleteLater()
 
         # get root
-        reply = self.server_client.get_hdf_file_data("/")
+        reply = self.server_client.get_hdf_file_group_structure("/")
         reply.finished.connect(self.get_roots)
         self.tree.clear()
 
@@ -92,9 +114,14 @@ class HDF5Viewer(QWidget):
         roots = self.server_client.get_data_from_reply(reply)["data"]
         reply.deleteLater()
 
-        for root in roots["structure"]:
-            reply = self.server_client.get_hdf_file_structure("/" + root)
+        counter = 0 
+        for root, _ in roots["members"].items():
+            reply = self.server_client.get_hdf_file_full_structure("/" + root)
             reply.finished.connect(self.populate_tree)
+            counter += 1
+
+            if self.preload_groups >= 0 and counter >= self.preload_groups:
+                break
 
     @Slot()
     def populate_tree(self):
@@ -105,26 +132,26 @@ class HDF5Viewer(QWidget):
         group = self.server_client.get_data_from_reply(reply)["data"]
         reply.deleteLater()
 
-        root_node = QTreeWidgetItem([group["root"], "Group", "-", "-"])
-        root_node.setData(0, Qt.ItemDataRole.UserRole, ("group", group["root"]))
+        root = list(group)[0]
+        root_node = QTreeWidgetItem([root, "Group", "-", "-"])
+        root_node.setData(0, Qt.ItemDataRole.UserRole, ("group", root))
         self.tree.invisibleRootItem().addChild(root_node)
-        self._populate_tree(group["structure"], group["root"], root_node)
+
+        self._populate_tree(group[root], root_node)
 
 
-    def _populate_tree(self, group, path, parent_item):
-        for key, item in group.items():
-            item_path = f"{path}{key}" if path.endswith("/") else f"{path}/{key}"
+    def _populate_tree(self, group, parent_item):
+        for item_path, item in group.items():
             if item["type"] == "group":
-                node = QTreeWidgetItem([key, "Group", "-", "-"])
+                node = QTreeWidgetItem([item_path.split("/")[-1], "Group", "-", "-"])
                 node.setData(0, Qt.ItemDataRole.UserRole, ("group", item_path))
                 parent_item.addChild(node)
-                self._populate_tree(item["structure"], node, item_path)
-
-            elif item["type"] == "data":
+                self._populate_tree(item, node)
+            elif item["type"] == "dataset":
                 shape = str(item["shape"])
                 dtype = str(item["dtype"])
-                node = QTreeWidgetItem([key, "Dataset", shape, dtype])
-                node.setData(0, Qt.ItemDataRole.UserRole, ("data", item_path))
+                node = QTreeWidgetItem([item_path.split("/")[-1], "Dataset", shape, dtype])
+                node.setData(0, Qt.ItemDataRole.UserRole, ("dataset", item_path))
                 parent_item.addChild(node)
 
     # -------------------------------------------------------------------------
@@ -134,8 +161,12 @@ class HDF5Viewer(QWidget):
         if path is None:
             return
 
-        reply = self.server_client.get_hdf_file_data(path)
-        reply.finished.connect(self._show_data)
+        if dtype == "group":
+            reply = self.server_client.get_hdf_file_attributes(path)
+            reply.finished.connect(self._show_data)
+        else:
+            reply = self.server_client.get_hdf_file_data(path)
+            reply.finished.connect(self._show_data)
 
     @Slot(QNetworkReply)
     def _show_data(self):
@@ -147,7 +178,8 @@ class HDF5Viewer(QWidget):
 
         result = self.server_client.get_data_from_reply(reply)
         data = result["data"]
-        print(data)
+        if "type" in data and data["type"] == "group":
+            data.pop("structure")
 
         if type(data) == dict:
             self.text.setPlainText(json.dumps(data, indent=4))
@@ -157,10 +189,28 @@ class HDF5Viewer(QWidget):
             preview = self.array_preview(data)
             self.text.setPlainText(preview)
 
-        # except Exception as e:
-        #     self.text.setPlainText(f"Error reading dataset:\n{e}")
+    @Slot(QNetworkReply)
+    def _show_attributes(self):
+        self.image_label.clear()
 
-    # -------------------------------------------------------------------------
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply):
+            return
+
+        result = self.server_client.get_data_from_reply(reply)
+        data = result["data"]
+        if "type" in data and data["type"] == "group":
+            data.pop("structure")
+
+        if type(data) == dict:
+            self.text.setPlainText(json.dumps(data, indent=4))
+        elif self.try_show_image(data):
+            self.text.setPlainText("Displayed as image.")
+        else:
+            preview = self.array_preview(data)
+            self.text.setPlainText(preview)
+
+
     def set_image(self, qimg: QImage):
         """Display an image scaled to fit the current label width."""
         pixmap = QPixmap.fromImage(qimg)

@@ -188,8 +188,18 @@ class ServerClient(QObject):
     def open_hdf_file(self, path):
         return self.post_request(self.get_url() + "/open-hdf5-file/" + path)
 
-    def get_hdf_file_data(self, path):
-        return self.get_request(self.get_url() + "/get-hdf5-file-data/" + path)
+    def get_hdf_file_group_structure(self, path):
+        return self.get_request(self.get_url() + "/get-group-structure/" + path)
 
-    def get_hdf_file_structure(self, path: str):
-        return self.get_request(self.get_url() + "/get-hdf5-file-structure/" + path)
+    def get_hdf_file_full_structure(self, path):
+        return self.get_request(self.get_url() + "/get-full-path/" + path)
+
+    def get_hdf_file_data(self, path):
+        return self.get_request(self.get_url() + "/get-data/" + path)
+
+    def get_hdf_file_attributes(self, path):
+        return self.get_request(self.get_url() + "/get-attributes/" + path)
+
+    # def get_hdf_file_structure(self, path: str):
+    #     return self.get_request(self.get_url() + "/get-hdf5-file-structure/" + path)
+

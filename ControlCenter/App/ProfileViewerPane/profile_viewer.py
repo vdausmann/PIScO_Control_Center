@@ -2,11 +2,17 @@ from PySide6.QtWidgets import (
         QGridLayout, QHBoxLayout, QWidget, QVBoxLayout, QLabel
 )
 from PySide6.QtCore import Qt
+
+from .abundance_plot import AbundancePlot
+from Server.Client.server_client import ServerClient
 from .matplotlib_widget import MatplotlibWidget
 
 class ProfileViewer(QWidget):
-    def __init__(self):
+    def __init__(self, server_client: ServerClient):
         super().__init__()
+
+        self.server_client = server_client
+
         self.init_ui()
 
 
@@ -28,7 +34,7 @@ class ProfileViewer(QWidget):
 
         physical_observables = MatplotlibWidget()
 
-        particle_distribution = MatplotlibWidget()
+        particle_distribution = AbundancePlot(self.server_client)
 
         full_img = MatplotlibWidget()
 

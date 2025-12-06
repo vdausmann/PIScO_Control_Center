@@ -3,6 +3,7 @@ from fastapi import FastAPI, WebSocket
 import sys
 
 from .websocket import WebSockets
+from .file_handler import FileHandler
 from .profile_analysis import ProfileAnalysis
 from .utils import endpoint
 
@@ -15,7 +16,8 @@ class PISCOServer(FastAPI):
         self.connected_clients: list[WebSocket] = []
         self.server = None
 
-        self.profile_analysis = ProfileAnalysis()
+        self.file_handler = FileHandler()
+        self.profile_analysis = ProfileAnalysis(self.file_handler)
         self.sockets = WebSockets()
 
         self._setup_routes()
@@ -32,6 +34,7 @@ class PISCOServer(FastAPI):
             self.server.run()
         except KeyboardInterrupt:
             print("Server stopped")
+            self.file_handler.close_all()
         finally:
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
@@ -40,6 +43,7 @@ class PISCOServer(FastAPI):
     def _setup_routes(self):
         """Attach all endpoints to the app."""
         self._register_endpoints(self)
+        self._register_endpoints(self.file_handler)
         self._register_endpoints(self.profile_analysis)
         self._register_endpoints(self.sockets)
 

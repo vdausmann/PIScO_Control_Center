@@ -48,7 +48,7 @@ class PIScOControlCenter(QMainWindow):
 
         self.init_ui()
 
-        self._show_page(0)
+        self._show_page(3)
         self.client.reconnect_to_server()
 
         # Connect application about to quit signal for state saving
@@ -134,7 +134,7 @@ class PIScOControlCenter(QMainWindow):
 
         self.task_viewer = TaskViewerPane()
         self.callibration_viewer = CallibrationViewer()
-        self.profile_viewer = ProfileViewer()
+        self.profile_viewer = ProfileViewer(self.client)
         self.hdf5_viewer = HDF5Viewer(self.client)
         self.server_viewer = ServerViewer(self.client)
         self.image_node_system = ImageSequencer(self.app)

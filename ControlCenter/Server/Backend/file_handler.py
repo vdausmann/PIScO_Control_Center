@@ -1,5 +1,6 @@
 import asyncio
 import os
+from typing import Optional
 from fastapi import HTTPException, Query, Response
 from pydantic import BaseModel
 import cv2 as cv
@@ -156,8 +157,10 @@ class FileHandler:
         raise HTTPException(status_code=code, detail=msg)
 
 
-    @endpoint.post("/close-hdf5-file/{path:path}")
-    async def close_hdf5_file(self, path: str = ""):
+    @endpoint.post("/close-hdf5-file")
+    async def close_hdf5_file(self, path: str | None = None):
+        if path is None:
+            path = ""
         key, success = self._get_file_session(path)
         if not success:
             raise HTTPException(status_code=404, detail="Path for file to close could not be found")

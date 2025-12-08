@@ -44,3 +44,28 @@ class ProfileAnalysis:
             pressure_data.append(pressure)
 
         return {"pressures": pressure_data, "areas": area_data}
+
+    @endpoint.get("/get-attributes-all-images")
+    async def get_attributes_all_images(self, file_path: str | None = None):
+        if file_path is None:
+            file_path = ""
+        key, success = self.file_handler._get_file_session(file_path)
+        if not success:
+            raise HTTPException(status_code=404, detail="Path for file to close could not be found")
+
+        file_session = self.file_handler.loaded_hdf_files[key]
+        structure, code, msg = file_session.get_group_structure("/")
+        if code != 200:
+            raise HTTPException(status_code=code, detail=msg)
+        images = list(structure["members"])
+        data = {}
+        for image in images:
+            attrs, code, msg = file_session.get_attributes(f"/{image}")
+            if code != 200:
+                raise HTTPException(status_code=code, detail=msg)
+            for key, value in attrs.items():
+                if not key in data:
+                    data[key] = []
+                data[key].append(value)
+
+        return data

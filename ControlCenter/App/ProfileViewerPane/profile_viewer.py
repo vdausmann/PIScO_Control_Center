@@ -3,6 +3,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from .ctd_plot import CTDPlot
+
 from .abundance_plot import AbundancePlot
 from Server.Client.server_client import ServerClient
 from .matplotlib_widget import MatplotlibWidget
@@ -32,7 +34,7 @@ class ProfileViewer(QWidget):
         plot_grid = QWidget()
         plot_grid_layout = QGridLayout(plot_grid)
 
-        physical_observables = MatplotlibWidget()
+        ctd = CTDPlot(self.server_client)
 
         particle_distribution = AbundancePlot(self.server_client)
 
@@ -40,7 +42,7 @@ class ProfileViewer(QWidget):
 
         crop = MatplotlibWidget()
 
-        plot_grid_layout.addWidget(physical_observables, 0, 0, 2, 1)
+        plot_grid_layout.addWidget(ctd, 0, 0, 2, 1)
         plot_grid_layout.addWidget(particle_distribution, 0, 1, 2, 1)
 
         plot_grid_layout.addWidget(full_img, 0, 2, 1, 1)

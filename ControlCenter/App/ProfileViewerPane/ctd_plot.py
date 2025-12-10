@@ -75,12 +75,12 @@ class CTDPlot(MatplotlibWidget):
 
         self.ax.set_ylabel("binned depth [dbar]")
 
-        temp, = ax_top1.plot(temperature, pressure, label="temperature", color="blue",
+        temp, = ax_top1.plot(temperature, pressure, ".", label="temperature", color="blue",
                              zorder=0)
-        oxygen, = ax_top2.plot(oxygen, pressure, label="oxygen", color="green", zorder=0)
-        salinity, = ax_bottom1.plot(salinity, pressure, label="salinity", color="red",
+        oxygen, = ax_top2.plot(oxygen, pressure, ".", label="oxygen", color="green", zorder=0)
+        salinity, = ax_bottom1.plot(salinity, pressure, ".", label="salinity", color="red",
                                     zorder=0)
-        chl, = ax_bottom2.plot(chl, pressure, label="chl", color="cyan", zorder=0)
+        chl, = ax_bottom2.plot(chl, pressure, ".", label="chl", color="cyan", zorder=0)
 
         self.ax.set_xticks([])
         self.ax.grid(True)

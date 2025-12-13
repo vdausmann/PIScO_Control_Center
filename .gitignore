@@ -8,6 +8,7 @@ __pycache__/
 
 # flake.lock files and envrc files (nix)
 ControlCenter/**/flake.lock
+ControlCenter/latest*
 # ControlCenter/**/.envrc
 ControlCenter/**/.direnv
 ControlCenter/**/.clang-format

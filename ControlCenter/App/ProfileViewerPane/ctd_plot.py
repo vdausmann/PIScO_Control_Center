@@ -18,10 +18,6 @@ class CTDPlot(MatplotlibWidget):
 
         self.server_client = client
 
-        update_button = QPushButton("Update Plot")
-        update_button.clicked.connect(self.update_plot)
-        self.main_layout.addWidget(update_button)
-
         self.ax = self.figure.add_subplot(111)
         self.divider = make_axes_locatable(self.ax)
         self.figure.canvas.mpl_connect("button_press_event", self.onclick)
@@ -83,10 +79,22 @@ class CTDPlot(MatplotlibWidget):
         chl, = ax_bottom2.plot(chl, pressure, ".", label="chl", color="cyan", zorder=0)
 
         self.ax.set_xticks([])
+        self.ax.invert_yaxis()
         self.ax.grid(True)
 
         self.ax.legend([temp, oxygen, salinity, chl], ["Temperature", "Oxygen",
                                                        "Salinity", "CHL"])
+        self.canvas.draw()
+
+
+    def set_selected_depth(self, depth):
+        depth = round(depth / self.bin_size) * self.bin_size
+        x0, x1 = self.ax.get_xlim()
+        if not self.depth_marker is None:
+            self.depth_marker.set_data([x0, x1], [depth, depth])
+        else:
+            self.depth_marker, = self.ax.plot([x0, x1], [depth, depth], linestyle="--")
+        self.ax.set_xlim(x0, x1)
         self.canvas.draw()
 
     def onclick(self, event):
@@ -95,12 +103,5 @@ class CTDPlot(MatplotlibWidget):
         y = event.ydata
         # round to nearest bin:
         y = round(y / self.bin_size) * self.bin_size
-        x0, x1 = self.ax.get_xlim()
-        if not self.depth_marker is None:
-            self.depth_marker.set_data([x0, x1], [y, y])
-        else:
-            self.depth_marker, = self.ax.plot([x0, x1], [y, y], linestyle="--")
         self.selected_depth.emit(y)
-        self.ax.set_xlim(x0, x1)
-        self.canvas.draw()
 

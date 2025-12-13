@@ -17,6 +17,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
         };
         libs = [
             pkgs.libcxx
+			pkgs.hdf5
         ];
     in
         with pkgs;

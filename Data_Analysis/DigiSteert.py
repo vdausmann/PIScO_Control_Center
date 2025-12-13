@@ -55,7 +55,7 @@ depth_bin_size = 1
 username = 'plankton'
 password = 'piscodisco'
 host = 'localhost'  # or the IP address of your database server
-port = '5432'       # default port for PostgreSQL
+port = '8000'       # default port for PostgreSQL
 database = 'pisco_crops_db'
 
 # Create an engine that connects to the PostgreSQL server
@@ -847,4 +847,4 @@ def update_feature_selection(feat_click):
         return crop_fig,     
 
 if __name__ == '__main__':
-    app.run(debug=True, host='10.136.72.201', port=8050)
+    app.run(debug=True, host='localhost', port=8000)

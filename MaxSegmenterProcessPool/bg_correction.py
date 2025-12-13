@@ -68,7 +68,7 @@ def correct_img(
     img, fn = input.images[img_index]
     mean = np.mean(img)
     stdev = np.std(img)
-    if stdev >2:
+    if stdev > 2:
         start = (img_index if img_index + n_bg_imgs < len(input.images) else len(input.images) - n_bg_imgs)
         bg_imgs: list[np.ndarray] = []
         for i in range(1, n_bg_imgs):

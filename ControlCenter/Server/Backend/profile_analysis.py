@@ -69,3 +69,27 @@ class ProfileAnalysis:
                 data[key].append(value)
 
         return data
+
+    @endpoint.get("/get-depth-filename-dict")
+    async def get_depth_filename_dict(self, file_path: str | None = None):
+        if file_path is None:
+            file_path = ""
+        key, success = self.file_handler._get_file_session(file_path)
+        if not success:
+            raise HTTPException(status_code=404, detail="Path for file to close could not be found")
+
+        file_session = self.file_handler.loaded_hdf_files[key]
+        structure, code, msg = file_session.get_group_structure("/")
+        if code != 200:
+            raise HTTPException(status_code=code, detail=msg)
+
+        images = list(structure["members"])
+        d = {}
+        for image in images:
+            attrs, code, msg = file_session.get_attributes(f"/{image}")
+            if code != 200:
+                raise HTTPException(status_code=code, detail=msg)
+            pressure = attrs["pressure"]
+            d[pressure] = image
+
+        return d

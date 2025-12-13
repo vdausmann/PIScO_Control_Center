@@ -1,6 +1,6 @@
 {
 inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils = {
         url = "github:numtide/flake-utils";
         inputs.system.follows = "systems";
@@ -34,7 +34,11 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						dash
 						plotly
 						sqlalchemy 
-						#(opencv4.override {enableGtk3 = true;})
+						pandas
+						packaging
+						dash-bootstrap-components
+						pillow
+						psycopg2
                     ]))
                 ];
                 buildInputs = with pkgs; [

@@ -1,6 +1,7 @@
 #include "writer.hpp"
 #include "types.hpp"
 #include "parser.hpp"
+#include <H5Fpublic.h>
 #include <H5PredType.h>
 #include <H5public.h>
 #include <fstream>
@@ -66,8 +67,14 @@ Error initH5ProfileFile(H5::H5File& file)
 		writeStringAttribute(file, "Date and time of Segmentation", datetime);
 		writeStringAttribute(file, "Profile name", e_profileName);
 		writeStringAttribute(file, "Image Source Path", e_sourcePath);
+		writeScalarAttribute(file, "Setting: imageStacksize", e_imageStackSize);
+		writeScalarAttribute(file, "Setting: minArea", e_minArea);
+		writeScalarAttribute(file, "Setting: minMean", e_minMean);
+		writeScalarAttribute(file, "Setting: minStdDev", e_minStdDev);
+
 		// TODO: write more
 		std::cout << "File id: " << file.getId() << std::endl;
+		file.close();
 
     } catch (H5::Exception& e) {
 		Error error = Error::RuntimeError;
@@ -79,10 +86,13 @@ Error initH5ProfileFile(H5::H5File& file)
 }
 
 
-void writeData(std::unordered_map<size_t, std::vector<SegmenterObject>>& objectData,
-		const std::vector<Image>& imageStack , const H5::H5File& file, 
+void writeData(std::unordered_map<size_t, Objects>& objectData,
+		const std::vector<Image>& imageStack, 
 		const std::vector<std::string>& files)
 {
+	// only open the file when writing to it and closing it directly after as a safety
+	// feature.
+	H5::H5File file = H5::H5File(e_savePath + e_profileName + ".h5", H5F_ACC_RDWR);
 	for (const Image& image: imageStack) {
 		std::string filename = files[image.id];
 		size_t idx = filename.find_last_of('/');
@@ -90,40 +100,57 @@ void writeData(std::unordered_map<size_t, std::vector<SegmenterObject>>& objectD
 		filename = "/" + filename.substr(0, filename.size() - 4);
 		std::cout << "Creating group for file " << filename << std::endl;
 		H5::Group group = file.createGroup(filename);
+		writeScalarAttribute(group, "Detection Threshold", image.detectionThreshold);
+		writeScalarAttribute(group, "Mean Original", image.meanOrg);
+		writeScalarAttribute(group, "Mean corrected", image.meanCorrected);
+		writeScalarAttribute(group, "Stddev Original", image.stddevOrg);
+		writeScalarAttribute(group, "Stddev corrected", image.stddevCorrected);
 
-		size_t numObjects = objectData[image.id].size();
-		std::vector<double> areas, x, y, w, h;
-		areas.reserve(numObjects);
-		x.reserve(numObjects);
-		y.reserve(numObjects);
-		w.reserve(numObjects);
-		h.reserve(numObjects);
-		for (const SegmenterObject& object: objectData[image.id]) {
-			areas.push_back(object.area);
-			x.push_back(object.boundingBox.x);
-			y.push_back(object.boundingBox.y);
-			w.push_back(object.boundingBox.width);
-			h.push_back(object.boundingBox.height);
-		}
-
+		Objects objects = objectData[image.id];
+		size_t numObjects = objects.width.size();
 		hsize_t dims[1] = { numObjects };
 		H5::DataSpace dataspace(1, dims);
 
-		H5::DataSet dataset = group.createDataSet("Areas", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(areas.data(), H5::PredType::NATIVE_DOUBLE);
-
-		dataset = group.createDataSet("Bounding Box x", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(x.data(), H5::PredType::NATIVE_DOUBLE);
-
-		dataset = group.createDataSet("Bounding Box y", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(y.data(), H5::PredType::NATIVE_DOUBLE);
-
-		dataset = group.createDataSet("Bounding Box Width", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(w.data(), H5::PredType::NATIVE_DOUBLE);
-
-		dataset = group.createDataSet("Bounding Box Height", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(h.data(), H5::PredType::NATIVE_DOUBLE);
+		H5::DataSet dataset = group.createDataSet("width", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.width.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("height", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.height.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("bx", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.bx.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("by", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.by.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("circ", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.circ.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("area_exc", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.area_exc.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("area_rprops", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.area_rprops.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("area%", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.area_percentage.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("major", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.major.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("minor", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.minor.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("centroid_x", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.centroidx.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("centroid_y", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.centroidy.data(), H5::PredType::NATIVE_DOUBLE);
+		// dataset = group.createDataSet("convex_area", H5::PredType::NATIVE_DOUBLE, dataspace);
+		// dataset.write(objects.convexArea.data(), H5::PredType::NATIVE_DOUBLE);
+		// dataset = group.createDataSet("min_intensity", H5::PredType::NATIVE_DOUBLE, dataspace);
+		// dataset.write(objects.minIntensity.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("perimeter", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.perimeter.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("circex", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.circex.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("angle", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.angle.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("boundingBoxArea", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.boundingBoxArea.data(), H5::PredType::NATIVE_DOUBLE);
+		dataset = group.createDataSet("eccentricity", H5::PredType::NATIVE_DOUBLE, dataspace);
+		dataset.write(objects.eccentricity.data(), H5::PredType::NATIVE_DOUBLE);
 	}
+	file.close();
 }
 
 

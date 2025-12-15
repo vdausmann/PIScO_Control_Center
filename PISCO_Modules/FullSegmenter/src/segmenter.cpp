@@ -47,7 +47,7 @@ void segmentProfile()
 		std::vector<std::string> fileStack = fileStacks[i];
 		size_t imageIndex = 0;
 		std::vector<Image> imageStack;
-		std::unordered_map<size_t, std::vector<SegmenterObject>> objects;
+		std::unordered_map<size_t, Objects> objects;
 		while (imageIndex < fileStack.size()) {
 			auto start = std::chrono::high_resolution_clock::now();
 			getNextImages(imageStack, fileStack, imageIndex).check();
@@ -57,7 +57,7 @@ void segmentProfile()
 
 #pragma omp critical
 {
-			writeData(objects, imageStack, file, fileStack);
+			writeData(objects, imageStack, fileStack);
 			// writeImageData(imageStack, imgFile);
 			// writeObjectData(objects, objectFile);
 			writeProgress(fileStack, imageStack, progressFile);

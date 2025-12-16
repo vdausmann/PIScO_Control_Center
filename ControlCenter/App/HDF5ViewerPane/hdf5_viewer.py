@@ -86,7 +86,8 @@ class HDF5Viewer(QWidget):
             pass
 
     def open_file(self):
-        dialog = ServerFileDialog(self.server_client, "/home/tim/Documents/Arbeit/HDF5Test/")
+        # dialog = ServerFileDialog(self.server_client, "/home/tim/Documents/Arbeit/HDF5Test/")
+        dialog = ServerFileDialog(self.server_client)
         if dialog.exec():
             path = dialog.selected_path()
             reply = self.server_client.open_hdf_file(path)

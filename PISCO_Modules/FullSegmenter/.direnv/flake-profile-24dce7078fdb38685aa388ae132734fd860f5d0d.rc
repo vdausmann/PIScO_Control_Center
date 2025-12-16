@@ -27,7 +27,7 @@ IN_NIX_SHELL='impure'
 export IN_NIX_SHELL
 LD='ld'
 export LD
-LD_LIBRARY_PATH='/nix/store/h0dqpsik53nbgv2qxbqgpv183bwj9s0c-libcxx-19.1.7/lib'
+LD_LIBRARY_PATH='/nix/store/h0dqpsik53nbgv2qxbqgpv183bwj9s0c-libcxx-19.1.7/lib:/nix/store/5wak1xnwn06b9d17qkpnh7gw88dxd7vk-hdf5-cpp-1.14.6/lib'
 export LD_LIBRARY_PATH
 LINENO='76'
 MACHTYPE='x86_64-pc-linux-gnu'
@@ -37,13 +37,13 @@ NIX_BINTOOLS='/nix/store/iga4lv0say4pbbbgkf1v79403n1ip7hf-binutils-wrapper-2.44'
 export NIX_BINTOOLS
 NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_BUILD_CORES='16'
+NIX_BUILD_CORES='4'
 export NIX_BUILD_CORES
 NIX_CC='/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0'
 export NIX_CC
 NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_CFLAGS_COMPILE=' -frandom-seed=pa9jn5891s -isystem /nix/store/84knz5k1lj38van1mnv8sl59k4wnap4w-bash-interactive-5.2p37-dev/include -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include -isystem /nix/store/x862r3jv4wadhki1hwq90dis5j7s48kh-libcxx-19.1.7-dev/include -isystem /nix/store/g3bz27bvf1yny86dsjijkplgqqdqrf9q-hdf5-cpp-1.14.6-dev/include -isystem /nix/store/ybhi1g8z643mcg5n4pkwhsihj4klk9y0-zlib-1.3.1-dev/include -isystem /nix/store/84knz5k1lj38van1mnv8sl59k4wnap4w-bash-interactive-5.2p37-dev/include -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include -isystem /nix/store/x862r3jv4wadhki1hwq90dis5j7s48kh-libcxx-19.1.7-dev/include -isystem /nix/store/g3bz27bvf1yny86dsjijkplgqqdqrf9q-hdf5-cpp-1.14.6-dev/include -isystem /nix/store/ybhi1g8z643mcg5n4pkwhsihj4klk9y0-zlib-1.3.1-dev/include'
+NIX_CFLAGS_COMPILE=' -frandom-seed=4nigpl39nb -isystem /nix/store/84knz5k1lj38van1mnv8sl59k4wnap4w-bash-interactive-5.2p37-dev/include -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include -isystem /nix/store/x862r3jv4wadhki1hwq90dis5j7s48kh-libcxx-19.1.7-dev/include -isystem /nix/store/g3bz27bvf1yny86dsjijkplgqqdqrf9q-hdf5-cpp-1.14.6-dev/include -isystem /nix/store/ybhi1g8z643mcg5n4pkwhsihj4klk9y0-zlib-1.3.1-dev/include -isystem /nix/store/84knz5k1lj38van1mnv8sl59k4wnap4w-bash-interactive-5.2p37-dev/include -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include -isystem /nix/store/x862r3jv4wadhki1hwq90dis5j7s48kh-libcxx-19.1.7-dev/include -isystem /nix/store/g3bz27bvf1yny86dsjijkplgqqdqrf9q-hdf5-cpp-1.14.6-dev/include -isystem /nix/store/ybhi1g8z643mcg5n4pkwhsihj4klk9y0-zlib-1.3.1-dev/include'
 export NIX_CFLAGS_COMPILE
 NIX_ENFORCE_NO_NATIVE='1'
 export NIX_ENFORCE_NO_NATIVE

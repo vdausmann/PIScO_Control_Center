@@ -9,8 +9,8 @@
 
 
 Error initH5ProfileFile(H5::H5File& file);
-void writeData(std::unordered_map<size_t, std::vector<SegmenterObject>>& objectData,
-		const std::vector<Image>& imageStack , const H5::H5File& file, 
+void writeData(std::unordered_map<size_t, Objects>& objectData,
+		const std::vector<Image>& imageStack, 
 		const std::vector<std::string>& files);
 
 

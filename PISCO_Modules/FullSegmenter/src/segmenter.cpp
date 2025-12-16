@@ -31,19 +31,18 @@ void segmentProfile()
 	getFiles(files).check();
 	std::cout << "Found " << files.size() << " files\n";
 
-	size_t nStacks = 4;
 	std::vector<std::vector<std::string>> fileStacks;
-	fileStacks.resize(nStacks);
-	for (size_t i = 0; i < nStacks - 1; i++) {
-		fileStacks[i] = std::vector(files.begin() + i * files.size() / nStacks,
-				files.begin() + (i + 1) * files.size() / nStacks);
+	fileStacks.resize(e_nImageStacks);
+	for (size_t i = 0; i < e_nImageStacks - 1; i++) {
+		fileStacks[i] = std::vector(files.begin() + i * files.size() / e_nImageStacks,
+				files.begin() + (i + 1) * files.size() / e_nImageStacks);
 	}
-	fileStacks[nStacks - 1] = std::vector(files.begin() + (nStacks - 1) * files.size() / nStacks,
+	fileStacks[e_nImageStacks - 1] = std::vector(files.begin() + (e_nImageStacks - 1) * files.size() / e_nImageStacks,
 			files.end());
 
 	auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for
-	for (size_t i = 0; i < nStacks; i++){
+	for (size_t i = 0; i < e_nImageStacks; i++){
 		std::vector<std::string> fileStack = fileStacks[i];
 		size_t imageIndex = 0;
 		std::vector<Image> imageStack;

@@ -13,6 +13,7 @@ extern bool e_grayscaleInput;
 extern double e_minStdDev;
 extern double e_minMean;
 extern size_t e_imageStackSize;
+extern size_t e_nImageStacks;
 extern double e_imageThreshold;
 extern double e_minArea;
 

@@ -129,6 +129,54 @@ Segmenter/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/build
 .PHONY : Segmenter/fast
 
+src/background_correction.o: src/background_correction.cpp.o
+.PHONY : src/background_correction.o
+
+# target to build an object file
+src/background_correction.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/background_correction.cpp.o
+.PHONY : src/background_correction.cpp.o
+
+src/background_correction.i: src/background_correction.cpp.i
+.PHONY : src/background_correction.i
+
+# target to preprocess a source file
+src/background_correction.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/background_correction.cpp.i
+.PHONY : src/background_correction.cpp.i
+
+src/background_correction.s: src/background_correction.cpp.s
+.PHONY : src/background_correction.s
+
+# target to generate assembly for a file
+src/background_correction.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/background_correction.cpp.s
+.PHONY : src/background_correction.cpp.s
+
+src/detection.o: src/detection.cpp.o
+.PHONY : src/detection.o
+
+# target to build an object file
+src/detection.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/detection.cpp.o
+.PHONY : src/detection.cpp.o
+
+src/detection.i: src/detection.cpp.i
+.PHONY : src/detection.i
+
+# target to preprocess a source file
+src/detection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/detection.cpp.i
+.PHONY : src/detection.cpp.i
+
+src/detection.s: src/detection.cpp.s
+.PHONY : src/detection.s
+
+# target to generate assembly for a file
+src/detection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/detection.cpp.s
+.PHONY : src/detection.cpp.s
+
 src/error.o: src/error.cpp.o
 .PHONY : src/error.o
 
@@ -225,6 +273,54 @@ src/reader.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/reader.cpp.s
 .PHONY : src/reader.cpp.s
 
+src/segmenter.o: src/segmenter.cpp.o
+.PHONY : src/segmenter.o
+
+# target to build an object file
+src/segmenter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/segmenter.cpp.o
+.PHONY : src/segmenter.cpp.o
+
+src/segmenter.i: src/segmenter.cpp.i
+.PHONY : src/segmenter.i
+
+# target to preprocess a source file
+src/segmenter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/segmenter.cpp.i
+.PHONY : src/segmenter.cpp.i
+
+src/segmenter.s: src/segmenter.cpp.s
+.PHONY : src/segmenter.s
+
+# target to generate assembly for a file
+src/segmenter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/segmenter.cpp.s
+.PHONY : src/segmenter.cpp.s
+
+src/writer.o: src/writer.cpp.o
+.PHONY : src/writer.o
+
+# target to build an object file
+src/writer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/writer.cpp.o
+.PHONY : src/writer.cpp.o
+
+src/writer.i: src/writer.cpp.i
+.PHONY : src/writer.i
+
+# target to preprocess a source file
+src/writer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/writer.cpp.i
+.PHONY : src/writer.cpp.i
+
+src/writer.s: src/writer.cpp.s
+.PHONY : src/writer.s
+
+# target to generate assembly for a file
+src/writer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Segmenter.dir/build.make CMakeFiles/Segmenter.dir/src/writer.cpp.s
+.PHONY : src/writer.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -234,6 +330,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Segmenter"
+	@echo "... src/background_correction.o"
+	@echo "... src/background_correction.i"
+	@echo "... src/background_correction.s"
+	@echo "... src/detection.o"
+	@echo "... src/detection.i"
+	@echo "... src/detection.s"
 	@echo "... src/error.o"
 	@echo "... src/error.i"
 	@echo "... src/error.s"
@@ -246,6 +348,12 @@ help:
 	@echo "... src/reader.o"
 	@echo "... src/reader.i"
 	@echo "... src/reader.s"
+	@echo "... src/segmenter.o"
+	@echo "... src/segmenter.i"
+	@echo "... src/segmenter.s"
+	@echo "... src/writer.o"
+	@echo "... src/writer.i"
+	@echo "... src/writer.s"
 .PHONY : help
 
 

@@ -11,10 +11,18 @@ input="$1"
 
 case "$input" in
     "debug")
-        cmake -DCMAKE_BUILD_TYPE=Debug 
+		nix develop ./latest \
+		  --offline \
+		  --no-update-lock-file \
+		  --command bash -c \
+		  "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && cd .. && cmake --build build"
         ;;
     "release")
-        cmake -DCMAKE_BUILD_TYPE=Release 
+		nix develop ./latest \
+		  --offline \
+		  --no-update-lock-file \
+		  --command bash -c \
+		  "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && cd .. && cmake --build build"
         ;;
     *)
         echo "Unknown command: $input"

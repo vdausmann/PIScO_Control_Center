@@ -18,6 +18,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
         libs = [
             pkgs.libcxx
 			pkgs.hdf5
+			pkgs.libtorch-bin
         ];
     in
         with pkgs;
@@ -37,6 +38,10 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     pkg-config
                     gcc
                     hdf5
+					libtorch-bin
+                    (pkgs.python312.withPackages(ps: with ps;[
+						torch
+					]))
                 ];
                 buildInputs = with pkgs; [
                 ];

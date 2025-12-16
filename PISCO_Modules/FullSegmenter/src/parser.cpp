@@ -113,7 +113,7 @@ bool e_grayscaleInput;
 double e_minStdDev;
 double e_minMean;
 size_t e_imageStackSize;
-size_t e_nImageStacks;
+size_t e_nCores;
 double e_imageThreshold;
 double e_minArea;
 
@@ -135,7 +135,7 @@ void readParameters(char* filename)
 	readParameter(fileConfig, e_minStdDev, VAR_NAME(e_minStdDev));
 	readParameter(fileConfig, e_minMean, VAR_NAME(e_minMean));
 	readParameter(fileConfig, e_imageStackSize, VAR_NAME(e_imageStackSize));
-	readParameter(fileConfig, e_nImageStacks, VAR_NAME(e_nImageStacks));
+	readParameter(fileConfig, e_nCores, VAR_NAME(e_nCores));
 	readParameter(fileConfig, e_imageThreshold, VAR_NAME(e_imageThreshold));
 	readParameter(fileConfig, e_minArea, VAR_NAME(e_minArea));
 

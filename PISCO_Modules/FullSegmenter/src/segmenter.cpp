@@ -6,6 +6,7 @@
 #include <chrono>
 #include <fstream>
 #include <H5Cpp.h>
+#include <torch/script.h>
 
 #include "background_correction.hpp"
 #include "writer.hpp"
@@ -32,17 +33,17 @@ void segmentProfile()
 	std::cout << "Found " << files.size() << " files\n";
 
 	std::vector<std::vector<std::string>> fileStacks;
-	fileStacks.resize(e_nImageStacks);
-	for (size_t i = 0; i < e_nImageStacks - 1; i++) {
-		fileStacks[i] = std::vector(files.begin() + i * files.size() / e_nImageStacks,
-				files.begin() + (i + 1) * files.size() / e_nImageStacks);
+	fileStacks.resize(e_nCores);
+	for (size_t i = 0; i < e_nCores - 1; i++) {
+		fileStacks[i] = std::vector(files.begin() + i * files.size() / e_nCores,
+				files.begin() + (i + 1) * files.size() / e_nCores);
 	}
-	fileStacks[e_nImageStacks - 1] = std::vector(files.begin() + (e_nImageStacks - 1) * files.size() / e_nImageStacks,
+	fileStacks[e_nCores - 1] = std::vector(files.begin() + (e_nCores - 1) * files.size() / e_nCores,
 			files.end());
 
 	auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for
-	for (size_t i = 0; i < e_nImageStacks; i++){
+	for (size_t i = 0; i < e_nCores; i++){
 		std::vector<std::string> fileStack = fileStacks[i];
 		size_t imageIndex = 0;
 		std::vector<Image> imageStack;

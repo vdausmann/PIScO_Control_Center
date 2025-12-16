@@ -19,6 +19,9 @@ ControlCenter/**/libDebug/
 Data_Analysis/flake.lock
 Data_Analysis/.envrc
 Data_Analysis/.direnv
+PISCO_Modules/FullSegmenter/latest*
+PISCO_Modules/FullSegmenter/.direnv
+PISCO_Modules/FullSegmenter/Results
 
 
 # Distribution / packaging

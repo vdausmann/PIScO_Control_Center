@@ -13,16 +13,20 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 # Add OpenCV support
 find_package(OpenCV REQUIRED)
-
-# Add HDF5 support
-find_package(HDF5 REQUIRED COMPONENTS C CXX)
-
 # Check if OpenCV is found
 if(OpenCV_FOUND)
   message(STATUS "OpenCV found at ${OpenCV_DIR}")
 else()
   message(FATAL_ERROR "OpenCV not found. Please install OpenCV and try again.")
 endif()
+
+# Add pytorch support
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+# Add HDF5 support
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fopenmp")
@@ -61,7 +65,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES} ${ERROR_DATA_TYPE_FILES}
                                ${PARSER_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${HDF5_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${HDF5_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 
 # target_link_options(${PROJECT_NAME} BEFORE PUBLIC -fsanitize=undefined PUBLIC
 # -fsanitize=address) Set the output directory for the binary to a 'bin' folder

@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 
-# Check if an argument is provided
-if [ -z "$1" ]; then
-    echo "Usage: $0 <command>"
-    exit 1
-fi
+MODE="${1:-release}"
 
-# Get the input string
-input="$1"
-
-case "$input" in
+case "$MODE" in
     "debug")
 		nix develop ./latest \
 		  --offline \

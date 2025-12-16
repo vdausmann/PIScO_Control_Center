@@ -20,7 +20,7 @@ case "$MODE" in
 		  "./bin/Segmenter $SETTINGS"
         ;;
     *)
-        echo "Unknown command: $input"
+        echo "Unknown command: $MODE"
         echo "Valid commands: debug, release"
         ;;
 esac

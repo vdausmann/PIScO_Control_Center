@@ -1,49 +1,49 @@
 [
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/background_correction.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/background_correction.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/background_correction.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/background_correction.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/background_correction.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/background_correction.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/detection.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/detection.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/detection.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/detection.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/detection.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/detection.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/error.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/error.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/error.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/error.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/error.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/error.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/main.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/main.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/main.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/main.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/main.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/main.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/parser.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/parser.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/parser.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/parser.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/parser.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/parser.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/reader.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/reader.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/reader.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/reader.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/reader.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/reader.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/segmenter.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/segmenter.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/segmenter.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/segmenter.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/segmenter.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/segmenter.cpp.o"
 },
 {
-  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter",
-  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -Wall -fopenmp -O3 -DNDEBUG -std=gnu++23 -o CMakeFiles/Segmenter.dir/src/writer.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/writer.cpp",
+  "directory": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/build",
+  "command": "/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0/bin/g++ -DDEBUG=0 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_GLIBCXX_USE_CXX11_ABI=1 -isystem /nix/store/xfl5lls01w0015qds54av8dphcx8yvdy-opencv-4.11.0/include/opencv4 -isystem /nix/store/dj74achp75lrhpzvaw0q5mhgbm23p82q-libtorch-2.5.0-dev/include/torch/csrc/api/include -Wall -fopenmp -std=gnu++20 -D_GLIBCXX_USE_CXX11_ABI=1 -o CMakeFiles/Segmenter.dir/src/writer.cpp.o -c /home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/writer.cpp",
   "file": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/src/writer.cpp",
   "output": "CMakeFiles/Segmenter.dir/src/writer.cpp.o"
 }

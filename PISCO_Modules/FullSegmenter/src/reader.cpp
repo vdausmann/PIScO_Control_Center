@@ -83,7 +83,7 @@ Error readImage(Image& image, const std::string& filename)
  *	Reads a stack of images into the imageBuffer. The number of images per stack is given
  *	by the external parameter e_imageStackSize.
  */
-Error getNextImages(std::vector<Image>& imageBuffer, std::vector<std::string>& files,
+Error getNextImages(std::vector<Image>& imageBuffer, const std::vector<std::string>& files,
 		size_t& nextImageIndex)
 {
     try {

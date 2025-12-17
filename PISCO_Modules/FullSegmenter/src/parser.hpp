@@ -17,6 +17,9 @@ extern size_t e_nCores;
 extern double e_imageThreshold;
 extern double e_minArea;
 
+extern bool e_useDeconv;
+extern size_t e_deconvBatchSize;
+
 extern std::string e_profileName;
 
 ////////////////////////////////////////////////////////////

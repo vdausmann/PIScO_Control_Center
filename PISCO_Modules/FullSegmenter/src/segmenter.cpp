@@ -1,19 +1,25 @@
 #include "segmenter.hpp"
 
+#include <c10/core/DeviceType.h>
 #include <iostream>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <chrono>
 #include <fstream>
 #include <H5Cpp.h>
-#include <torch/script.h>
 
 #include "background_correction.hpp"
+#include "deconvolution.hpp"
 #include "writer.hpp"
 #include "parser.hpp"
 #include "detection.hpp"
 #include "reader.hpp"
 #include "types.hpp"
+
 
 void segmentProfile()
 {
@@ -23,7 +29,6 @@ void segmentProfile()
 	std::ofstream imgFile = initImageFile();
 
 
-	// H5::H5File file = H5::H5File(e_savePath + e_profileName + ".h5", H5F_ACC_TRUNC);
 	H5::H5File file;
 	initH5ProfileFile(file).check();
 
@@ -41,6 +46,12 @@ void segmentProfile()
 	fileStacks[e_nCores - 1] = std::vector(files.begin() + (e_nCores - 1) * files.size() / e_nCores,
 			files.end());
 
+
+	DeconvolutionModel model;
+	if (e_useDeconv) {
+		model.init();
+	}
+
 	auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for
 	for (size_t i = 0; i < e_nCores; i++){
@@ -53,6 +64,14 @@ void segmentProfile()
 			getNextImages(imageStack, fileStack, imageIndex).check();
 
 			correctImages(imageStack).check();
+
+			if (e_useDeconv) {
+#pragma omp critical
+				{
+					runDeconvolution(imageStack, model).check();
+				}
+			}
+
 			detection(imageStack, objects).check();
 
 #pragma omp critical

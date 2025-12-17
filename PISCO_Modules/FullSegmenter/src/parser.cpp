@@ -117,6 +117,9 @@ size_t e_nCores;
 double e_imageThreshold;
 double e_minArea;
 
+bool e_useDeconv;
+size_t e_deconvBatchSize;
+
 std::string e_profileName;
 
 ////////////////////////////////////////////////////////////
@@ -138,6 +141,8 @@ void readParameters(char* filename)
 	readParameter(fileConfig, e_nCores, VAR_NAME(e_nCores));
 	readParameter(fileConfig, e_imageThreshold, VAR_NAME(e_imageThreshold));
 	readParameter(fileConfig, e_minArea, VAR_NAME(e_minArea));
+	readParameter(fileConfig, e_deconvBatchSize, VAR_NAME(e_deconvBatchSize));
+	readParameter(fileConfig, e_useDeconv, VAR_NAME(e_useDeconv));
 
 	if (e_savePath.back() != '/')
 		e_savePath += "/";

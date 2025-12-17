@@ -14,6 +14,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
         pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
+			config.cudaSupport = true;
         };
         libs = [
             pkgs.libcxx
@@ -38,14 +39,20 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     pkg-config
                     gcc
                     hdf5
-					libtorch-bin
                     (pkgs.python312.withPackages(ps: with ps;[
-						torch
+						(torch.override ({cudaSupport = true;}))
 					]))
+					cudatoolkit
+					cudaPackages.cuda_nvcc
+					cudaPackages.cuda_cudart
+					# (libtorch-bin.override ({cudaSupport = true;}))
+					libtorch-bin
                 ];
                 buildInputs = with pkgs; [
                 ];
                 shellHook = ''
+					export CUDA_HOME=${pkgs.cudaPackages.cuda_nvcc}
+					export CUDAToolkit_ROOT=${pkgs.cudaPackages.cuda_nvcc}
                 '';
                 LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath libs}";
             };

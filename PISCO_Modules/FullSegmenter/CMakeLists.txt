@@ -1,14 +1,13 @@
-cmake_minimum_required(VERSION 3.10)
-project(Segmenter)
+cmake_minimum_required(VERSION 3.18)
+project(Segmenter LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23) # Specify C++ standard version
+set(CMAKE_CXX_STANDARD 20) # Specify C++ standard version
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Ensure the chosen version is used
+set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "" FORCE)
 
 # Variable for the project name
 set(PROJECT_NAME "Segmenter")
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 # Add OpenCV support
@@ -72,3 +71,18 @@ target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${HDF5_LIBRARIES} ${TORCH_L
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                  ${BUILDING_DIR})
+
+target_compile_options(${PROJECT_NAME}
+    PRIVATE
+        ${TORCH_CXX_FLAGS}
+)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    BUILD_RPATH "${TORCH_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH "${TORCH_INSTALL_PREFIX}/lib"
+)
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        _GLIBCXX_USE_CXX11_ABI=1
+)

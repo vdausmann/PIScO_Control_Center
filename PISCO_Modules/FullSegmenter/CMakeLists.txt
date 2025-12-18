@@ -3,7 +3,7 @@ project(Segmenter LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20) # Specify C++ standard version
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Ensure the chosen version is used
-set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "" FORCE)
+#set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "" FORCE)
 
 # Variable for the project name
 set(PROJECT_NAME "Segmenter")

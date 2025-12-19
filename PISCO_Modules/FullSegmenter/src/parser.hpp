@@ -20,6 +20,10 @@ extern double e_minArea;
 extern bool e_useDeconv;
 extern size_t e_deconvBatchSize;
 
+extern bool e_saveCrops;
+extern size_t e_chunkSize;
+extern int e_compressionLevel;
+
 extern std::string e_profileName;
 
 ////////////////////////////////////////////////////////////

@@ -1,5 +1,7 @@
 #include "deconvolution.hpp"
 #include "parser.hpp"
+#include <c10/core/DeviceType.h>
+#include <chrono>
 
 torch::Device getDevice() {
 	if (torch::cuda::is_available()) {
@@ -47,6 +49,7 @@ torch::Tensor _runDeconvolution(torch::Tensor& input, torch::jit::script::Module
 	// std::cout << "Forward pass...\n";
 	auto output = model.forward({input});
 	auto outTuple = output.toTuple();
+
 	return outTuple->elements()[0].toTensor();
 }
 

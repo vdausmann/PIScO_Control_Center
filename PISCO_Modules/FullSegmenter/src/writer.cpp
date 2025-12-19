@@ -111,14 +111,15 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 		hsize_t dims[1] = { numObjects };
 		H5::DataSpace dataspace(1, dims);
 
-		H5::DataSet dataset = group.createDataSet("width", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(objects.width.data(), H5::PredType::NATIVE_DOUBLE);
-		dataset = group.createDataSet("height", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(objects.height.data(), H5::PredType::NATIVE_DOUBLE);
-		dataset = group.createDataSet("bx", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(objects.bx.data(), H5::PredType::NATIVE_DOUBLE);
-		dataset = group.createDataSet("by", H5::PredType::NATIVE_DOUBLE, dataspace);
-		dataset.write(objects.by.data(), H5::PredType::NATIVE_DOUBLE);
+		H5::DataSet dataset = group.createDataSet("width", H5::PredType::NATIVE_INT, dataspace);
+		dataset.write(objects.width.data(), H5::PredType::NATIVE_INT);
+		dataset = group.createDataSet("height", H5::PredType::NATIVE_INT, dataspace);
+		dataset.write(objects.height.data(), H5::PredType::NATIVE_INT);
+		dataset = group.createDataSet("bx", H5::PredType::NATIVE_INT, dataspace);
+		dataset.write(objects.bx.data(), H5::PredType::NATIVE_INT);
+		dataset = group.createDataSet("by", H5::PredType::NATIVE_INT, dataspace);
+		dataset.write(objects.by.data(), H5::PredType::NATIVE_INT);
+
 		dataset = group.createDataSet("circ", H5::PredType::NATIVE_DOUBLE, dataspace);
 		dataset.write(objects.circ.data(), H5::PredType::NATIVE_DOUBLE);
 		dataset = group.createDataSet("area_exc", H5::PredType::NATIVE_DOUBLE, dataspace);
@@ -149,6 +150,27 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 		dataset.write(objects.boundingBoxArea.data(), H5::PredType::NATIVE_DOUBLE);
 		dataset = group.createDataSet("eccentricity", H5::PredType::NATIVE_DOUBLE, dataspace);
 		dataset.write(objects.eccentricity.data(), H5::PredType::NATIVE_DOUBLE);
+
+		if (e_saveCrops) {
+			size_t numPixels = objects.crops.size();
+			std::cout << "Writing " << numPixels << " pixel values\n";
+			hsize_t cropDims[1] = { numPixels };
+			dataspace = H5::DataSpace(1, cropDims);
+
+			if (numPixels >= e_chunkSize) { 
+				H5::DSetCreatPropList plist;
+				hsize_t chunk[1] = {e_chunkSize};
+				plist.setChunk(1, chunk);
+				plist.setShuffle();
+				plist.setDeflate(e_compressionLevel);
+				dataset = group.createDataSet("1D_crop_data", H5::PredType::NATIVE_UINT8, 
+						dataspace, plist);
+			} else {
+				dataset = group.createDataSet("1D_crop_data", H5::PredType::NATIVE_UINT8, 
+						dataspace);
+			}
+			dataset.write(objects.crops.data(), H5::PredType::NATIVE_UINT8);
+		}
 	}
 	file.close();
 }

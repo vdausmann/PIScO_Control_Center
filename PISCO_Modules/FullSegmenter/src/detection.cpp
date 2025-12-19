@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 
@@ -60,6 +62,22 @@ void computeRegionProps(const std::vector<cv::Point>& contour, Objects& objects)
 	}
 }
 
+size_t c = 0;
+
+void generateCrop(const std::vector<cv::Point>& contour, const Image& image, Objects& objects)
+{
+	cv::Mat crop = image.img(cv::boundingRect(contour)).clone();
+	crop = crop.reshape(1, 1);
+	uint8_t* dataPtr = (uint8_t*)crop.data;
+	objects.crops.reserve(objects.crops.size() + crop.rows * crop.cols);
+
+	for (int i = 0; i < crop.rows * crop.cols; i++) {
+		objects.crops.push_back(dataPtr[i]);
+	}
+}
+
+// void createDenseCropImage
+
 Error detection(std::vector<Image>& imageBuffer, 
 		std::unordered_map<size_t, Objects>& detectedObjects)
 {
@@ -84,6 +102,9 @@ Error detection(std::vector<Image>& imageBuffer,
 					continue;
 
 				computeRegionProps(contour, objects);
+				if (e_saveCrops) {
+					generateCrop(contour, image, objects);
+				}
 			}
 			objects.shrinkToFit();
 			detectedObjects[image.id] = objects;

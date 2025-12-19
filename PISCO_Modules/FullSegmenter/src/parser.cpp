@@ -120,6 +120,10 @@ double e_minArea;
 bool e_useDeconv;
 size_t e_deconvBatchSize;
 
+bool e_saveCrops;
+size_t e_chunkSize;
+int e_compressionLevel;
+
 std::string e_profileName;
 
 ////////////////////////////////////////////////////////////
@@ -143,6 +147,9 @@ void readParameters(char* filename)
 	readParameter(fileConfig, e_minArea, VAR_NAME(e_minArea));
 	readParameter(fileConfig, e_deconvBatchSize, VAR_NAME(e_deconvBatchSize));
 	readParameter(fileConfig, e_useDeconv, VAR_NAME(e_useDeconv));
+	readParameter(fileConfig, e_saveCrops, VAR_NAME(e_saveCrops));
+	readParameter(fileConfig, e_chunkSize, VAR_NAME(e_chunkSize));
+	readParameter(fileConfig, e_compressionLevel, VAR_NAME(e_compressionLevel));
 
 	if (e_savePath.back() != '/')
 		e_savePath += "/";

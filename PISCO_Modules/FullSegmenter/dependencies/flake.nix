@@ -40,12 +40,13 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     gcc
                     hdf5
                     (pkgs.python312.withPackages(ps: with ps;[
-						#(torch.override ({cudaSupport = true;}))
-						torch
+						(torch.override ({cudaSupport = true;}))
+						(opencv4.override {enableGtk3 = true; enableCuda = false;})
+						h5py
 					]))
-					#cudatoolkit
-					#cudaPackages.cuda_nvcc
-					#cudaPackages.cuda_cudart
+					cudatoolkit
+					cudaPackages.cuda_nvcc
+					cudaPackages.cuda_cudart
 					# (libtorch-bin.override ({cudaSupport = true;}))
 					libtorch-bin
                 ];

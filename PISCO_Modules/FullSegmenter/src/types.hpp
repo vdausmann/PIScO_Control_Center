@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <vector>
@@ -19,10 +20,10 @@ struct Image {
 struct Objects {
 	size_t id;	// source image id
 
-	std::vector<double> width;			// bbox width
-	std::vector<double> height;			// bbox height
-	std::vector<double> bx;				// bbox x top left
-	std::vector<double> by;				// bbox y top left
+	std::vector<int> width;			// bbox width
+	std::vector<int> height;			// bbox height
+	std::vector<int> bx;				// bbox x top left
+	std::vector<int> by;				// bbox y top left
 	std::vector<double> circ;			// circularity
 	std::vector<double> area_exc;		// area excluding holes 
 	std::vector<double> area_rprops;		// area
@@ -51,6 +52,8 @@ struct Objects {
 	std::vector<double> local_centroid_col;
 	std::vector<double> local_centroid_row;
 	std::vector<double> solidity;
+
+	std::vector<uint8_t> crops;
 
 
 	void reserver(size_t sizeEstimate) {

@@ -67,6 +67,7 @@ size_t c = 0;
 void generateCrop(const std::vector<cv::Point>& contour, const Image& image, Objects& objects)
 {
 	cv::Mat crop = image.img(cv::boundingRect(contour)).clone();
+	objects.crops2D.push_back(crop);
 	crop = crop.reshape(1, 1);
 	uint8_t* dataPtr = (uint8_t*)crop.data;
 	objects.crops.reserve(objects.crops.size() + crop.rows * crop.cols);
@@ -91,15 +92,23 @@ Error detection(std::vector<Image>& imageBuffer,
 			std::vector<std::vector<cv::Point>> contours;
 			cv::findContours(thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
 
+			// sort contours by area:
+			std::sort(contours.begin(), contours.end(),
+				[&](std::vector<cv::Point>& a, std::vector<cv::Point>& b) {
+					return cv::contourArea(a) > cv::contourArea(b);
+				});
+
 			// std::cout << "Found " << contours.size() << " objects\n";
 
 			Objects objects;
-			objects.reserver(contours.size());
+			objects.reserve(contours.size());
 			objects.id = image.id;
 			for (const std::vector<cv::Point>& contour: contours) {
 				double area = cv::contourArea(contour);
-				if (area < e_minArea)
-					continue;
+				if (area < e_minArea) {
+					break; // break is possible as the contours are sorted in descending
+						   // order
+				}
 
 				computeRegionProps(contour, objects);
 				if (e_saveCrops) {
@@ -108,6 +117,7 @@ Error detection(std::vector<Image>& imageBuffer,
 			}
 			objects.shrinkToFit();
 			detectedObjects[image.id] = objects;
+
 		} catch (const std::exception& e) {
 			Error error = Error::RuntimeError;
 			error.addMessage(std::string("Error while detecting objects on image " +

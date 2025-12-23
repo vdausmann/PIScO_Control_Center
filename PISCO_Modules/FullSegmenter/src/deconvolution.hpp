@@ -15,3 +15,7 @@ struct DeconvolutionModel {
 };
 
 Error runDeconvolution(std::vector<Image>& imageBuffer, DeconvolutionModel& model);
+Error runDeconvolution(std::vector<cv::Mat>& imageBuffer, DeconvolutionModel& model);
+void groupCrops(const std::unordered_map<size_t, Objects>& objectsMap,
+		std::vector<cv::Mat>& cropGroupImages,
+		std::unordered_map<size_t, std::vector<Crop>>& tiles);

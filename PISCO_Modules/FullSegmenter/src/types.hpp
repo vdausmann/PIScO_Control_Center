@@ -1,8 +1,13 @@
 #pragma once
 #include <cstdint>
+#include <numeric>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <vector>
+
+
+template <typename T>
+void reorder(std::vector<T>& v, const std::vector<size_t>& idx);
 
 
 struct Image {
@@ -54,9 +59,10 @@ struct Objects {
 	std::vector<double> solidity;
 
 	std::vector<uint8_t> crops;
+	std::vector<cv::Mat> crops2D;
 
 
-	void reserver(size_t sizeEstimate) {
+	void reserve(size_t sizeEstimate) {
 		width.reserve(sizeEstimate);
 		height.reserve(sizeEstimate);
 		bx.reserve(sizeEstimate);
@@ -89,6 +95,7 @@ struct Objects {
 		local_centroid_col.reserve(sizeEstimate);
 		local_centroid_row.reserve(sizeEstimate);
 		solidity.reserve(sizeEstimate);
+		crops2D.reserve(sizeEstimate);
 	}
 
 	void shrinkToFit()
@@ -125,6 +132,7 @@ struct Objects {
 		local_centroid_col.shrink_to_fit();
 		local_centroid_row.shrink_to_fit();
 		solidity.shrink_to_fit();
+		crops2D.shrink_to_fit();
 	}
 };
 
@@ -167,4 +175,9 @@ struct SegmenterObject {
 	double local_centroid_col;
 	double local_centroid_row;
 	double solidity;
+};
+
+struct Crop {
+	size_t cropGroupImageIdx;
+	cv::Rect tile;
 };

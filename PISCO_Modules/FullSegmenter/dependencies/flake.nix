@@ -20,6 +20,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
             pkgs.libcxx
 			pkgs.hdf5
 			pkgs.libtorch-bin
+			pkgs.cudaPackages.cuda_nvrtc
         ];
     in
         with pkgs;
@@ -47,6 +48,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 					cudatoolkit
 					cudaPackages.cuda_nvcc
 					cudaPackages.cuda_cudart
+					cudaPackages.cuda_nvrtc
 					# (libtorch-bin.override ({cudaSupport = true;}))
 					libtorch-bin
                 ];

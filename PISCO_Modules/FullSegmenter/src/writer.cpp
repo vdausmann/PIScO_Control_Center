@@ -98,7 +98,7 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 		size_t idx = filename.find_last_of('/');
 		filename = filename.substr(idx + 1, filename.size());
 		filename = "/" + filename.substr(0, filename.size() - 4);
-		std::cout << "Creating group for file " << filename << std::endl;
+		// std::cout << "Creating group for file " << filename << std::endl;
 		H5::Group group = file.createGroup(filename);
 		writeScalarAttribute(group, "Detection Threshold", image.detectionThreshold);
 		writeScalarAttribute(group, "Mean Original", image.meanOrg);
@@ -153,7 +153,7 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 
 		if (e_saveCrops) {
 			size_t numPixels = objects.crops.size();
-			std::cout << "Writing " << numPixels << " pixel values\n";
+			// std::cout << "Writing " << numPixels << " pixel values\n";
 			hsize_t cropDims[1] = { numPixels };
 			dataspace = H5::DataSpace(1, cropDims);
 

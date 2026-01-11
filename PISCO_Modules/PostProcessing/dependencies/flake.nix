@@ -21,6 +21,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 			pkgs.hdf5
 			pkgs.libtorch-bin
 			pkgs.cudaPackages.cuda_nvrtc
+			pkgs.mpi
         ];
     in
         with pkgs;
@@ -40,10 +41,11 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     pkg-config
                     gcc
 					mpi
-                    (hdf5 ({
-						threadsafe = true;
+                    (hdf5.override ({
+						# mpiSupport = true;
+						# cppSupport = false;
 					}))
-                    (pkgs.python312.withPackages(ps: with ps;[
+                    (python312.withPackages(ps: with ps;[
 						(torch.override ({cudaSupport = true;}))
 						(opencv4.override {enableGtk3 = true; enableCuda = false;})
 						h5py

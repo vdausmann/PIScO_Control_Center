@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "types.hpp"
-#include "error.hpp"
 
 struct DeconvolutionModel {
 	torch::Device device = torch::kCPU;
@@ -14,7 +13,5 @@ struct DeconvolutionModel {
 	void init();
 };
 
-Error runDeconvolution(std::vector<Image>& imageBuffer, DeconvolutionModel& model);
-Error runDeconvolution(std::vector<cv::Mat>& imageBuffer, DeconvolutionModel& model);
-void groupCrops(std::vector<cv::Mat>& cropGroupImages,
-		std::unordered_map<size_t, std::vector<Crop>>& tiles);
+void deconvolutionWorker(ThreadSafeQueue<CropStack>& deconvQueue, 
+		ThreadSafeQueue<CropStack>& writerQueue);

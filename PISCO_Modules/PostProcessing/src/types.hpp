@@ -1,185 +1,143 @@
 #pragma once
-#include <cstdint>
-#include <numeric>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
+#include <queue>
+#include <unordered_map>
 #include <vector>
+#include <optional>
+#include <chrono>
+#include <condition_variable>
 
+using namespace std::chrono_literals;
 
-
-template <typename T>
-void reorder(std::vector<T>& v, const std::vector<size_t>& idx);
-
-
-struct Image {
-	cv::Mat img;
-	size_t id;	// image id
-
-	double meanOrg = -1;
-	double stddevOrg = -1;
-	double meanCorrected = -1;
-	double stddevCorrected = -1;
-	double detectionThreshold = -1;
+struct CropStack {
+	std::vector<cv::Mat> stackImages;
+	std::vector<std::unordered_map<size_t, std::vector<cv::Rect>>> tileMap;	// [stackImageIdx][sourceImageIdx][cropIdx]
 };
 
+template<typename T>
+class ThreadSafeQueue {
+public:
+    explicit ThreadSafeQueue(size_t capacity)
+        : capacity_(capacity) {}
 
-struct Objects {
-	size_t id;	// source image id
+    // ---------------- Push ----------------
 
-	std::vector<int> width;			// bbox width
-	std::vector<int> height;			// bbox height
-	std::vector<int> bx;				// bbox x top left
-	std::vector<int> by;				// bbox y top left
-	std::vector<double> circ;			// circularity
-	std::vector<double> area_exc;		// area excluding holes 
-	std::vector<double> area_rprops;		// area
-	std::vector<double> area_percentage;	// 1 - area_exc / area_rprops
-	std::vector<double> major;			// major axis of ellipse
-	std::vector<double> minor;			// minor axis of ellipse
-	std::vector<double> centroidy;		// y position of center of gravity
-	std::vector<double> centroidx;		// x position of center of gravity
-	std::vector<double> convexArea;		// area of smallest polygon
-	std::vector<double> minIntensity;	// min gray value in object
-	std::vector<double> maxIntensity;	// max gray value in object
-	std::vector<double> meanIntensity;	// average gray value in object
-	std::vector<double> intden;			// integrated density: area_rprops * meanIntensity
-	std::vector<double> perimeter;		// length of outside boundary
-	std::vector<double> elongation;		// major / minor
-	std::vector<double> range;			// maxIntensity - minIntensity
-	std::vector<double> perimAreaXC;		// perimeter / area_exc
-	std::vector<double> perimMajor;		// perimeter / major
-	std::vector<double> circex;		// (4 * pi * area_exc) / perimeter^2
-	std::vector<double> angle;			// angle between x axis and major
-	std::vector<double> boundingBoxArea;	
-	std::vector<double> eccentricity;	
-	std::vector<double> equivalentDiameter;
-	std::vector<double> eulerNumber;
-	std::vector<double> extent;
-	std::vector<double> local_centroid_col;
-	std::vector<double> local_centroid_row;
-	std::vector<double> solidity;
+    // Blocking push
+    bool push(T value) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        cv_not_full_.wait(lock, [&] {
+            return queue_.size() < capacity_ || closed_ || stop_requested_;
+        });
 
-	std::vector<uint8_t> crops;
-	std::vector<cv::Mat> crops2D;
+        if (closed_ || stop_requested_)
+            return false;
 
+        queue_.push(std::move(value));
+        cv_not_empty_.notify_one();
+        return true;
+    }
 
-	void reserve(size_t sizeEstimate) {
-		width.reserve(sizeEstimate);
-		height.reserve(sizeEstimate);
-		bx.reserve(sizeEstimate);
-		by.reserve(sizeEstimate);
-		circ.reserve(sizeEstimate);
-		area_exc.reserve(sizeEstimate);
-		area_rprops.reserve(sizeEstimate);
-		area_percentage.reserve(sizeEstimate);
-		major.reserve(sizeEstimate);
-		minor.reserve(sizeEstimate);
-		centroidy.reserve(sizeEstimate);
-		centroidx.reserve(sizeEstimate);
-		convexArea.reserve(sizeEstimate);
-		minIntensity.reserve(sizeEstimate);
-		maxIntensity.reserve(sizeEstimate);
-		meanIntensity.reserve(sizeEstimate);
-		intden.reserve(sizeEstimate);
-		perimeter.reserve(sizeEstimate);
-		elongation.reserve(sizeEstimate);
-		range.reserve(sizeEstimate);
-		perimAreaXC.reserve(sizeEstimate);
-		perimMajor.reserve(sizeEstimate);
-		circex.reserve(sizeEstimate);
-		angle.reserve(sizeEstimate);
-		boundingBoxArea.reserve(sizeEstimate);
-		eccentricity.reserve(sizeEstimate);
-		equivalentDiameter.reserve(sizeEstimate);
-		eulerNumber.reserve(sizeEstimate);
-		extent.reserve(sizeEstimate);
-		local_centroid_col.reserve(sizeEstimate);
-		local_centroid_row.reserve(sizeEstimate);
-		solidity.reserve(sizeEstimate);
-		crops2D.reserve(sizeEstimate);
-	}
+    // Timed push
+    template<class Rep, class Period>
+    bool push_for(T value, const std::chrono::duration<Rep,Period>& timeout) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!cv_not_full_.wait_for(lock, timeout, [&] {
+                return queue_.size() < capacity_ || closed_ || stop_requested_;
+            })) {
+            return false; // timeout
+        }
 
-	void shrinkToFit()
-	{
-		width.shrink_to_fit();
-		height.shrink_to_fit();
-		bx.shrink_to_fit();
-		by.shrink_to_fit();
-		circ.shrink_to_fit();
-		area_exc.shrink_to_fit();
-		area_rprops.shrink_to_fit();
-		area_percentage.shrink_to_fit();
-		major.shrink_to_fit();
-		minor.shrink_to_fit();
-		centroidy.shrink_to_fit();
-		centroidx.shrink_to_fit();
-		convexArea.shrink_to_fit();
-		minIntensity.shrink_to_fit();
-		maxIntensity.shrink_to_fit();
-		meanIntensity.shrink_to_fit();
-		intden.shrink_to_fit();
-		perimeter.shrink_to_fit();
-		elongation.shrink_to_fit();
-		range.shrink_to_fit();
-		perimAreaXC.shrink_to_fit();
-		perimMajor.shrink_to_fit();
-		circex.shrink_to_fit();
-		angle.shrink_to_fit();
-		boundingBoxArea.shrink_to_fit();
-		eccentricity.shrink_to_fit();
-		equivalentDiameter.shrink_to_fit();
-		eulerNumber.shrink_to_fit();
-		extent.shrink_to_fit();
-		local_centroid_col.shrink_to_fit();
-		local_centroid_row.shrink_to_fit();
-		solidity.shrink_to_fit();
-		crops2D.shrink_to_fit();
-	}
-};
+        if (closed_ || stop_requested_)
+            return false;
 
-struct SegmenterObject {
-	size_t id;	// source image id
-	std::vector<cv::Point> contour;	// contour of object
-	cv::Rect boundingBox;
-	double area;
+        queue_.push(std::move(value));
+        cv_not_empty_.notify_one();
+        return true;
+    }
 
+    // ---------------- Pop ----------------
 
-	double width;			// bbox width
-	double height;			// bbox height
-	double bx;				// bbox x top left
-	double by;				// bbox y top left
-	double circ;			// circularity
-	double area_exc;		// area excluding holes 
-	double area_rprops;		// area
-	double area_percentage;	// 1 - area_exc / area_rprops
-	double major;			// major axis of ellipse
-	double minor;			// minor axis of ellipse
-	double centroidy;		// y position of center of gravity
-	double centroidx;		// x position of center of gravity
-	double convexArea;		// area of smallest polygon
-	double minIntensity;	// min gray value in object
-	double maxIntensity;	// max gray value in object
-	double meanIntensity;	// average gray value in object
-	double intden;			// integrated density: area_rprops * meanIntensity
-	double perimeter;		// length of outside boundary
-	double elongation;		// major / minor
-	double range;			// maxIntensity - minIntensity
-	double perimAreaXC;		// perimeter / area_exc
-	double perimMajor;		// perimeter / major
-	double circex;		// (4 * pi * area_exc) / perimeter^2
-	double angle;			// angle between x axis and major
-	double boundingBoxArea;	
-	double eccentricity;	
-	double equivalentDiameter;
-	double eulerNumber;
-	double extent;
-	double local_centroid_col;
-	double local_centroid_row;
-	double solidity;
-};
+    // Blocking pop
+    std::optional<T> pop() {
+        std::unique_lock<std::mutex> lock(mutex_);
+        cv_not_empty_.wait(lock, [&] {
+            return !queue_.empty() || closed_ || stop_requested_;
+        });
 
-struct Crop {
-	size_t cropGroupImageIdx;
-	cv::Rect tile;
-	cv::Mat image;
+        // Immediate abort
+        if (stop_requested_)
+            return std::nullopt;
+
+        // Graceful close: queue drained
+        if (queue_.empty())
+            return std::nullopt;
+
+        T value = std::move(queue_.front());
+        queue_.pop();
+        cv_not_full_.notify_one();
+        return value;
+    }
+
+    // Timed pop
+    template<class Rep, class Period>
+    std::optional<T> pop_for(const std::chrono::duration<Rep,Period>& timeout) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!cv_not_empty_.wait_for(lock, timeout, [&] {
+                return !queue_.empty() || closed_ || stop_requested_;
+            })) {
+            return std::nullopt; // timeout
+        }
+
+        if (stop_requested_)
+            return std::nullopt;
+
+        if (queue_.empty())
+            return std::nullopt;
+
+        T value = std::move(queue_.front());
+        queue_.pop();
+        cv_not_full_.notify_one();
+        return value;
+    }
+
+    // ---------------- Shutdown ----------------
+
+    // Graceful: no more pushes, drain existing data
+    void close() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            closed_ = true;
+        }
+        cv_not_empty_.notify_all();
+        cv_not_full_.notify_all();
+    }
+
+    // Immediate abort: drop everything
+    void request_stop() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stop_requested_ = true;
+        }
+        cv_not_empty_.notify_all();
+        cv_not_full_.notify_all();
+    }
+
+    bool closed() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return closed_;
+    }
+
+    bool stop_requested() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return stop_requested_;
+    }
+
+private:
+    size_t capacity_;
+    std::queue<T> queue_;
+    mutable std::mutex mutex_;
+    std::condition_variable cv_not_empty_;
+    std::condition_variable cv_not_full_;
+    bool closed_ = false;
+    bool stop_requested_ = false;
 };

@@ -1,198 +1,216 @@
 #include "reader.hpp"
+#include "error.hpp"
 #include "parser.hpp"
-#include <H5Attribute.h>
-#include <H5DataType.h>
+#include "types.hpp"
+#include <H5Cpp.h>
+#include <H5DataSet.h>
+#include <H5DataSpace.h>
 #include <H5Exception.h>
-#include <H5Group.h>
+#include <H5File.h>
+#include <H5Gpublic.h>
 #include <H5PredType.h>
-#include <cstdint>
 #include <cstring>
+#include <exception>
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <unordered_map>
 
-Error openHDFFile(H5::H5File& file)
+
+Error openFile(H5::H5File& file)
 {
-    try {
-        file.openFile(e_sourceFile, H5F_ACC_RDONLY);
-        // std::cout << e_sourceFile << " opened successfully\n";
-    } catch (const H5::FileIException& e) {
-        Error error = Error::RuntimeError;
-        error.addMessage(
-            "Error loading HDF file'" + e_sourceFile + "'. Error: \n" + e.getDetailMsg());
+	try {
+		file.openFile(e_sourceFile, H5F_ACC_RDONLY);
+		std::cout << "Successfully opened HDF file '" << e_sourceFile << "'.\n";
+		return Error::Success;
+    } catch (H5::FileIException& e) {
+		Error error = Error::RuntimeError;
+		error.addMessage("Error while opening HDF file '" + e_sourceFile + "': " + e.getDetailMsg());
         return error;
     }
-    return Error::Success;
 }
 
-bool hasAttribute(const H5::H5Object& obj, const std::string& name)
+Error openGroup(const H5::H5Object& root, H5::Group& group, const std::string& path)
 {
-    return H5Aexists(obj.getId(), name.c_str()) > 0;
-}
-
-bool readAttribute(const H5::H5Object& obj, const std::string& name, void* dst,
-    const H5::DataType& type)
-{
-    try {
-        H5::Exception::dontPrint();
-
-        if (H5Aexists(obj.getId(), name.c_str()) <= 0) {
-            std::cout << "Could not find attribute '" << name << "'\n";
-            return false;
-        }
-
-        H5::Attribute attr = obj.openAttribute(name);
-        attr.read(type, dst);
-        return true;
-    } catch (const H5::Exception& e) {
-        std::cout << "HDF5 error while reading attribute '" << name
-                  << "': " << e.getDetailMsg() << std::endl;
-        return false;
-    }
-}
-
-bool readStringAttribute(const H5::H5Object& obj, const std::string& name,
-    std::string& out)
-{
-    try {
-        H5::Exception::dontPrint();
-
-        if (H5Aexists(obj.getId(), name.c_str()) <= 0)
-            return false;
-
-        H5::Attribute attr = obj.openAttribute(name);
-        H5::StrType stype = attr.getStrType();
-
-        // Variable-length string
-        if (stype.isVariableStr()) {
-            char* cstr = nullptr;
-            attr.read(stype, &cstr);
-            if (!cstr)
-                return false;
-            out = cstr;
-            free(cstr);
-            return true;
-        }
-
-        // Fixed-length string
-        size_t len = stype.getSize();
-        std::vector<char> buf(len + 1, 0);  // +1 for null terminator
-        attr.read(stype, buf.data());
-        out = std::string(buf.data());
-        return true;
-    } catch (...) {
-        return false;
-    }
-}
-
-Error readAttributes(const H5::H5File& file)
-{
-    try {
-        H5::StrType strDataType(H5::PredType::C_S1, H5T_VARIABLE);
-        strDataType.setCset(H5T_CSET_UTF8);
-        // reading settings from file:
-		std::cout << "------------------------------\n";
-        std::cout << "Extracted the following settings from HDF file: " << std::endl;
-
-        if (readStringAttribute(file, "Date and Time of Segmentation", e_dateTime)) {
-            std::cout << "\tFound attribute dateTime=" << e_dateTime << "\n";
-        }
-
-        if (readStringAttribute(file, "Image Source Path", e_imageSourcePath)) {
-            std::cout << "\tFound attribute imageSourcePath=" << e_imageSourcePath << "\n";
-        }
-
-        if (readStringAttribute(file, "Profile Name", e_profileName)) {
-            std::cout << "\tFound attribute profileName=" << e_profileName << "\n";
-        }
-
-        if (readAttribute(file, "Setting: minArea", &e_minArea,
-                H5::PredType::NATIVE_DOUBLE)) {
-            std::cout << "\tFound attribute minArea=" << e_minArea << std::endl;
-        }
-
-        if (readAttribute(file, "Setting: minMean", &e_minMean,
-                H5::PredType::NATIVE_DOUBLE)) {
-            std::cout << "\tFound attribute minMean=" << e_minMean << std::endl;
-        }
-
-        if (readAttribute(file, "Setting: minStdDev", &e_minStdDev,
-                H5::PredType::NATIVE_DOUBLE)) {
-            std::cout << "\tFound attribute minStdDev=" << e_minStdDev << std::endl;
-        }
-
-		std::cout << "------------------------------\n";
-    } catch (const H5::Exception& e) {
-        Error error = Error::RuntimeError;
-        error.addMessage("Error on reading settings. Error: \n" + e.getDetailMsg());
+	try {
+		group = root.openGroup(path);
+		return Error::Success;
+    } catch (H5::GroupIException& e) {
+		Error error = Error::RuntimeError;
+		error.addMessage("Error while opening group at path '" + path + "': " + e.getDetailMsg());
         return error;
     }
-    return Error::Success;
 }
 
-
-std::vector<std::string> getImagePathsFromHDF(const H5::Group& group)
+template<typename T>
+Error getData(const H5::H5Object& root, const std::string& path, std::vector<T>& dst, H5::DataType type)
 {
-    std::vector<std::string> subgroups;
-    hsize_t n = group.getNumObjs();
+	try {
+		H5::DataSet dataset = root.openDataSet(path);
+		H5::DataSpace dataspace = dataset.getSpace();
 
-    for (hsize_t i = 0; i < n; i++) {
-        std::string name = group.getObjnameByIdx(i);
-        H5G_obj_t type = group.getObjTypeByIdx(i);
+		// Get size of 1D dataset
+		hsize_t dims[1];
+		dataspace.getSimpleExtentDims(dims);
 
-        if (type == H5G_GROUP) {
-            subgroups.push_back(name);
-        }
-    }
-    return subgroups;
+		size_t length = dims[0];
+		dst.resize(length);
+
+		dataset.read(dst.data(), type);
+		return Error::Success;
+	} catch (H5::Exception& e) {
+		Error error = Error::RuntimeError;
+		error.addMessage("Error while reading data from path '" + path + "': " + e.getDetailMsg());
+        return error;
+	}
 }
 
 
-void getCrop(size_t idx, size_t& offset, const std::vector<int>& widths,
-		const std::vector<int>& heights, const std::vector<uint8_t>& crop1DData,
+Error getCropImage(size_t& offset, size_t idx, const std::vector<int>& width, 
+		const std::vector<int>& height, const std::vector<uint8_t>& pixelValues,
 		cv::Mat& dst)
 {
-	int width = widths[idx];
-	int height = heights[idx];
-	size_t numPixels = width * height;
+	try {
+		size_t numPixels = width[idx] * height[idx];
+		dst = cv::Mat(height[idx], width[idx], CV_8UC1);
+		std::memcpy(dst.data, pixelValues.data() + offset, numPixels);
+		offset += numPixels;
+	} catch (std::exception& e) {
+		Error error = Error::RuntimeError;
+		error.addMessage("Error while converting 1D crop data to 2D image: " +
+				std::string(e.what()));
+        return error;
+	}
 
-	dst = cv::Mat(height, width, CV_8UC1);
-	std::memcpy(dst.data, crop1DData.data() + offset, numPixels);
-		
-	offset += numPixels;
+	return Error::Success;
 }
 
 
-void getAllCropsFromImage(const H5::Group& group, std::vector<Crop>& crops)
+
+void groupCrops(const std::unordered_map<size_t, std::vector<cv::Mat>>& cropMap,
+		CropStack& stack) 
 {
-	H5::DataSet dataset = group.openDataSet("1D_crop_data");
-	H5::DataSpace space = dataset.getSpace();
-	int ndims = space.getSimpleExtentNdims();
-	std::vector<hsize_t> dims(ndims);
-	space.getSimpleExtentDims(dims.data());
+	size_t h = 2560;
+	size_t w = 2560;
+	cv::Mat emptyImage = cv::Mat::zeros(h, w, CV_8U);
+	cv::Mat cropGroup = emptyImage.clone();
+	std::unordered_map<size_t, std::vector<cv::Rect>> tileMap;
 
-	std::vector<uint8_t> crop1DData(dims[0]);
-	dataset.read(crop1DData.data(), H5::PredType::NATIVE_UINT8);
+	size_t padding = 20;
+	size_t currentRow = padding;
+	size_t currentCol = padding;
+	size_t rowSize = 0;
+	for (const auto& [imageIdx, crops]: cropMap) {
+		tileMap[imageIdx].reserve(crops.size());
 
+		for (const cv::Mat& crop: crops) {
 
-	dataset = group.openDataSet("width");
-	space = dataset.getSpace();
-	ndims = space.getSimpleExtentNdims();
-	space.getSimpleExtentDims(dims.data());
+			// wrap column
+			if (currentCol + crop.cols + padding >= w) {
+				currentCol = padding;
+				currentRow += rowSize + padding;
+				rowSize = 0;
+			}
 
-	std::vector<int> widths(dims[0]);
-	dataset.read(widths.data(), H5::PredType::NATIVE_INT);
-	dataset = group.openDataSet("height");
-	std::vector<int> heights(dims[0]);
-	dataset.read(heights.data(), H5::PredType::NATIVE_INT);
+			// new image
+			if (currentRow + crop.rows + padding >= h) {
+				cv::bitwise_not(cropGroup, cropGroup);
+				stack.stackImages.push_back(cropGroup);
+				stack.tileMap.push_back(tileMap);
 
-	crops.reserve(widths.size());
+				cropGroup = emptyImage.clone();
+				tileMap.clear();
 
-	size_t offset = 0;
-	size_t idx = 0;
-	while (offset < crop1DData.size()) {
-		Crop crop;
-		getCrop(idx, offset, widths, heights, crop1DData, crop.image);
-		idx++;
+				// make new image
+				currentRow = padding;
+				currentCol = padding;
+				rowSize = 0;
+			}
 
-		crops.push_back(crop);
+			cv::Rect region(currentCol, currentRow, crop.cols, crop.rows);
+			crop.copyTo(cropGroup(region));
+
+			tileMap[imageIdx].push_back(region);
+
+			currentCol += crop.cols + padding;
+			if (crop.rows > rowSize) rowSize = crop.rows;
+		}
 	}
+
+	if (!cropGroup.empty()) {
+		cv::bitwise_not(cropGroup, cropGroup);
+		stack.stackImages.push_back(cropGroup);
+		stack.tileMap.push_back(tileMap);
+	}
+
+	std::cout << "Compressed " << cropMap.size() << " full images to " << 
+		stack.stackImages.size() << " crop images\n";
+}
+
+
+
+void readWorker(ThreadSafeQueue<CropStack>& deconvQueue)
+{
+	// open HDF source file:
+	H5::H5File file;
+	openFile(file).check();
+	H5::Group root;
+	openGroup(file, root, "/").check();
+	
+	// get image names from HDF file:
+	hsize_t numImages = root.getNumObjs();
+	std::vector<std::string> imagePaths;
+	imagePaths.reserve(numImages);
+	for (hsize_t imageIdx = 0; imageIdx < numImages; imageIdx++) {
+		std::string imageName = root.getObjnameByIdx(imageIdx);
+		H5G_obj_t type = root.getObjTypeByIdx(imageIdx);
+
+		if (type == H5G_GROUP)
+			imagePaths.push_back(imageName);
+	}
+
+	// generate crop stack:
+	size_t numStacks = numImages / e_imageStackSize + (numImages % e_imageStackSize > 0);
+	for (size_t imageStackIdx = 0; imageStackIdx < numStacks; imageStackIdx++) {
+		size_t startIdx = imageStackIdx * e_imageStackSize;
+		size_t stopIdx = std::min(startIdx + e_imageStackSize, numImages);
+
+		std::vector<int> width, height;
+		std::vector<uint8_t> pixelValues;
+		std::unordered_map<size_t, std::vector<cv::Mat>> cropMap;
+		for (size_t imageIdx = startIdx; imageIdx < stopIdx; imageIdx++) {
+			H5::Group imageGroup;
+			openGroup(root, imageGroup, imagePaths[imageIdx]).check();
+
+			getData(imageGroup, "width", width, H5::PredType::NATIVE_INT).check();
+			getData(imageGroup, "height", height, H5::PredType::NATIVE_INT).check();
+			getData(imageGroup, "1D_crop_data", pixelValues, H5::PredType::NATIVE_UINT8).check();
+
+
+			std::vector<cv::Mat> crops;
+			crops.resize(width.size());
+			size_t offset = 0;
+			for (size_t cropIdx = 0; cropIdx < width.size(); cropIdx++) {
+				cv::Mat crop;
+				getCropImage(offset, cropIdx, width, height, pixelValues, 
+						crops[cropIdx]).check();
+			}
+			cropMap[imageIdx] = crops;
+		}
+
+		// group crops to images:
+		CropStack stack;
+		groupCrops(cropMap, stack);
+
+		// if space in queue, push stack to queue
+		bool res = deconvQueue.push_for(stack, 5s);
+		if (!res) {
+			std::cout << "Timeout on waiting for queue push!\n";
+			break;
+		}
+
+		std::cout << "Finished group " << startIdx << "-" << stopIdx << std::endl;
+	}
+
+	deconvQueue.close();
+	file.close();
 }

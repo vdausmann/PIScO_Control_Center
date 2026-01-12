@@ -22,6 +22,7 @@ Data_Analysis/.direnv
 PISCO_Modules/FullSegmenter/latest*
 PISCO_Modules/FullSegmenter/.direnv
 PISCO_Modules/FullSegmenter/Results
+PISCO_Modules/PostProcessing/Results
 
 
 # Distribution / packaging

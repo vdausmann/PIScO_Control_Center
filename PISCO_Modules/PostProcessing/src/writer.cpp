@@ -28,21 +28,21 @@ void writeWorker(ThreadSafeQueue<CropStack>& writerQueue)
 		CropStack stack = *ret;
 
 		for (size_t stackIdx = 0; stackIdx < stack.stackImages.size(); stackIdx++) {
-			cv::Mat img = stack.stackImages[stackIdx];
-			cv::bitwise_not(img, img);
-			for (const auto& [key, regions]: stack.tileMap[stackIdx]) {
-				for (const cv::Rect& region: regions) {
-					cv::threshold(img(region), img(region), 10, 255, cv::THRESH_BINARY);
-				}
-			}
-
-			// cv::cvtColor(stack.stackImages[stackIdx], stack.stackImages[stackIdx], cv::COLOR_GRAY2BGR);
+			// cv::Mat img = stack.stackImages[stackIdx];
+			// cv::bitwise_not(img, img);
 			// for (const auto& [key, regions]: stack.tileMap[stackIdx]) {
 			// 	for (const cv::Rect& region: regions) {
-			// 		cv::rectangle(stack.stackImages[stackIdx], region, 
-			// 				cv::Scalar(0, 0, 255), 1);
+			// 		cv::threshold(img(region), img(region), 10, 255, cv::THRESH_BINARY);
 			// 	}
 			// }
+
+			cv::cvtColor(stack.stackImages[stackIdx], stack.stackImages[stackIdx], cv::COLOR_GRAY2BGR);
+			for (const auto& [key, regions]: stack.tileMap[stackIdx]) {
+				for (const cv::Rect& region: regions) {
+					cv::rectangle(stack.stackImages[stackIdx], region, 
+							cv::Scalar(0, 0, 255), 1);
+				}
+			}
 
 			cv::imwrite("Results/" + std::to_string(imageIdx) + ".png", stack.stackImages[stackIdx]);
 			std::cout << "Image written to " << "Results/" + std::to_string(imageIdx) + ".png\n";

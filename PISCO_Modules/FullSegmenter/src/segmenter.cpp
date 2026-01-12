@@ -77,7 +77,7 @@ void segmentProfile()
 
 			detection(imageStack, objects).check();
 
-			groupCrops(objects, cropGroupImages, tiles);
+			//groupCrops(objects, cropGroupImages, tiles);
 // 			if (e_useDeconv) {
 // #pragma omp critical
 // 				{

@@ -14,4 +14,5 @@ done
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # nohup python3 start_server.py --host "$HOST" --port "$PORT" > /dev/null >2&1 &
-nix develop ./dependencies/flake.nix --command bash -c "nohup python3 start_server.py --host $HOST --port $PORT"
+# nix develop ./dependencies/flake.nix --command bash -c "nohup python3 start_server.py --host $HOST --port $PORT"
+nix develop ./latest --offline --no-update-lock-file --command bash -c "nohup python3 start_server.py --host $HOST --port $PORT"

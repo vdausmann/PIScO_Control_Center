@@ -25,7 +25,7 @@ class ServerClient(QObject):
 
         self.server_running: bool = False
         self.host: str | None = "127.0.0.1"
-        self.port: int | None = 8000
+        self.port: int | None = 8001
         self.remote: bool = False
         self.path_to_server_script: str = ""
 

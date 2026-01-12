@@ -69,3 +69,29 @@ Registering: GET /get-depth-filename-dict -> ProfileAnalysis.get_depth_filename_
 Registering: GET /get-hdf-file-abundance -> ProfileAnalysis.get_hdf_abundance
 Registering: WEBSOCKET /ws -> WebSockets.ws_endpoint
 Server stopped
+INFO:     Started server process [24126]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24126]
+Registering: GET / -> PISCOServer.root
+Registering: POST /shutdown -> PISCOServer.shutdown
+Registering: GET /test_ws -> PISCOServer.test_ws
+Registering: POST /close-hdf5-file -> FileHandler.close_hdf5_file
+Registering: GET /download-image -> FileHandler.download_image
+Registering: GET /get-attributes/{path:path} -> FileHandler.get_attributes
+Registering: GET /get-data/{path:path} -> FileHandler.get_data
+Registering: GET /get-full-path/{path:path} -> FileHandler.get_full_path
+Registering: GET /get-group-structure/{path:path} -> FileHandler.get_group_structure
+Registering: GET /get-path/{path:path} -> FileHandler.get_path
+Registering: POST /load-image-dir/{path:path} -> FileHandler.load_image_dir
+Registering: POST /load-images -> FileHandler.load_images
+Registering: POST /open-hdf5-file/{path:path} -> FileHandler.open_hdf5_file
+Registering: GET /get-attributes-all-images -> ProfileAnalysis.get_attributes_all_images
+Registering: GET /get-depth-filename-dict -> ProfileAnalysis.get_depth_filename_dict
+Registering: GET /get-hdf-file-abundance -> ProfileAnalysis.get_hdf_abundance
+Registering: WEBSOCKET /ws -> WebSockets.ws_endpoint
+Server stopped

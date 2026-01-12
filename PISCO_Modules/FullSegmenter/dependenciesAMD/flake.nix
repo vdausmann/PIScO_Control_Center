@@ -1,5 +1,5 @@
 {
-  description = "LibTorch binary with ROCm support (based on libtorch-bin)";
+  description = "LibTorch binary with ROCm support (extracted from PyTorch wheel)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs";
 
@@ -12,67 +12,81 @@
       config.allowUnfree = true;
     };
 
-    # ---- CONFIG ----
-    pytorchVersion = "2.1.2";
-    rocmVersion = "5.7";  # MUST match your system ROCm
-    # ----------------
-
-    libtorchUrl =
-      "https://download.pytorch.org/libtorch/rocm${rocmVersion}/"
-      + "libtorch-cxx11-abi-shared-with-deps-${pytorchVersion}%2Brocm${rocmVersion}.zip";
+    # Use local PyTorch wheel instead of downloading
+    pytorchWheelPath = /home/veit/PIScO_dev/torch-2.6.0+rocm6.4.1.git1ded221d-cp312-cp312-linux_x86_64.whl;
 
   in {
     packages.${system}.libtorch-rocm =
       pkgs.stdenv.mkDerivation rec {
         pname = "libtorch-rocm";
-        version = "${pytorchVersion}-rocm${rocmVersion}";
+        version = "2.6.0-rocm6.4.1";
 
-        src = pkgs.fetchurl {
-          url = libtorchUrl;
-          # ⚠️ Run once with fake hash, then replace
-          sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-        };
+        src = pytorchWheelPath;
 
         nativeBuildInputs = [
           pkgs.unzip
           pkgs.patchelf
+          pkgs.python3
         ];
 
-        buildInputs = with pkgs.rocmPackages; [
-          rocm-runtime
-          hip
-          rocblas
-          miopen
-          hipsparse
-          rocsparse
-          hipfft
+        buildInputs = [
+          pkgs.rocmPackages.rocm-core
+          pkgs.rocmPackages.rocblas
+          pkgs.rocmPackages.rocsparse
+          pkgs.rocmPackages.hipfft
         ];
 
         unpackPhase = ''
-          unzip $src
+          mkdir -p libtorch_extract
+          cd libtorch_extract
+          unzip -q $src
+          cd ..
         '';
 
         installPhase = ''
-          mkdir -p $out
-          cp -r libtorch/* $out/
+          mkdir -p $out/lib/cmake $out/include $out/share/cmake
+          
+          # Copy libraries to lib subdirectory
+          if [ -d libtorch_extract/torch/lib ]; then
+            cp -r libtorch_extract/torch/lib/* $out/lib/
+          fi
+          
+          # Copy headers to include subdirectory
+          if [ -d libtorch_extract/torch/include ]; then
+            cp -r libtorch_extract/torch/include/* $out/include/
+          fi
+          
+          # Copy cmake files to both locations (for compatibility)
+          if [ -d libtorch_extract/torch/share/cmake ]; then
+            cp -r libtorch_extract/torch/share/cmake/* $out/lib/cmake/
+            cp -r libtorch_extract/torch/share/cmake/* $out/share/cmake/
+          fi
+          
+          # Copy other share files (excluding cmake which we already handled)
+          if [ -d libtorch_extract/torch/share ]; then
+            for item in libtorch_extract/torch/share/*; do
+              if [ "$(basename "$item")" != "cmake" ]; then
+                cp -r "$item" $out/share/
+              fi
+            done
+          fi
         '';
 
         postFixup = ''
           echo "Patching RPATHs..."
-          find $out -type f -executable | while read f; do
+          find $out/lib -type f \( -name "*.so*" -o -executable \) 2>/dev/null | while read f; do
             patchelf --set-rpath \
               ${pkgs.lib.makeLibraryPath buildInputs}:$out/lib \
-              "$f" || true
+              "$f" 2>/dev/null || true
           done
         '';
 
         meta = with pkgs.lib; {
-          description = "LibTorch C++ distribution with ROCm support";
+          description = "LibTorch C++ distribution with ROCm support (from PyTorch wheel)";
           platforms = platforms.linux;
         };
       };
 
-    # Convenience alias
     defaultPackage.${system} = self.packages.${system}.libtorch-rocm;
   };
 }

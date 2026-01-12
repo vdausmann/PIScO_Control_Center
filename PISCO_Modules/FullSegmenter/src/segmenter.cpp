@@ -64,43 +64,50 @@ void segmentProfile()
 
 			correctImages(imageStack).check();
 
-// 			if (e_useDeconv) {
-// #pragma omp critical
-// 				{
-// 					runDeconvolution(imageStack, model).check();
-// 				}
-// 			}
+			if (e_useDeconv) {
+#pragma omp critical
+				{
+					runDeconvolution(imageStack, model).check();
+				}
+			}
 
 			std::unordered_map<size_t, Objects> objects;
 			std::vector<cv::Mat> cropGroupImages;
 			std::unordered_map<size_t, std::vector<Crop>> tiles;
 
 			detection(imageStack, objects).check();
+
 			groupCrops(objects, cropGroupImages, tiles);
+// 			if (e_useDeconv) {
+// #pragma omp critical
+// 				{
+// 					runDeconvolution(cropGroupImages, model).check();
 
-			if (e_useDeconv) {
-#pragma omp critical
-				{
-					// runDeconvolution(cropGroupImages, model).check();
+					// for (size_t i = 0; i < cropGroupImages.size(); i++) {
+					// 	cv::cvtColor(cropGroupImages[i], cropGroupImages[i], 
+					// 			cv::COLOR_GRAY2BGR);
+					// }
+					//
+					// for (const auto& [key, crops]: tiles) {
+					// 	for (const Crop& crop: crops) {
+					// 		cv::rectangle(cropGroupImages[crop.cropGroupImageIdx], 
+					// 				crop.tile, cv::Scalar(0, 0, 255), 2);
+					// 	}
+					// }
+					//
+					// for (size_t i = 0; i < cropGroupImages.size(); i++) {
+					// 	cv::imwrite("Results/temp/" + std::to_string(imageStack[0].id) +
+					// 			"_" + std::to_string(i) + "_no_deconv.png", cropGroupImages[i]);
+					// }
+				// }
+			// }
 
-					for (size_t i = 0; i < cropGroupImages.size(); i++) {
-						cv::cvtColor(cropGroupImages[i], cropGroupImages[i], 
-								cv::COLOR_GRAY2BGR);
-					}
-
-					for (const auto& [key, crops]: tiles) {
-						for (const Crop& crop: crops) {
-							cv::rectangle(cropGroupImages[crop.cropGroupImageIdx], 
-									crop.tile, cv::Scalar(0, 0, 255), 2);
-						}
-					}
-
-					for (size_t i = 0; i < cropGroupImages.size(); i++) {
-						cv::imwrite("Results/temp/" + std::to_string(imageStack[0].id) +
-								"_" + std::to_string(i) + "_no_deconv.png", cropGroupImages[i]);
-					}
-				}
-		}
+			// for (const auto& [key, crops]: tiles) {
+			// 	for (const Crop& crop: crops) {
+			// 		cv::rectangle(cropGroupImages[crop.cropGroupImageIdx], 
+			// 				crop.tile, cv::Scalar(0, 0, 255), 2);
+			// 	}
+			// }
 
 
 #pragma omp critical

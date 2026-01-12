@@ -44,6 +44,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						(torch.override ({cudaSupport = true;}))
 						(opencv4.override {enableGtk3 = true; enableCuda = false;})
 						h5py
+						matplotlib
 					]))
 					cudatoolkit
 					cudaPackages.cuda_nvcc

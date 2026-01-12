@@ -78,7 +78,6 @@ void generateCrop(const std::vector<cv::Point>& contour, const Image& image, Obj
 }
 
 // void createDenseCropImage
-
 Error detection(std::vector<Image>& imageBuffer, 
 		std::unordered_map<size_t, Objects>& detectedObjects)
 {

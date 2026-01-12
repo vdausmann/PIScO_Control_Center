@@ -6,10 +6,6 @@
 #include <vector>
 
 
-template <typename T>
-void reorder(std::vector<T>& v, const std::vector<size_t>& idx);
-
-
 struct Image {
 	cv::Mat img;
 	size_t id;	// image id

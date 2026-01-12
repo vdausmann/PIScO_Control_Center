@@ -64,10 +64,10 @@ Error initH5ProfileFile(H5::H5File& file)
 
 		strftime(buffer,sizeof(buffer),"%d-%m-%Y %H:%M:%S",timeinfo);
 		std::string datetime(buffer);
-		writeStringAttribute(file, "Date and time of Segmentation", datetime);
-		writeStringAttribute(file, "Profile name", e_profileName);
+		writeStringAttribute(file, "Date and Time of Segmentation", datetime);
+		writeStringAttribute(file, "Profile Name", e_profileName);
 		writeStringAttribute(file, "Image Source Path", e_sourcePath);
-		writeScalarAttribute(file, "Setting: imageStacksize", e_imageStackSize);
+		writeScalarAttribute(file, "Setting: imageStackSize", e_imageStackSize);
 		writeScalarAttribute(file, "Setting: minArea", e_minArea);
 		writeScalarAttribute(file, "Setting: minMean", e_minMean);
 		writeScalarAttribute(file, "Setting: minStdDev", e_minStdDev);

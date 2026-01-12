@@ -9,7 +9,7 @@ from PySide6.QtCore import QSize, Slot, Qt
 from PySide6.QtGui import QIcon, QAction
 
 
-from .CV_Image_SequencerPane.image_sequencer_pane import ImageSequencer
+# from .CV_Image_SequencerPane.image_sequencer_pane import ImageSequencer
 from .TaskViewerPane import TaskViewerPane
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
@@ -137,7 +137,7 @@ class PIScOControlCenter(QMainWindow):
         self.profile_viewer = ProfileViewer(self.client)
         self.hdf5_viewer = HDF5Viewer(self.client)
         self.server_viewer = ServerViewer(self.client)
-        self.image_node_system = ImageSequencer(self.app)
+        # self.image_node_system = ImageSequencer(self.app)
 
 
         self.stacked_widget.addWidget(self.server_viewer)
@@ -145,7 +145,7 @@ class PIScOControlCenter(QMainWindow):
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
         self.stacked_widget.addWidget(self.hdf5_viewer)
-        self.stacked_widget.addWidget(self.image_node_system)
+        # self.stacked_widget.addWidget(self.image_node_system)
         main_layout.addWidget(self.stacked_widget, 1)
 
     def add_menubar(self):

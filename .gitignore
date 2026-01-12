@@ -22,7 +22,8 @@ Data_Analysis/.direnv
 PISCO_Modules/FullSegmenter/latest*
 PISCO_Modules/FullSegmenter/.direnv
 PISCO_Modules/FullSegmenter/Results
-PISCO_Modules/PostProcessing/Results
+PISCO_Modules/FullSegmenter/latest
+PISCO_Modules/FullSegmenter/dependenciesAMD/torch-2.6.0+rocm6.4.1.git1ded221d-cp312-cp312-linux_x86_64.whl
 
 
 # Distribution / packaging

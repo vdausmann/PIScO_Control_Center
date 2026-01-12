@@ -205,8 +205,7 @@ class TaskManager:
         except FileNotFoundError:
             await self._send_message_to_clients(
                     error_msg(404, f"Command not found: {" ".join(module.internal_settings.command)}",
-                                                          module.parent_task_id,
-                              module.module_id))
+                                                          module.parent_task_id, module.module_id))
         except Exception as e:
             await self._send_message_to_clients(
                     error_msg(400, f"Unknown exception {e} for command: {" ".join(module.internal_settings.command)}",

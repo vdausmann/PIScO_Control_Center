@@ -42,12 +42,11 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						websockets
 						qasync
 						(opencv4.override {enableGtk3 = true;})
-						pyqtgraph
 						scikit-image
 						h5py
 						paramiko
                     ]))
-					qt6.qtwayland
+					# qt6.qtwayland
                 ];
                 shellHook = ''
 					export QT_QPA_PLATFORM=xcb
@@ -57,3 +56,4 @@ outputs = { self, nixpkgs, flake-utils, ... }:
         }
     );
 }
+# qt6.qtwayland not for darwin!

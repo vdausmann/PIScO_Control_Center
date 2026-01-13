@@ -46,6 +46,8 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						h5py
 						paramiko
                     ]))
+					qt6.qtbase
+					qt6.qtwebengine
 					# qt6.qtwayland
                 ];
                 shellHook = ''

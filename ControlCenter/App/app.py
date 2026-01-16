@@ -7,10 +7,16 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QSize, Slot, Qt
 from PySide6.QtGui import QIcon, QAction
+from PyQt5.QtGui import QSurfaceFormat
+from PyQt5.QtCore import QCoreApplication
 
 
-# from .CV_Image_SequencerPane.image_sequencer_pane import ImageSequencer
-# from .TaskViewerPane import TaskViewerPane
+try:
+    from .CV_Image_SequencerPane.image_sequencer_pane import ImageSequencer
+    HAS_CV_IMAGE_SEQUENCER = True
+except:
+    HAS_CV_IMAGE_SEQUENCER = False
+from .TaskViewerPane import TaskViewerPane
 from .CallibrationPane import CallibrationViewer
 from .ProfileViewerPane import ProfileViewer
 from .HDF5ViewerPane import HDF5Viewer
@@ -23,6 +29,12 @@ class PIScOControlCenter(QMainWindow):
     """Main application window for the PISCO-Controller."""
 
     def __init__(self):
+        fmt = QSurfaceFormat()
+        fmt.setVersion(3, 2)               # or 3,3 — anything ≥ 3
+        fmt.setProfile(QSurfaceFormat.CoreProfile)
+        QSurfaceFormat.setDefaultFormat(fmt)
+
+        
         self.app = QApplication(sys.argv)
         super().__init__()
         self.setScreen(self.app.screens()[0])
@@ -132,20 +144,22 @@ class PIScOControlCenter(QMainWindow):
 
         self.stacked_widget = QStackedWidget() 
 
-        # self.task_viewer = TaskViewerPane()
+        self.task_viewer = TaskViewerPane()
         self.callibration_viewer = CallibrationViewer()
         self.profile_viewer = ProfileViewer(self.client)
         self.hdf5_viewer = HDF5Viewer(self.client)
         self.server_viewer = ServerViewer(self.client)
-        # self.image_node_system = ImageSequencer(self.app)
+        if HAS_CV_IMAGE_SEQUENCER:
+            self.image_node_system = ImageSequencer(self.app)
 
 
         self.stacked_widget.addWidget(self.server_viewer)
-        # self.stacked_widget.addWidget(self.task_viewer)
+        self.stacked_widget.addWidget(self.task_viewer)
         self.stacked_widget.addWidget(self.callibration_viewer)
         self.stacked_widget.addWidget(self.profile_viewer)
         self.stacked_widget.addWidget(self.hdf5_viewer)
-        # self.stacked_widget.addWidget(self.image_node_system)
+        if HAS_CV_IMAGE_SEQUENCER:
+            self.stacked_widget.addWidget(self.image_node_system)
         main_layout.addWidget(self.stacked_widget, 1)
 
     def add_menubar(self):

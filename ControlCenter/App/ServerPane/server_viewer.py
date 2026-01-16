@@ -33,8 +33,11 @@ class ServerViewer(QWidget):
         ########################################
         ## FastAPI connection:
         ########################################
-        self.fast_api_view = FastAPIView(self.client)
-        self.splitter.addWidget(self.fast_api_view)
-        self.splitter.setSizes([300, 700])
+        # try:
+        #     self.fast_api_view = FastAPIView(self.client)
+        #     self.splitter.addWidget(self.fast_api_view)
+        #     self.splitter.setSizes([300, 700])
+        # except:
+        #     ...
 
 

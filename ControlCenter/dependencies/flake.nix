@@ -48,7 +48,7 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     ]))
 					qt6.qtbase
 					qt6.qtwebengine
-					# qt6.qtwayland
+					 #qt6.qtwayland
                 ];
                 shellHook = ''
 					export QT_QPA_PLATFORM=xcb

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Building PISCO App..."
+git submodule update --init --recursive
 rm latest*
 SYSTEM=$(nix eval --raw --impure --expr "builtins.currentSystem")
 echo "Detected system: ${SYSTEM}"

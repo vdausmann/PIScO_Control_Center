@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QPushButton,
+from PySide6.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
                                QVBoxLayout, QWidget, QDialog, QTreeWidget,
                                QTreeWidgetItem)
 from PySide6.QtCore import Qt, QTimer, Signal, QSize
@@ -224,3 +224,14 @@ class RemoteFileDialog(QDialog):
     def selected_path(self):
         item = self.tree.currentItem()
         return item.data(0, 32)
+
+
+class HTTPErrorBox:
+
+    def __init__(self, status_code: int, msg: str, parent=None):
+        self.msg = QMessageBox(parent)
+        self.msg.setIcon(QMessageBox.Icon.Critical)
+        self.msg.setWindowTitle("Network Error")
+        self.msg.setText(f"HTTP Error {status_code}")
+        self.msg.setInformativeText(msg)
+        self.msg.exec()

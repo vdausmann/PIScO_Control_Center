@@ -1,22 +1,27 @@
 from typing import Optional
-from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtWidgets import (
-        QCheckBox, QLineEdit, QSizePolicy, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
+        QCheckBox, QHeaderView, QLineEdit, QStackedWidget, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextEdit, QTreeWidget,
         QTreeWidgetItem, QHBoxLayout, QSplitter
 )
-import numpy as np
 import json
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QImage, QIntValidator, QPixmap
-import cv2 
+from PySide6.QtCore import QModelIndex, QObject, Qt, Signal, Slot, QThread
+from PySide6.QtGui import QIntValidator
 
 from PySide6.QtCore import Qt
-import requests
-from requests.models import HTTPError
 from ..helper import HTTPErrorBox
 from Server.Client.remote_hdf_file import RemoteHDFFile
-from Server.Client.file_explorer import ServerFileDialog
 from Server.Client.server_client import ServerClient
+
+
+class Worker(QObject):
+    finished = Signal(str)
+    progress = Signal(int)
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def run(self):
+        ...
 
 class HDF5Viewer(QWidget):
     def __init__(self, server_client: ServerClient):
@@ -84,13 +89,30 @@ class HDF5Viewer(QWidget):
         right_splitter.addWidget(self.attributes)
 
         # Data:
+        self.data_space = QStackedWidget()
+
         label = QLabel("Data", alignment=Qt.AlignmentFlag.AlignCenter)
         label.setFixedHeight(20)
         label.setStyleSheet("font-size: 16px;")
+
         self.data = QTextEdit()
         self.data.setReadOnly(True)
+
+        # self.image_label = QLabel()
+        # self.image_label.setAlignment(Qt.AlignmentFlag.AlignLeft |
+        #                               Qt.AlignmentFlag.AlignTop)
+        # img_scroll_area = QScrollArea()
+        # img_scroll_area.setWidget(self.image_label)
+
+        
+        self.data_space.addWidget(self.data)
+        # self.data_space.addWidget(img_scroll_area)
+
+        self.data_space.setCurrentIndex(0)
+
         right_splitter.addWidget(label)
-        right_splitter.addWidget(self.data)
+        right_splitter.addWidget(self.data_space)
+        right_splitter.setSizes([10, 100, 10, 200])
 
     @Slot()
     def change_preload_groups(self, text):
@@ -110,7 +132,7 @@ class HDF5Viewer(QWidget):
             self.file.close()
             self.file = None
 
-        self.file = RemoteHDFFile(self.server_client, "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/Results/M202_046-01_PISCO2_20240727-0334_Images-PNG.h5")
+        self.file = RemoteHDFFile(self.server_client, "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/Results/M181-165-1_CTD-048_00°00S-017°00W_20220508-0903.h5")
         code, detail = self.file.open()
         if code != 200:
             HTTPErrorBox(code, detail["detail"])
@@ -119,6 +141,9 @@ class HDF5Viewer(QWidget):
         self.root_node = QTreeWidgetItem(["/", "Root", "-", "-"])
         self.root_node.setData(0, Qt.ItemDataRole.UserRole, ("group", "/"))
         self.tree.invisibleRootItem().addChild(self.root_node)
+
+        # t = QThread()
+        # t.start()
         self.populate_tree("/", self.root_node)
         self.root_node.setExpanded(True)
 
@@ -152,6 +177,19 @@ class HDF5Viewer(QWidget):
             if counter >= self.preload_groups:
                 break
 
+        # self.tree.header().resizeSections(QHeaderView.ResizeMode.ResizeToContents)
+        self.tree.resizeColumnToContents(1)
+        self.tree.resizeColumnToContents(2)
+        self.tree.header().setStretchLastSection(True)
+
+        for column in [0, 1]:
+            self.tree.setRootIndex(self.tree.model().index(0,0))
+            self.tree.resizeColumnToContents(column)
+            child_width = self.tree.columnWidth(column)
+
+            self.tree.setRootIndex(QModelIndex())  # restore
+            self.tree.setColumnWidth(column, child_width)
+
 
     def on_item_clicked(self, item, column):
         dtype, path = item.data(0, Qt.ItemDataRole.UserRole)
@@ -173,5 +211,14 @@ class HDF5Viewer(QWidget):
                 group_path = "/".join(path.split("/")[:-1])
                 width = self.file[group_path + "/width"]
                 height = self.file[group_path + "/height"]
+                # img = QPixmap.fromImage(convert_cv_to_qt(create_crop_collection_image(data,
+                #                                           width, height, 400, len(width))))
+                # label = QLabel()
+                # label.setPixmap(img)
+                # label.resize(img.size())
+                # self.crop_flow_layout.addWidget(label)
+                # self.data_space.setCurrentIndex(1)
             else:
                 self.data.setPlainText(str(data))
+        else:
+            self.data_space.setCurrentIndex(0)

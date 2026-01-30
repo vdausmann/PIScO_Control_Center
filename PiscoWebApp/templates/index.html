@@ -1,29 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>HDF5 Inspector - Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}HDF Inspector{% endblock %}
+
+{% block content %}
 <div class="landing-container">
-    <h1>HDF5 Web Inspector</h1>
+    <h1>PIScO WebApp</h1>
     <p>Select an option below:</p>
 
     <div class="cards">
 
         <div class="card">
-            <h3>Browse HDF5 Files</h3>
+            <h3>HDF5 File Inspector</h3>
             <p>View file structure, datasets, and attributes.</p>
-            <a href="/files" class="button">Open Browser</a>
+            <a href="/select_file?file_types=.h5,.hdf5" class="button">Open Browser</a>
         </div>
 
         <div class="card">
-            <h3>Run Analysis / Tasks</h3>
-            <p>Run scripts or programs with parameters on server files.</p>
+            <h3>Profile Processing</h3>
+            <p>Visualization and data processing of PIScO profile data.</p>
+            <a href="/" class="button">Start processing</a>
+        </div>
+
+        <div class="card">
+            <h3>Start Tasks</h3>
+            <p>Run scripts or programs on server files.</p>
             <a href="/run_task" class="button">Run Tasks</a>
         </div>
 
     </div>
 </div>
-</body>
-</html>
+{% endblock %}

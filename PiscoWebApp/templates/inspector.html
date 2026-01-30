@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}HDF Inspector{% endblock %}
+
+{% block content %}
+<div class="panel">
+
+<!-- <h2>HDF5 Inspector</h2> -->
+
+<p style="text-align: left;"><b>File:</b> {{ file_path }}</p>
+
+
+<div class="inspector-layout">
+
+    <!-- LEFT COLUMN -->
+    <section class="inspector-left" style="text-align: left;">
+        <h2>Group: {{ hdf_path }}</h2>
+
+        <!-- Attributes -->
+		{% if attributes %}
+		<table class="attr-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Value</th>
+					<th>Type</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for a in attributes %}
+				<tr>
+					<td class="attr-key">{{ a.key }}</td>
+					<td class="attr-value">
+						<pre>{{ a.value }}</pre>
+					</td>
+					<td class="attr-type">{{ a.type }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+			<p class="muted">No attributes</p>
+		{% endif %}
+
+		<div class="navigation-layout">
+			<div>
+				<h4>Datasets:</h4>
+				{% if datasets %}
+				<ul class="nav-list">
+					{% for d in datasets %}
+						<li>📄 <a href="/inspect-data/{{ file_path }}?hdf_path={{ d.path }}"> {{ d.name }}</a></li>
+					{% endfor %}
+				</ul>
+				{% else %}
+					<p class="muted">No Datasets</p>
+				{% endif %}
+			</div>
+			<div>
+				<h4>Subgroups:</h4>
+				{% if groups %}
+				<ul class="nav-list">
+					{% for g in groups %}
+						<li>📁 <a href="/inspect/{{ file_path }}?hdf_path={{ g.path }}"> {{ g.name }}</a></li>
+					{% endfor %}
+				</ul>
+				{% else %}
+					<p class="muted">No Subgroups</p>
+				{% endif %}
+			</div>
+		</div>
+    </section>
+
+
+		<aside class="inspector-right">
+			<div class="dataset-plot">
+				{{ plot_div | safe }}
+			</div>
+
+		</aside>
+
+	<!-- RIGHT COLUMN -->
+ <!--    <aside class="inspector-right"> -->
+	<!-- 	<h3>Navigation</h3> -->
+	<!---->
+	<!-- 	{% if groups %} -->
+	<!-- 	<div class="nav-section"> -->
+	<!-- 		<h4>Subgroups:</h4> -->
+	<!-- 		<ul class="nav-list"> -->
+	<!-- 			{% for g in groups %} -->
+	<!-- 				<li>📁 <a href="/inspect/{{ file_path }}?hdf_path={{ g.path }}"> {{ g.name }}</a></li> -->
+	<!-- 			{% endfor %} -->
+	<!-- 		</ul> -->
+	<!-- 	</div> -->
+	<!-- 	{% endif %} -->
+	<!---->
+	<!-- </aside> -->
+
+</div>
+
+
+<!-- <div class="panel" style="padding: 5px 0px;"> -->
+<!--     <h3>Group attributes</h3> -->
+<!---->
+<!--     {% if attributes %} -->
+<!--     <table class="attr-table"> -->
+<!--         <thead> -->
+<!--             <tr> -->
+<!--                 <th>Name</th> -->
+<!--                 <th>Value</th> -->
+<!--                 <th>Type</th> -->
+<!--             </tr> -->
+<!--         </thead> -->
+<!--         <tbody> -->
+<!--         {% for a in attributes %} -->
+<!--             <tr> -->
+<!--                 <td class="attr-key">{{ a.key }}</td> -->
+<!--                 <td class="attr-value"> -->
+<!--                     <pre>{{ a.value }}</pre> -->
+<!--                 </td> -->
+<!--                 <td class="attr-type">{{ a.type }}</td> -->
+<!--             </tr> -->
+<!--         {% endfor %} -->
+<!--         </tbody> -->
+<!--     </table> -->
+<!--     {% else %} -->
+<!--         <p class="muted">No attributes</p> -->
+<!--     {% endif %} -->
+<!-- </div> -->
+<!---->
+<!---->
+<!-- <ul class="file-list"> -->
+<!-- {% for g in groups %} -->
+<!-- 	<li>📁 <a href="/inspect/{{ file_path }}?hdf_path={{ g.path }}"> {{ g.name }}</a></li> -->
+<!-- {% endfor %} -->
+<!-- </ul> -->
+<!---->
+<!-- <ul class="file-list"> -->
+<!-- {% for d in datasets %} -->
+<!-- 	<li>📄 <a href="/inspect-data/{{ file_path }}?hdf_path={{ d.path }}"> {{ d.name }}</a></li> -->
+<!-- {% endfor %} -->
+<!-- </ul> -->
+<!---->
+<!-- <br> -->
+<!-- <a href="/">⬅ Back to dashboard</a> -->
+
+</div>
+{% endblock %}

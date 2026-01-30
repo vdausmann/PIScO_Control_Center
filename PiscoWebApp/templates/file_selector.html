@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}HDF Inspector{% endblock %}
+
+{% block content %}
+<div class="panel">
+
+<h2>Select HDF5 file on server</h2>
+
+<p>Recently opened: 
+	<ul class="file-list">
+    {% for f in recent %}
+        <li>📄 <a href="/inspect/{{f.path}}?hdf_path=/">{{f.name}}</a></li>
+    {% endfor %}
+	</ul>
+</p>
+        
+
+<p>Current folder: /{{current_path}}</p>
+
+<ul class="file-list">
+{% for e in entries %}
+    {% if e.is_dir %}
+		<li>📁 <a href="/select_file?subpath={{e.subpath}}&file_types={{file_type}}">{{e.name}}</a></li>
+    {% elif e.is_selectable %}
+        <!-- <li>📄 <a href="/select_file/choose/{{e.subpath}}">{{e.name}}</a></li> -->
+        <li>📄 <a href="/inspect/{{e.path}}?hdf_path=/">{{e.name}}</a></li>
+    {% else %}
+        <li style="color:#888;">📄 {{e.name}}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+<br>
+<a href="/">⬅ Back to dashboard</a>
+
+</div>
+{% endblock %}

@@ -32,7 +32,6 @@ void segmentProfile()
 	H5::H5File file;
 	initH5ProfileFile(file).check();
 
-
 	std::vector<std::string> files;
 	getFiles(files).check();
 	std::cout << "Found " << files.size() << " files\n";

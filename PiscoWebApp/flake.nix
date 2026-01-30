@@ -35,8 +35,9 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						jinja2
 						plotly
 						python-multipart
+						watchfiles
 						# flask
-						#(opencv4.override {enableGtk3 = true;})
+						(opencv4.override {enableGtk3 = true;})
                     ]))
                 ];
                 buildInputs = with pkgs; [

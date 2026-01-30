@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}HDF Tool{% endblock %}</title>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<header class="header">
+    <h1 class="app-title">HDF Inspector</h1>
+
+    <div class="header-actions">
+        <button id="theme-toggle" class="button" style="padding: 2px 4px">🌙</button>
+        <a href="/">Home</a>
+        <a href="/select_file?file_types=.h5,.hdf5">Select HDF file</a>
+    </div>
+</header>
+
+<main class="content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- <footer class="footer"> -->
+<!--     <small>Local HDF5 Web Tool</small> -->
+<!-- </footer> -->
+
+<script>
+(function () {
+    const storedTheme = localStorage.getItem("theme");
+
+    if (storedTheme) {
+        document.documentElement.setAttribute("data-theme", storedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+    }
+
+    const toggle = document.getElementById("theme-toggle");
+    if (toggle) {
+        toggle.onclick = () => {
+            const current = document.documentElement.getAttribute("data-theme");
+            const next = current === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", next);
+            localStorage.setItem("theme", next);
+            toggle.innerText = next === "dark" ? "☀️" : "🌙";
+        };
+    }
+})();
+</script>
+
+{% block body_extra %}{% endblock %}
+</body>
+</html>

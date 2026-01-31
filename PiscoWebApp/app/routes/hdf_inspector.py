@@ -1,19 +1,20 @@
 from cv2 import hdf
 import numpy as np
 from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 import plotly.graph_objects as go
-from plotly.io import to_html
+from plotly.io import to_html, to_json
+from fastapi import Depends
 
 from app.services.hdf_service import HDFInspectorError, HDFPathNotFound, HDFService
+from app.services.auth import require_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 templates = Jinja2Templates(directory="templates")
 
 
-def create_distribution_plot(x, y):
-    print(len(x), len(y))
+def plot_distribution(x, y):
     fig = go.Figure(go.Histogram(x=x, y=y, 
                                  xbins={
                                      "start": np.min(x),
@@ -29,26 +30,46 @@ def create_distribution_plot(x, y):
     )
 
     # Generate HTML div (without full page)
-    plot_div = to_html(fig, full_html=False, include_plotlyjs="cdn")
-    return plot_div
+    # plot_div = to_html(fig, full_html=False, include_plotlyjs="cdn")
+    return to_json(fig)
 
 def plot_image(img):
-    bg_color = "#fff"
-    fig = go.Figure(go.Image(z=img))
+    # fig = go.Figure(go.Image(z=img))
+    fig = go.Figure()
 
-    # fig.add_trace(go.Image(z=img))  # z = 2D array or RGB array
+    fig.add_trace(go.Image(z=img))  # z = 2D array or RGB array
 
     fig.update_layout(
         title="Reconstructed image",
         margin=dict(l=20, r=20, t=40, b=20),
-        plot_bgcolor=bg_color,
-        paper_bgcolor=bg_color,
+        # plot_bgcolor=bg_color,
+        # paper_bgcolor=bg_color,
         xaxis=dict(showgrid=False, showticklabels=False),
         yaxis=dict(showgrid=False, showticklabels=False),
-        height=600,
+        height=800,
+        template="plotly_dark",
     )
 
-    return to_html(fig, full_html=False, include_plotlyjs="cdn")
+    # return to_html(fig, full_html=False, include_plotlyjs="cdn")
+    return to_json(fig)
+
+
+
+@router.get("/plot/{file_path:path}", response_class=JSONResponse)
+def add_plot(file_path: str, hdf_path: str):
+    service = HDFService(file_path)
+
+    if not service.exists():
+        return HTMLResponse("Selected file no longer exists.")
+
+    if hdf_path == "/":
+        data = service.get_distribution()
+        plot = plot_distribution(data["depths"], data["num_objects"])
+    else:
+        img = service.reconstruct_image(hdf_path)
+        plot = plot_image(img)
+    return JSONResponse(plot)
+
 
 
 @router.get("/inspect/{file_path:path}", response_class=HTMLResponse)
@@ -60,13 +81,6 @@ def inspect_hdf(request: Request, file_path: str, hdf_path: str):
 
     structure = service.list_groups_and_datasets(hdf_path)
 
-    if hdf_path == "/":
-        data = service.get_distribution()
-        plot_div = create_distribution_plot(data["depths"], data["num_objects"])
-    else:
-        img = service.reconstruct_image(hdf_path)
-        plot_div = plot_image(img)
-
     return templates.TemplateResponse(
         "inspector.html",
         {
@@ -76,7 +90,6 @@ def inspect_hdf(request: Request, file_path: str, hdf_path: str):
             "datasets": structure["datasets"],
             "attributes": structure["attributes"],
             "hdf_path": hdf_path,
-            "plot_div": plot_div
         }
     )
 

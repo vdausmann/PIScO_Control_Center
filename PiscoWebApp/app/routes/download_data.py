@@ -7,7 +7,10 @@ import csv
 
 from app.services.hdf_service import HDFService
 
-router = APIRouter()
+from fastapi import Depends
+from app.services.auth import require_user
+
+router = APIRouter(dependencies=[Depends(require_user)])
 
 def dataset_to_csv_stream(ds):
     buffer = io.StringIO()

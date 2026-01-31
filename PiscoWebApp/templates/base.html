@@ -18,6 +18,9 @@
         <button id="theme-toggle" class="button" style="padding: 2px 4px">🌙</button>
         <a href="/">Home</a>
         <a href="/select_file?file_types=.h5,.hdf5">Select HDF file</a>
+		<form action="/logout" method="post" style="display:inline;">
+			<button type="submit" class="button" style="padding: 2px 2px;">Logout</button>
+		</form>
     </div>
 </header>
 
@@ -51,6 +54,8 @@
     }
 })();
 </script>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
 {% block body_extra %}{% endblock %}
 </body>

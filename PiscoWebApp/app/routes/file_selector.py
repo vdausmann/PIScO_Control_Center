@@ -4,7 +4,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-router = APIRouter()
+from fastapi import Depends
+from app.services.auth import require_user
+
+router = APIRouter(dependencies=[Depends(require_user)])
 templates = Jinja2Templates(directory="templates")
 
 # Root directory on the server you want to browse

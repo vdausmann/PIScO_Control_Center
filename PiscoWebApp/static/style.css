@@ -11,7 +11,7 @@
 }
 
 /* Dark theme */
-[data-theme="light"] {
+[data-theme="dark"] {
     --bg-color: #f4f4f4;
     --panel-bg: #ffffff;
     --text-color: #111;
@@ -266,4 +266,75 @@ a:hover {
     width: 100%;
     max-width: 600px;
     margin: 12px 0;
+}
+
+.plot-placeholder {
+    height: 300px;
+    background: linear-gradient(90deg, var(--panel), var(--bg), var(--panel));
+    animation: pulse 1.5s infinite;
+}
+
+.centered-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-box,
+.message-box {
+    /* width: 320px; */
+    padding: 24px 10px;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+.login-box h2,
+.message-box h2 {
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.form-group input {
+    width: 50%;
+    padding: 6px 10px;
+}
+
+/* button, */
+/* .button-link { */
+/*     display: inline-block; */
+/*     width: 100%; */
+/*     padding: 8px; */
+/*     margin-top: 10px; */
+/*     background: var(--accent-color); */
+/*     color: white; */
+/*     border: none; */
+/*     border-radius: 6px; */
+/*     text-decoration: none; */
+/*     cursor: pointer; */
+/* } */
+/**/
+/* button:hover, */
+/* .button-link:hover { */
+/*     opacity: 0.9; */
+/* } */
+
+.error-box {
+    background: #c0392b;
+    color: white;
+    padding: 6px;
+    border-radius: 6px;
+    margin-bottom: 10px;
 }

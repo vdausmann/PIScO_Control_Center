@@ -177,8 +177,8 @@ class HDFService:
                 img[y[i]:y[i]+h, x[i]:x[i]+w, 0] = pixels
                 img[y[i]:y[i]+h, x[i]:x[i]+w, 1] = pixels
                 img[y[i]:y[i]+h, x[i]:x[i]+w, 2] = pixels
-                cv.rectangle(img, (x[i], y[i]), (x[i] + w, y[i] + h), (255, 0, 0), 4)
-        img = cv.resize(img, None, fx=0.2, fy=0.2)
+                # cv.rectangle(img, (x[i], y[i]), (x[i] + w, y[i] + h), (255, 0, 0), 2)
+        img = cv.resize(img, None, fx=0.25, fy=0.25)
         # img = cv.bitwise_not(img)
         # img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
         return img

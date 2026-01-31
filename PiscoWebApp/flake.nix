@@ -38,6 +38,11 @@ outputs = { self, nixpkgs, flake-utils, ... }:
 						watchfiles
 						# flask
 						(opencv4.override {enableGtk3 = true;})
+						passlib
+						bcrypt
+						python-dotenv
+						itsdangerous
+						sqlalchemy
                     ]))
                 ];
                 buildInputs = with pkgs; [

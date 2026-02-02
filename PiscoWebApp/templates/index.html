@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}PIScO WebApp{% endblock %}
+
+
+{% block content %}
+<div class="landing-container">
+    <h1>PIScO WebApp</h1>
+    <p>Select an option below:</p>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>HDF5 File Inspector</h3>
+            <p>View file structure, datasets, and attributes.</p>
+            <a href="/select_file?file_types=.h5,.hdf5" class="button">Open Browser</a>
+        </div>
+
+        <div class="card">
+            <h3>Profile Processing</h3>
+            <p>Visualization and data processing of PIScO profile data.</p>
+            <a href="/" class="button">Start processing</a>
+        </div>
+
+        <div class="card">
+            <h3>Start Tasks</h3>
+            <p>Run scripts or programs on server files.</p>
+            <a href="/run_task" class="button">Run Tasks</a>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

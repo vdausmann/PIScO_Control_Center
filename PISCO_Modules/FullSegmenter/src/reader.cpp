@@ -5,6 +5,7 @@
 #include <iostream>
 #include <filesystem>
 #include <algorithm>
+#include <opencv2/imgproc.hpp>
 #include <string>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -62,6 +63,10 @@ Error readImage(Image& image, const std::string& filename)
         error.addMessage("Empty image at '" + filename);
         return error;
     }
+
+	if (image.img.cols > 2560 || image.img.rows > 2560) {
+		cv::resize(image.img, image.img, cv::Size(2560, 2560));
+	}
 	// check for corrupted image:
 	cv::Scalar mean, stddev;
 	cv::meanStdDev(image.img, mean, stddev);

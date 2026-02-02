@@ -10,14 +10,14 @@ case "$MODE" in
 		  --offline \
 		  --no-update-lock-file \
 		  --command bash -c \
-		  "./binDebug/Segmenter $SETTINGS"
+		  "./binDebug/PostProcessing $SETTINGS"
         ;;
     "release")
 		nix develop ./latest \
 		  --offline \
 		  --no-update-lock-file \
 		  --command bash -c \
-		  "./bin/Segmenter $SETTINGS"
+		  "./bin/PostProcessing $SETTINGS"
         ;;
     *)
         echo "Unknown command: $MODE"

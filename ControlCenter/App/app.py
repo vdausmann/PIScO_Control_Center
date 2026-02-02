@@ -60,7 +60,7 @@ class PIScOControlCenter(QMainWindow):
 
         self.init_ui()
 
-        self._show_page(3)
+        self._show_page(4)
         self.client.reconnect_to_server()
 
         # Connect application about to quit signal for state saving

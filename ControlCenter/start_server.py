@@ -13,7 +13,7 @@ def create_server():
         print(f"Remember to run SSH port-forwarding: ssh -L {args.port}:localhost:{args.port} user@ip")
 
     server = PISCOServer()
-    server.run("127.0.0.1", 8001, False)
+    server.run("127.0.0.1", 8001)
     # return server.app
 
 if __name__ == "__main__":

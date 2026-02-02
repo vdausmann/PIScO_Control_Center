@@ -16,7 +16,7 @@ def get_crop(crop_data: np.ndarray, widths: np.ndarray, heights: np.ndarray, idx
     return data2D
 
 
-path = "./Results/M202_046-01_PISCO2_20240727-0334_Images-PNG.h5"
+path = "./Results/M181-165-1_CTD-048_00°00S-017°00W_20220508-0903.h5"
 
 with h5py.File(path, "r") as f:
     # crop_data = np.array([])
@@ -33,6 +33,8 @@ with h5py.File(path, "r") as f:
         heights = get_group_dataset(group, "height")
 
         for i in range(len(widths)):
+            if widths[i] * heights[i] < 1000:
+                continue
             crop = get_crop(crop_data, widths, heights, i)
-            cv.imwrite(f"./Results/Crops/{str(image)}_{i}.png", crop)
+            cv.imwrite(f"./Results/Crops_deconv/{str(image)}_{i}.png", crop)
 

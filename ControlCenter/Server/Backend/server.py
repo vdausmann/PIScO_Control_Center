@@ -22,7 +22,7 @@ class PISCOServer(FastAPI):
 
         self._setup_routes()
 
-    def run(self, host: str, port: int, remote: bool):
+    def run(self, host: str, port: int):
         config = uvicorn.Config(self, host=host, port=port, log_level="info",
         lifespan="on")
         self.server = uvicorn.Server(config)
@@ -34,7 +34,7 @@ class PISCOServer(FastAPI):
             self.server.run()
         except KeyboardInterrupt:
             print("Server stopped")
-            self.file_handler.close_all()
+            # self.file_handler.close_all()
         finally:
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__

@@ -2,11 +2,13 @@ import os
 from pathlib import Path
 import socket
 from typing import Optional
-from PySide6.QtCore import QByteArray, QEventLoop, QObject, QProcess, QTimer, QUrl, Signal, Slot
-from PySide6.QtNetwork import QAbstractSocket, QNetworkAccessManager, QNetworkReply, QNetworkRequest
+from PySide6.QtCore import QByteArray, QObject, QProcess, QTimer, QUrl, Signal
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtWidgets import QMessageBox
 import json
+
+import requests
 
 from .ssh_connection import SSHConnectionClient
 

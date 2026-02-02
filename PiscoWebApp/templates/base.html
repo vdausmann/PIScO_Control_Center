@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}HDF Tool{% endblock %}</title>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
+
+    {% block head_extra %}{% endblock %}
+</head>
+
+<body>
+
+<header class="header">
+    <h1 class="app-title">PIScO WebApp</h1>
+
+    <div class="header-actions">
+		<div>
+			<button id="theme-toggle" class="button" style="padding: 2px 4px">🌙</button>
+			<a href="/">Home</a>
+			<a href="/select_file?file_types=.h5,.hdf5">Select HDF file</a>
+		</div>
+		<!-- <form action="/logout" method="post" style="display:inline;"> -->
+		<!-- 	<button type="submit" class="button" style="padding: 2px 2px;">Logout</button> -->
+		<!-- </form> -->
+
+		<div class="user-info">
+			{% if user %}
+				<form action="/logout" method="post" style="display:inline;">
+					<button type="submit" class="button" style="padding: 2px 2px;">Logout</button>
+				</form>
+
+				{% if is_admin %}
+					<form action="/admin/logout_all" method="post" style="display:inline; margin-left:10px;">
+						<button type="submit" class="button" style="padding: 2px 2px;">Logout All Users</button>
+					</form>
+				{% endif %}
+
+				Logged in as: <strong>{{ user }}</strong>
+			{% else %}
+				Hello, Guest!
+			{% endif %}
+		</div>
+	</div>
+</header>
+
+<main class="content">
+    {% block content %}{% endblock %}
+</main>
+
+<script>
+(function () {
+    const storedTheme = localStorage.getItem("theme");
+
+    if (storedTheme) {
+        document.documentElement.setAttribute("data-theme", storedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+    }
+
+    const toggle = document.getElementById("theme-toggle");
+    if (toggle) {
+        toggle.onclick = () => {
+            const current = document.documentElement.getAttribute("data-theme");
+            const next = current === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", next);
+            localStorage.setItem("theme", next);
+            toggle.innerText = next === "dark" ? "☀️" : "🌙";
+        };
+    }
+})();
+</script>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+{% block body_extra %}{% endblock %}
+</body>
+</html>

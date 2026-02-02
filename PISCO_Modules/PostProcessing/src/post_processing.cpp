@@ -1,5 +1,6 @@
 #include "post_processing.hpp"
 #include "deconvolution.hpp"
+#include "parser.hpp"
 #include "reader.hpp"
 #include "writer.hpp"
 #include "types.hpp"
@@ -12,16 +13,21 @@ void runPostProcessing()
 	ThreadSafeQueue<CropStack> deconvQueue(2);
 	ThreadSafeQueue<CropStack> writerQueue(2);
 
+	if (e_useDeconv) {
+		std::thread readerThread(readWorker, std::ref(deconvQueue));
+		std::thread deconvThread(deconvolutionWorker, std::ref(deconvQueue), std::ref(writerQueue));
+		std::thread writerThread(writeWorker, std::ref(writerQueue));
 
-	std::thread readerThread(readWorker, std::ref(deconvQueue));
-	std::thread deconvThread(deconvolutionWorker, std::ref(deconvQueue), std::ref(writerQueue));
-	std::thread writerThread(writeWorker, std::ref(writerQueue));
+		readerThread.join();
+		deconvThread.join();
+		writerThread.join();
+	} else {
+		std::thread readerThread(readWorker, std::ref(writerQueue));
+		std::thread writerThread(writeWorker, std::ref(writerQueue));
 
-
-
-	readerThread.join();
-	deconvThread.join();
-	writerThread.join();
+		readerThread.join();
+		writerThread.join();
+	}
 
 	auto end = std::chrono::high_resolution_clock::now();
 	double duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

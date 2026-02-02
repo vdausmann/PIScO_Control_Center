@@ -1,4 +1,5 @@
 #include "writer.hpp"
+#include "parser.hpp"
 #include "types.hpp"
 #include <iostream>
 #include <opencv2/core.hpp>
@@ -44,8 +45,8 @@ void writeWorker(ThreadSafeQueue<CropStack>& writerQueue)
 				}
 			}
 
-			cv::imwrite("Results/" + std::to_string(imageIdx) + ".png", stack.stackImages[stackIdx]);
-			std::cout << "Image written to " << "Results/" + std::to_string(imageIdx) + ".png\n";
+			cv::imwrite(e_savePath + std::to_string(imageIdx) + ".png", stack.stackImages[stackIdx]);
+			std::cout << "Image written to " << e_savePath + std::to_string(imageIdx) + ".png\n";
 			imageIdx++;
 		}
 	}

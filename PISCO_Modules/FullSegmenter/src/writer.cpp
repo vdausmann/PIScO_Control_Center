@@ -44,6 +44,47 @@ void writeScalarAttribute(H5::H5Object& obj,
     double tmp = static_cast<double>(value);
     attribute.write(H5::PredType::NATIVE_DOUBLE, &tmp);
 }
+
+void writeIntAttribute(H5::H5Object& obj, const std::string& attr_name, int value)
+{
+	H5::DataSpace dataspace(H5S_SCALAR);
+	H5::Attribute attribute = obj.createAttribute(
+        attr_name,
+        H5::PredType::NATIVE_INT,
+        dataspace
+    );
+
+    attribute.write(H5::PredType::NATIVE_INT, &value);
+}
+
+
+Error incrementAttribute(H5::H5File& file, const std::string& attrName)
+{
+    try {
+        H5::Attribute attr;
+        H5::DataSpace scalarSpace(H5S_SCALAR);
+        int value = 0;
+
+        // Check if the attribute exists
+        if (H5Aexists(file.getId(), attrName.c_str())) {
+            attr = file.openAttribute(attrName);
+
+            attr.read(H5::PredType::NATIVE_INT, &value);
+            value += 1;
+            attr.write(H5::PredType::NATIVE_INT, &value);
+        } else {
+            value = 1;
+            attr = file.createAttribute(attrName, H5::PredType::NATIVE_INT, scalarSpace);
+            attr.write(H5::PredType::NATIVE_INT, &value);
+        }
+		return Error::Success;
+    } catch (H5::Exception& e) {
+		Error error = Error::RuntimeError;
+		error.addMessage("Error while initializing HDF file: " + e.getDetailMsg());
+        return error;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -111,6 +152,8 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 		hsize_t dims[1] = { numObjects };
 		H5::DataSpace dataspace(1, dims);
 
+		writeIntAttribute(group, "Number of objects", objects.width.size());
+
 		H5::DataSet dataset = group.createDataSet("width", H5::PredType::NATIVE_INT, dataspace);
 		dataset.write(objects.width.data(), H5::PredType::NATIVE_INT);
 		dataset = group.createDataSet("height", H5::PredType::NATIVE_INT, dataspace);
@@ -171,6 +214,8 @@ void writeData(std::unordered_map<size_t, Objects>& objectData,
 			}
 			dataset.write(objects.crops.data(), H5::PredType::NATIVE_UINT8);
 		}
+
+		incrementAttribute(file, "Number of images:").check();
 	}
 	file.close();
 }

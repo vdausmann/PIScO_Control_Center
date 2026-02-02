@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}HDF Inspector{% endblock %}
+
+{% block content %}
+
+<div class="login-box">
+    {% if error %}
+        <div class="error-box">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required>
+        </div>
+
+        <button type="submit" class="button">Login</button>
+    </form>
+</div>
+
+</body>
+</html>
+{% endblock %}

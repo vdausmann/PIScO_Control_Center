@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}HDF Inspector{% endblock %}
+
+{% block content %}
+<div class="panel">
+
+<h2>HDF5 Dataset Inspector</h2>
+
+<p style="text-align: left;"><b>File:</b> {{ file_path }}</p>
+
+<p style="text-align: left;"><b>HDF path:</b> {{ name }}</p>
+
+<p style="text-align: left;"><b>Data shape:</b> {{ shape }}</p>
+<p style="text-align: left;"><b>Data type:</b> {{ dtype }}</p>
+
+<div style="text-align: left;">
+<a href="/download/dataset/{{ file_path }}?hdf_path={{ name }}"
+	class="button" style="padding: 5px 10px;">⬇ Download data (CSV)</a>
+</div>
+
+<br>
+
+{% if truncated %}
+	<p style="text-align: center;"><b> Due to large size the data is truncated!</b>  </p>
+{% endif %}
+
+<div class="matrix-legend">
+    <span>{{ "%.4g"|format(vmin) }}</span>
+    <div class="bar"></div>
+    <span>{{ "%.4g"|format(vmax) }}</span>
+</div>
+
+<br>
+
+
+<table class="matrix">
+	{% for row in rows %}
+	<tr>
+		{% for cell in row %}
+			<td style="--v: {{ cell.norm }}">
+				{{ "%.4g"|format(cell.value) }}
+			</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+
+<br>
+<a href="/">⬅ Back to dashboard</a>
+
+</div>
+{% endblock %}

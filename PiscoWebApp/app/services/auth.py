@@ -8,11 +8,11 @@ from pathlib import Path
 
 
 SESSION_VERSION_FILE = "~/.pisco_app_session_version"
-load_dotenv(".env")
+# load_dotenv(".env")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-USERNAME = os.environ["APP_USER"]
-PASSWORD_HASH = os.environ["APP_PSWD_HASH"]
+# USERNAME = os.environ["APP_USER"]
+# PASSWORD_HASH = os.environ["APP_PSWD_HASH"]
 
 def login_user(request: Request, username: str, password: str):
     if username != USERNAME:

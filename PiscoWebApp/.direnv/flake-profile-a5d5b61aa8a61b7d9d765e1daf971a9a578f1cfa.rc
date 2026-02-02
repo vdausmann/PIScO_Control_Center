@@ -31,7 +31,7 @@ NIX_BINTOOLS='/nix/store/iga4lv0say4pbbbgkf1v79403n1ip7hf-binutils-wrapper-2.44'
 export NIX_BINTOOLS
 NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_BUILD_CORES='16'
+NIX_BUILD_CORES='20'
 export NIX_BUILD_CORES
 NIX_CC='/nix/store/kks0nbx2riwry5qsx0qr87qr0lswmhzi-gcc-wrapper-14.3.0'
 export NIX_CC

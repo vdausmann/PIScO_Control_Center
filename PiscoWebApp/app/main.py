@@ -12,7 +12,9 @@ from app.routes import landing, file_selector, hdf_inspector, download_data, aut
 
 from app.services.templates import templates
 from app.services.auth import require_user, require_admin
+from app.services.auth import bump_session_version
 
+bump_session_version()
 app = FastAPI(title="PIScO WebApp")
 
 @app.middleware("http")

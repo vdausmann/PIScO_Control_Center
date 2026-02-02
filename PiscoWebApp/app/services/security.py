@@ -6,8 +6,7 @@ import os
 def init_secret_key(
     env_var: str = "SECRET_KEY",
     key_file: str = "~/.pisco_app_secret",
-    length: int = 64,
-) -> str:
+    length: int = 64):
     """
     Load SECRET_KEY from environment or persistent file.
     Generates one if missing.
@@ -25,7 +24,7 @@ def init_secret_key(
     path.write_text(key)
     path.chmod(0o600)  # owner read/write only
     os.environ[env_var] = key
-    return key
+    # return key
 
 
 pwd_context = CryptContext(

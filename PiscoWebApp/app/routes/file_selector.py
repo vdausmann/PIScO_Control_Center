@@ -6,9 +6,9 @@ from pathlib import Path
 
 from fastapi import Depends
 from app.services.auth import require_user
+from app.services.templates import templates
 
 router = APIRouter(dependencies=[Depends(require_user)])
-templates = Jinja2Templates(directory="templates")
 
 # Root directory on the server you want to browse
 BROWSE_ROOT = Path.home()

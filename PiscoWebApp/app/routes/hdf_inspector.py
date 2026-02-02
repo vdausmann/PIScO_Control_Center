@@ -9,10 +9,9 @@ from fastapi import Depends
 
 from app.services.hdf_service import HDFInspectorError, HDFPathNotFound, HDFService
 from app.services.auth import require_user
+from app.services.templates import templates
 
 router = APIRouter(dependencies=[Depends(require_user)])
-templates = Jinja2Templates(directory="templates")
-
 
 def plot_distribution(x, y):
     fig = go.Figure(go.Histogram(x=x, y=y, 

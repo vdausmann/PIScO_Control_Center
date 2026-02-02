@@ -9,28 +9,45 @@
 
     {% block head_extra %}{% endblock %}
 </head>
+
 <body>
 
 <header class="header">
-    <h1 class="app-title">HDF Inspector</h1>
+    <h1 class="app-title">PIScO WebApp</h1>
 
     <div class="header-actions">
-        <button id="theme-toggle" class="button" style="padding: 2px 4px">🌙</button>
-        <a href="/">Home</a>
-        <a href="/select_file?file_types=.h5,.hdf5">Select HDF file</a>
-		<form action="/logout" method="post" style="display:inline;">
-			<button type="submit" class="button" style="padding: 2px 2px;">Logout</button>
-		</form>
-    </div>
+		<div>
+			<button id="theme-toggle" class="button" style="padding: 2px 4px">🌙</button>
+			<a href="/">Home</a>
+			<a href="/select_file?file_types=.h5,.hdf5">Select HDF file</a>
+		</div>
+		<!-- <form action="/logout" method="post" style="display:inline;"> -->
+		<!-- 	<button type="submit" class="button" style="padding: 2px 2px;">Logout</button> -->
+		<!-- </form> -->
+
+		<div class="user-info">
+			{% if user %}
+				<form action="/logout" method="post" style="display:inline;">
+					<button type="submit" class="button" style="padding: 2px 2px;">Logout</button>
+				</form>
+
+				{% if is_admin %}
+					<form action="/admin/logout_all" method="post" style="display:inline; margin-left:10px;">
+						<button type="submit" class="button" style="padding: 2px 2px;">Logout All Users</button>
+					</form>
+				{% endif %}
+
+				Logged in as: <strong>{{ user }}</strong>
+			{% else %}
+				Hello, Guest!
+			{% endif %}
+		</div>
+	</div>
 </header>
 
 <main class="content">
     {% block content %}{% endblock %}
 </main>
-
-<!-- <footer class="footer"> -->
-<!--     <small>Local HDF5 Web Tool</small> -->
-<!-- </footer> -->
 
 <script>
 (function () {

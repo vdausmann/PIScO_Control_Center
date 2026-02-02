@@ -3,11 +3,11 @@ import os
 from fastapi import Request, HTTPException
 from passlib.context import CryptContext
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 from pathlib import Path
 
 
 SESSION_VERSION_FILE = "~/.pisco_app_session_version"
-
 load_dotenv(".env")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -54,4 +54,14 @@ def require_admin(request: Request):
     user = require_user(request)
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Admin required")
+    return user
+
+def get_current_user(request: Request):
+    user = require_user(request)
+    if not user:
+        request.session.clear()
+        raise StarletteHTTPException(
+            status_code=303,
+            headers={"Location": "/login"},
+        )
     return user

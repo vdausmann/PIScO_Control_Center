@@ -338,3 +338,29 @@ a:hover {
     border-radius: 6px;
     margin-bottom: 10px;
 }
+
+.header {
+    /* display: flex; */
+    justify-content: space-between; /* Left vs Right */
+    align-items: center;
+    padding: 5px 10px;
+    background-color: var(--header-bg, #222);
+    color: var(--header-fg, #fff);
+    font-family: sans-serif;
+}
+
+.app-title {
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;    /* wrap on small screens */
+    justify-content: space-between; /* Left vs Right */
+}
+
+.user-info {
+    margin-left: 15px; /* push slightly away from buttons */
+    font-weight: bold;
+}

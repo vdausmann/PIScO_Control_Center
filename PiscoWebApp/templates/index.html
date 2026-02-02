@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}HDF Inspector{% endblock %}
+{% block title %}PIScO WebApp{% endblock %}
 
 
 {% block content %}
@@ -31,24 +31,4 @@
     </div>
 
 </div>
-
-    <div class="user-info">
-        Logged in as: <strong>{{ username }}</strong>
-    </div>
-
-    <div class="user-actions">
-        <!-- Logout button -->
-        <form action="/logout" method="post" style="display:inline;">
-            <button type="submit" class="link-button">Logout</button>
-        </form>
-
-        {% if is_admin %}
-        <!-- Admin: Logout all users -->
-        <form action="/admin/logout_all" method="post" style="display:inline; margin-left:10px;">
-            <button type="submit" class="link-button">Logout All Users</button>
-        </form>
-        {% endif %}
-    </div>
-
-
 {% endblock %}

@@ -7,15 +7,31 @@ from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from starlette.middleware.sessions import SessionMiddleware
 import os
-
 from app.services.hdf_service import HDFInspectorError, HDFPathNotFound
-
-import app.services.auth
-
-
 from app.routes import landing, file_selector, hdf_inspector, download_data, auth
 
+from app.services.templates import templates
+from app.services.auth import require_user, require_admin
+
 app = FastAPI(title="PIScO WebApp")
+
+@app.middleware("http")
+async def user_context_middleware(request: Request, call_next):
+    try:
+        user = require_user(request)
+        if user:
+            request.state.user = user.get("username")
+        is_admin = require_admin(request)
+        if is_admin:
+            request.state.is_admin = True
+        else:
+            request.state.is_admin = False
+    except:
+        ...
+    
+    response = await call_next(request)
+    return response
+
 
 app.add_middleware(
         SessionMiddleware,
@@ -26,7 +42,8 @@ app.add_middleware(
         https_only=False,
 )
 
-templates = Jinja2Templates(directory="templates")
+
+# templates = Jinja2Templates(directory="templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

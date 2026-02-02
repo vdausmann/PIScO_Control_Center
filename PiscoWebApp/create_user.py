@@ -5,5 +5,5 @@ Base.metadata.create_all(bind=engine)
 
 # 2. Create admin user
 db = SessionLocal()
-create_user(db, username="user", password="", is_admin=False)
+create_user(db, username="", password="", is_admin=False)
 db.close()

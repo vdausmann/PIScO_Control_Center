@@ -29,6 +29,7 @@ PISCO_Modules/PostProcessing/.direnv
 PISCO_Modules/PostProcessing/latest*
 PiscoWebApp/.env
 PiscoWebApp/.app_secret
+PiscoWebApp/data
 
 
 # Distribution / packaging

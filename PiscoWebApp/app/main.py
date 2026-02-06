@@ -1,6 +1,7 @@
 from app.services.security import init_secret_key
 init_secret_key()
 
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -8,13 +9,14 @@ from fastapi import Request
 from starlette.middleware.sessions import SessionMiddleware
 import os
 from app.services.hdf_service import HDFInspectorError, HDFPathNotFound
-from app.routes import landing, file_selector, hdf_inspector, download_data, auth
+from app.routes import (landing, file_selector, hdf_inspector, download_data, auth,
+    profile_processing, modules)
 
 from app.services.templates import templates
 from app.services.auth import require_user, require_admin
 from app.services.auth import bump_session_version
 
-bump_session_version()
+# bump_session_version()
 app = FastAPI(title="PIScO WebApp")
 
 @app.middleware("http")
@@ -54,6 +56,8 @@ app.include_router(file_selector.router)
 app.include_router(hdf_inspector.router)
 app.include_router(download_data.router)
 app.include_router(auth.router)
+app.include_router(profile_processing.router)
+app.include_router(modules.router)
 
 
 @app.exception_handler(HDFPathNotFound)

@@ -1,24 +1,29 @@
-from os import name
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
 
 from fastapi import Depends
 from app.services.auth import require_user
 from app.services.templates import templates
+from pprint import pprint
+import json
 
 router = APIRouter(dependencies=[Depends(require_user)])
 
 # Root directory on the server you want to browse
 BROWSE_ROOT = Path.home()
 
+# load recently opened files:
+recently_opened = []
+recently_opened_path = "./data/recently_opened.json"
+if Path(recently_opened_path).exists():
+    with open(recently_opened_path, "r") as f:
+        recently_opened = json.load(f)
+
 
 @router.get("/select_file", response_class=HTMLResponse)
-def select_file(request: Request, subpath: str = "", file_types: str = ""):
-    """
-    Simple server-side file browser.
-    """
+def select_file(request: Request, subpath: str = "", file_types: str = "", mode: str =
+                "inpect"):
     current_path = (BROWSE_ROOT / subpath).resolve()
 
     if file_types:
@@ -65,17 +70,30 @@ def select_file(request: Request, subpath: str = "", file_types: str = ""):
     return templates.TemplateResponse("file_selector.html", {
         "request": request,
         "entries": entries,
+        "mode": mode,
         "current_path": str(current_path.relative_to(BROWSE_ROOT)),
         "file_type": file_types,
-        "recent": [
-            {
-                "path": "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/Results/M181-165-1_CTD-048_00°00S-017°00W_20220508-0903.h5",
-                "name": "M181-165-1_CTD-048_00°00S-017°00W_20220508-0903.h5"
-            },
-            {
-                "path":
-                "/home/tim/Documents/Arbeit/PIScO_Control_Center/PISCO_Modules/FullSegmenter/Results/M202_046-01_PISCO2_20240727-0334_Images-PNG.h5",
-                "name": "M202_046-01_PISCO2_20240727-0334_Images-PNG.h5"
-            },
-        ]
+        "recent": recently_opened,
     })
+
+@router.get("/select_file/choose/{path:path}")
+def choose_file(
+    request: Request,
+    path: str,
+    mode: str = "inspect",
+):
+    if mode == "inspect":
+        # add to recently opened:
+        found = False
+        for obj in recently_opened:
+            if obj["path"] == path:
+                found = True
+                break
+        if not found:
+            recently_opened.append({"path": path, "name": path.split("/")[-1]})
+            with open(recently_opened_path, "w") as f:
+                json.dump(recently_opened, f, indent=4)
+
+        return RedirectResponse(f"/inspect/{path}?hdf_path=/", status_code=303)
+    elif mode == "processing":
+        return RedirectResponse(f"/profile-processing/add-file/{path}", status_code=303)

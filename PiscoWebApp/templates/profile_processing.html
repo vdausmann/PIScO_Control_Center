@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}PIScO WebApp{% endblock %}
+
+
+{% block content %}
+<div class="landing-container">
+    <h1>Profile Processing</h1>
+
+
+	<!-- <section class="file-selection"> -->
+ <!--        <h3>Add Profile:</h3> -->
+	<!-- 	<a href="/select_file?file_types=.h5,.hdf5&mode=processing" class="button">Open Browser</a> -->
+ <!--    </section> -->
+
+	<ul>
+		<p>Selected Files (click to remove):</p>
+		<ul class="file-list">
+			{% for f in selected_profiles %}
+				<!-- <li>{{ f }}</li> -->
+				<li> <a href="/profile-processing/remove-file/{{ f }}"> {{ f}} </a> </li>
+			{% endfor %}
+			<a href="/select_file?file_types=.h5,.hdf5&mode=processing" class="button"
+				style="margin: 10px; padding: 4px 4px;">Add Profile</a>
+		</ul>
+	</ul>
+
+    <section class="modules">
+        <h3>Processing Modules</h3>
+        <div id="module-grid"></div>
+    </section>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Module Histogram</h3>
+            <p>Plot the object distribution of one or multiple profiles.</p>
+			<a href="/profile-processing/module-hist?{% for f in selected_profiles %}{{ '&selected_files=' ~ f }}{% endfor
+				%}" class="button">
+				Start Module
+			</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

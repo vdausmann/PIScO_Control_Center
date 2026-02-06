@@ -9,8 +9,8 @@
 
 <p>Recently opened: 
 	<ul class="file-list">
-    {% for f in recent %}
-        <li>📄 <a href="/inspect/{{f.path}}?hdf_path=/">{{f.name}}</a></li>
+    {% for e in recent %}
+		<li>📄 <a href="/select_file/choose/{{e.path}}?file_types={{file_type}}&mode={{ mode }}">{{e.name}}</a></li>
     {% endfor %}
 	</ul>
 </p>
@@ -21,10 +21,11 @@
 <ul class="file-list">
 {% for e in entries %}
     {% if e.is_dir %}
-		<li>📁 <a href="/select_file?subpath={{e.subpath}}&file_types={{file_type}}">{{e.name}}</a></li>
+	<li>📁 <a href="/select_file?subpath={{e.subpath}}&file_types={{file_type}}&mode={{
+					mode }}">{{e.name}}</a></li>
     {% elif e.is_selectable %}
-        <!-- <li>📄 <a href="/select_file/choose/{{e.subpath}}">{{e.name}}</a></li> -->
-        <li>📄 <a href="/inspect/{{e.path}}?hdf_path=/">{{e.name}}</a></li>
+		<li>📄 <a href="/select_file/choose/{{e.path}}?file_types={{file_type}}&mode={{ mode }}">{{e.name}}</a></li>
+        <!-- <li>📄 <a href="/inspect/{{e.path}}?hdf_path=/">{{e.name}}</a></li> -->
     {% else %}
         <li style="color:#888;">📄 {{e.name}}</li>
     {% endif %}

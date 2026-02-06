@@ -1,17 +1,6 @@
 
 /* Default (light) theme */
 :root {
-    --bg-color: #121212;
-    --panel-bg: #1e1e1e;
-    --text-color: #eaeaea;
-    --link-color: #66aaff;
-    --border-color: #333;
-    --matrix-low: #1e293b;
-    --matrix-high: #38bdf8;
-}
-
-/* Dark theme */
-[data-theme="dark"] {
     --bg-color: #f4f4f4;
     --panel-bg: #ffffff;
     --text-color: #111;
@@ -19,6 +8,18 @@
     --border-color: #ddd;
 	--matrix-low: #f1f5f9;
     --matrix-high: #60a5fa;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --landing-container-bg: #0e0e0e;
+    --panel-bg: #2e2e2e;
+    --text-color: #eaeaea;
+    --link-color: #66aaff;
+    --border-color: #333;
+    --matrix-low: #1e293b;
+    --matrix-high: #38bdf8;
 }
 
 
@@ -31,7 +32,7 @@ body {
 }
 
 .landing-container, .panel {
-    background: var(--panel-bg);
+    background: var(--bg-color);
     text-align: center;
     padding: 50px 20px;
     /* max-width: 1200px; */
@@ -312,25 +313,6 @@ a:hover {
     padding: 6px 10px;
 }
 
-/* button, */
-/* .button-link { */
-/*     display: inline-block; */
-/*     width: 100%; */
-/*     padding: 8px; */
-/*     margin-top: 10px; */
-/*     background: var(--accent-color); */
-/*     color: white; */
-/*     border: none; */
-/*     border-radius: 6px; */
-/*     text-decoration: none; */
-/*     cursor: pointer; */
-/* } */
-/**/
-/* button:hover, */
-/* .button-link:hover { */
-/*     opacity: 0.9; */
-/* } */
-
 .error-box {
     background: #c0392b;
     color: white;
@@ -364,3 +346,4 @@ a:hover {
     margin-left: 15px; /* push slightly away from buttons */
     font-weight: bold;
 }
+

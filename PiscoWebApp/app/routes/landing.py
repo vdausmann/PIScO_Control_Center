@@ -14,7 +14,7 @@ def landing_page(request: Request):
     """
     Landing page / dashboard.
     """
-    user = require_user(request)
+    # user = require_user(request)
     return templates.TemplateResponse(
         "index.html",
         {

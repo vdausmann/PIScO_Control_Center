@@ -27,6 +27,8 @@ PISCO_Modules/FullSegmenter/dependenciesAMD/torch-2.6.0+rocm6.4.1.git1ded221d-cp
 PISCO_Modules/PostProcessing/Results
 PISCO_Modules/PostProcessing/.direnv
 PISCO_Modules/PostProcessing/latest*
+PiscoWebApp/.env
+PiscoWebApp/.app_secret
 
 
 # Distribution / packaging

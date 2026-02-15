@@ -49,6 +49,31 @@
     {% block content %}{% endblock %}
 </main>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+	console.log("Change theme");
+
+    const theme = localStorage.getItem("theme") || "dark";
+    const isDark = theme === "dark";
+
+    document.querySelectorAll(".plotly-graph-div")
+        .forEach(plot => {
+
+            Plotly.relayout(plot, {
+                paper_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
+                plot_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
+                font: {
+                    color: isDark ? "#ffffff" : "#000000"
+                },
+                xaxis: { gridcolor: isDark ? "#444" : "#ddd" },
+                yaxis: { gridcolor: isDark ? "#444" : "#ddd" }
+            });
+
+        });
+});
+</script>
+
 <script>
 (function () {
     const storedTheme = localStorage.getItem("theme");
@@ -67,12 +92,31 @@
             document.documentElement.setAttribute("data-theme", next);
             localStorage.setItem("theme", next);
             toggle.innerText = next === "dark" ? "☀️" : "🌙";
+
+		const isDark = next === "dark";
+
+		document.querySelectorAll(".plotly-graph-div")
+			.forEach(plot => {
+
+				Plotly.relayout(plot, {
+					paper_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
+					plot_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
+					font: {
+						color: isDark ? "#ffffff" : "#000000"
+					},
+					xaxis: { gridcolor: isDark ? "#444" : "#ddd" },
+					yaxis: { gridcolor: isDark ? "#444" : "#ddd" }
+				});
+
+			});
         };
+
     }
 })();
 </script>
 
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
 
 {% block body_extra %}{% endblock %}
 </body>

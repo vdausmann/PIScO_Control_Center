@@ -1,26 +1,10 @@
 #!/usr/bin/env bash
 
-MODE="${1:-release}"
-SETTINGS="${2:-settings.cfg}"
+SETTINGS=$1
+echo "Using settings from" $SETTINGS
 
-
-case "$MODE" in
-    "debug")
-		nix develop ./latest \
-		  --offline \
-		  --no-update-lock-file \
-		  --command bash -c \
-		  "./binDebug/Segmenter $SETTINGS"
-        ;;
-    "release")
-		nix develop ./latest \
-		  --offline \
-		  --no-update-lock-file \
-		  --command bash -c \
-		  "./bin/Segmenter $SETTINGS"
-        ;;
-    *)
-        echo "Unknown command: $MODE"
-        echo "Valid commands: debug, release"
-        ;;
-esac
+nix develop ./latest \
+    --offline \
+    --no-update-lock-file \
+    --command bash -c \
+    "./bin/Segmenter $SETTINGS"

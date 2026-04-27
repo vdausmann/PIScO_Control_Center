@@ -40,12 +40,12 @@ outputs = { self, nixpkgs, flake-utils, ... }:
                     pkg-config
                     gcc
                     hdf5
-                    (pkgs.python312.withPackages(ps: with ps;[
-						(torch.override ({cudaSupport = true;}))
-						(opencv4.override {enableGtk3 = true; enableCuda = false;})
-						h5py
-						matplotlib
-					]))
+     #                (pkgs.python312.withPackages(ps: with ps;[
+					# 	(torch.override ({cudaSupport = true;}))
+					# 	(opencv4.override {enableGtk3 = true; enableCuda = false;})
+					# 	h5py
+					# 	matplotlib
+					# ]))
 					cudatoolkit
 					cudaPackages.cuda_nvcc
 					cudaPackages.cuda_cudart

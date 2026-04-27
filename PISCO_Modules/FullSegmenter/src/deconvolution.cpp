@@ -134,7 +134,7 @@ void groupCrops(const std::unordered_map<size_t, Objects>& objectsMap,
 			tiles[key].push_back(cropHelper);
 
 			currentCol += crop.cols + padding;
-			if (crop.rows > rowSize) rowSize = crop.rows;
+			if (crop.rows > int(rowSize)) rowSize = crop.rows;
 		}
 	}
 
